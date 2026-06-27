@@ -1,11 +1,13 @@
 package com.example.backend.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 
 import java.time.LocalDate;
 
 @Entity
+@Data
 public class Predmet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,7 +61,7 @@ public class Predmet {
 
     @ManyToOne
     @JoinColumn(name = "organizaciskaedinica_id")
-    private Organizaciskaedinica organizaciskaedinica;
+    private OrganizaciskaEdinica organizaciskaedinica;
 
     @Enumerated(EnumType.STRING)
     private StatusPredmet statusPredmet;
@@ -242,11 +244,11 @@ public class Predmet {
         this.tipOdgovor = tipOdgovor;
     }
 
-    public Organizaciskaedinica getOrganizaciskaedinica() {
+    public OrganizaciskaEdinica getOrganizaciskaedinica() {
         return organizaciskaedinica;
     }
 
-    public void setOrganizaciskaedinica(Organizaciskaedinica organizaciskaedinica) {
+    public void setOrganizaciskaedinica(OrganizaciskaEdinica organizaciskaedinica) {
         this.organizaciskaedinica = organizaciskaedinica;
     }
 
