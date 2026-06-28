@@ -17,7 +17,7 @@ public class UserTable {
 
     @ManyToOne
     @JoinColumn(name = "organizaciskaedinica_id")
-    private OrganizaciskaEdinica organizaciskaedinica;
+    private OrganizaciskaEdinica organizaciskaEdinica;
 
     @ManyToOne
     @JoinColumn(name = "nacalnik_na_vrab_id")
