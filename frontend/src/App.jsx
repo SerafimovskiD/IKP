@@ -1,18 +1,51 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import LoginPage from "./UI/Pages/LoginPage.jsx";
+import ProtectedRoute from "./components/AuthContext.jsx";
+import Dashboard from "./UI/Pages/Dashboard.jsx";
 
-import './App.css'
-import {BrowserRouter, Route, Router, Routes} from "react-router-dom";
-import IndexPage from "./UI/Pages/IndexPage.jsx";
+export default function App() {
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <Routes>
 
+                    {/* Јавни рути */}
+                    <Route path="/login" element={<LoginPage />} />
 
-function App() {
+                    {/* Заштитени рути — сите логирани */}
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    } />
 
-  return (
-      <BrowserRouter>
-          <Routes>
-              <Route path={"/a"} element={<IndexPage/>} />
-                  </Routes>
-      </BrowserRouter>
-  )
+                    {/* Само за ADMIN */}
+                    <Route path="/admin" element={
+                        <ProtectedRoute roles={["ADMIN"]}>
+                            {/*<AdminPage />*/}
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Само за NACALNIK и ADMIN */}
+                    <Route path="/workflow" element={
+                        <ProtectedRoute roles={["NACALNIK_SEK", "NACALNIK_ODD", "ADMIN"]}>
+                            {/*<WorkflowPage />*/}
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Default — пренасочи кон dashboard */}
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+                    {/* Forbidden страница */}
+                    <Route path="/forbidden" element={
+                        <div className="min-h-screen flex items-center justify-center">
+                            <p className="text-red-500 text-xl">Немате пристап до оваа страница</p>
+                        </div>
+                    } />
+
+                </Routes>
+            </AuthProvider>
+        </BrowserRouter>
+    );
 }
-
-export default App
