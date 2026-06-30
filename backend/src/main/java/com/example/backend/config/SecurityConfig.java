@@ -22,7 +22,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws    Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
@@ -38,7 +38,9 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/api/auth/**",
                                 "/api/isprakjaci/**",
-                                "/api/arhivi/**"
+                                "/api/arhivi/**",
+                                "/api/isprateni-do/**",
+                                "/api/vidovi-predmet/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
