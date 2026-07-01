@@ -1,6 +1,7 @@
 package com.example.backend.web_controller;
 
 import com.example.backend.dto.DobienaPostaRequest;
+import com.example.backend.dto.IspratenaPostaRequest;
 import com.example.backend.model.Predmet;
 import com.example.backend.service.nomenclature.PredmetService;
 import org.springframework.web.bind.annotation.*;
@@ -24,5 +25,9 @@ public class PredmetController {
     @PutMapping("/{id}/status")
     public Predmet updateStatusPredmet(@PathVariable Long id, @RequestBody StatusPredmetRequest request, Authentication authentication) {
         return this.predmetService.updateStatusPredmet(id, request, authentication.getName());
+    }
+    @PostMapping("/ispratena")
+    public Predmet createIspratenaPosta(@RequestBody IspratenaPostaRequest request) {
+        return this.predmetService.createIspratenaPosta(request);
     }
 }

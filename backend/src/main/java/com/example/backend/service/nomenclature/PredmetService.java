@@ -1,6 +1,7 @@
 package com.example.backend.service.nomenclature;
 
 import com.example.backend.dto.DobienaPostaRequest;
+import com.example.backend.dto.IspratenaPostaRequest;
 import com.example.backend.exceptions.BadRequestException;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
@@ -21,8 +22,9 @@ public class PredmetService {
     private final ArhivaRepository arhivaRepository;
     private final orgEdinicaRepository orgEdinicaRepository;
     private final PredmetStatusRepository predmetStatusRepository;
+    private final IspratenDoRepository ispratenDoRepository;
 
-    public PredmetService(PredmetRepository predmetRepository, IsprakjacRepository isprakjacRepository, VidPredmetRepository vidPredmetRepository, UserRepository userRepository, ArhivaRepository arhivaRepository, orgEdinicaRepository orgEdinicaRepository, PredmetStatusRepository predmetStatusRepository) {
+    public PredmetService(PredmetRepository predmetRepository, IsprakjacRepository isprakjacRepository, VidPredmetRepository vidPredmetRepository, UserRepository userRepository, ArhivaRepository arhivaRepository, orgEdinicaRepository orgEdinicaRepository, PredmetStatusRepository predmetStatusRepository, IspratenDoRepository ispratenDoRepository) {
         this.predmetRepository = predmetRepository;
         this.isprakjacRepository = isprakjacRepository;
         this.vidPredmetRepository = vidPredmetRepository;
@@ -30,6 +32,7 @@ public class PredmetService {
         this.arhivaRepository = arhivaRepository;
         this.orgEdinicaRepository = orgEdinicaRepository;
         this.predmetStatusRepository = predmetStatusRepository;
+        this.ispratenDoRepository = ispratenDoRepository;
     }
 
     @Transactional
@@ -99,6 +102,77 @@ public class PredmetService {
         predmet.setIspratenoDo(null);
         return this.predmetRepository.save(predmet);
     }
+    @Transactional
+    public Predmet createIspratenaPosta(IspratenaPostaRequest request){
+        Predmet predmet = new Predmet();
+        LocalDate datumZaveduvanje = request.getDatumZaveduvanje() != null
+                ? request.getDatumZaveduvanje()
+                : LocalDate.now();
+        Integer godina = datumZaveduvanje.getYear();
+        Integer lastRedenBroj = this.predmetRepository.findMaxRedenBroj(godina);
+        Integer nextRedenBroj = lastRedenBroj + 1;
+
+        Integer podBroj = 0;
+        String brAkt = nextRedenBroj + "/" + godina;
+        predmet.setBrAkt(brAkt);
+        predmet.setRedenBroj(nextRedenBroj);
+        predmet.setPodBroj(podBroj);
+        predmet.setGodina(godina);
+        predmet.setDatumZaveduvanje(datumZaveduvanje);
+
+        predmet.setTipPosta(request.getTipPosta());
+        predmet.setPrioritet(request.getPrioritet());
+
+        if (request.getIspratenoDoId() == null){
+            throw new BadRequestException("Примач е задолжителен за испратена пошта");
+        }
+        IspratenDo ispratenDo = this.ispratenDoRepository.findById(request.getIspratenoDoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Испратено до", request.getIspratenoDoId()));
+
+        predmet.setIspratenoDo(ispratenDo);
+        predmet.setIsprakjac(null);
+        predmet.setBrAktNivni(request.getBrAktNivni());
+        predmet.setDatumIsprakjanje(request.getDatumIsprakjanje());
+        predmet.setBrAktArhivski(request.getBrAktArhivski());
+
+        if(request.getVidPredmetId() != null){
+            VidPredmet vidPredmet = this.vidPredmetRepository.findById(request.getVidPredmetId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Вид на предмет", request.getVidPredmetId()));
+            predmet.setVidPredmet(vidPredmet);
+        }
+        predmet.setSodrzina(request.getSodrzina());
+
+        if(request.getOdgovornoLiceId() != null) {
+            UserTable odgovornolice = this.userRepository.findById(request.getOdgovornoLiceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Одговорно лице", request.getOdgovornoLiceId()));
+            predmet.setOdgovornoLice(odgovornolice);
+        }
+        predmet.setInformativnaPosta(request.getInformativnaPosta());
+        predmet.setRealizirano(request.getRealizirano());
+
+        if(request.getArhivaId() != null){
+            Arhiva arhiva = this.arhivaRepository.findById(request.getArhivaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Архива", request.getArhivaId()));
+            predmet.setArhiva(arhiva);
+        }
+        predmet.setZabeleska(request.getZabeleska());
+
+        if(request.getRoditelPredmetId() != null){
+            Predmet roditelPredmet = this.predmetRepository.findById(request.getRoditelPredmetId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Родител предмет", request.getRoditelPredmetId()));
+            predmet.setRoditelPredmet(roditelPredmet);
+        }
+
+        if(request.getOrganizaciskaEdinicaId() != null){
+            OrganizaciskaEdinica organizaciskaEdinica = this.orgEdinicaRepository.findById(request.getOrganizaciskaEdinicaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Организациска единица", request.getOrganizaciskaEdinicaId()));
+            predmet.setOrganizaciskaedinica(organizaciskaEdinica);
+        }
+        predmet.setStatusPredmet(request.getStatusPredmet());
+
+        predmet.setTipOdgovor(TipOdgovor.испратена);
+        return this.predmetRepository.save(predmet);
+    }
 
     @Transactional
     public Predmet updateStatusPredmet(Long id, StatusPredmetRequest request,String changedBy){
@@ -124,4 +198,5 @@ public class PredmetService {
 
         return savedPredmet;
     }
+
 }
