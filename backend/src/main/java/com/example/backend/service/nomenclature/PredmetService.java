@@ -6,8 +6,11 @@ import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
 import com.example.backend.repository.*;
 import org.springframework.stereotype.Service;
+import com.example.backend.dto.StatusPredmetRequest;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 
 @Service
 public class PredmetService {
@@ -17,14 +20,16 @@ public class PredmetService {
     private final UserRepository userRepository;
     private final ArhivaRepository arhivaRepository;
     private final orgEdinicaRepository orgEdinicaRepository;
+    private final PredmetStatusRepository predmetStatusRepository;
 
-    public PredmetService(PredmetRepository predmetRepository, IsprakjacRepository isprakjacRepository, VidPredmetRepository vidPredmetRepository, UserRepository userRepository, ArhivaRepository arhivaRepository, orgEdinicaRepository orgEdinicaRepository) {
+    public PredmetService(PredmetRepository predmetRepository, IsprakjacRepository isprakjacRepository, VidPredmetRepository vidPredmetRepository, UserRepository userRepository, ArhivaRepository arhivaRepository, orgEdinicaRepository orgEdinicaRepository, PredmetStatusRepository predmetStatusRepository) {
         this.predmetRepository = predmetRepository;
         this.isprakjacRepository = isprakjacRepository;
         this.vidPredmetRepository = vidPredmetRepository;
         this.userRepository = userRepository;
         this.arhivaRepository = arhivaRepository;
         this.orgEdinicaRepository = orgEdinicaRepository;
+        this.predmetStatusRepository = predmetStatusRepository;
     }
 
     @Transactional
@@ -93,5 +98,30 @@ public class PredmetService {
         predmet.setTipOdgovor(TipOdgovor.добиена);
         predmet.setIspratenoDo(null);
         return this.predmetRepository.save(predmet);
+    }
+
+    @Transactional
+    public Predmet updateStatusPredmet(Long id, StatusPredmetRequest request,String changedBy){
+        if(request.getStatusPredmet() == null){
+            throw new BadRequestException("Статусот на предметот е задолжителен");
+        }
+        Predmet predmet = this.predmetRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Предмет", id));
+        StatusPredmet oldStatus = predmet.getStatusPredmet();
+        StatusPredmet newStatus = request.getStatusPredmet();
+
+        predmet.setStatusPredmet(newStatus);
+        Predmet savedPredmet = this.predmetRepository.save(predmet);
+
+        PredmetStatusLog log = new PredmetStatusLog();
+        log.setPredmet(savedPredmet);
+        log.setOldStatus(oldStatus);
+        log.setNewStatus(newStatus);
+        log.setChangedBy(changedBy);
+        log.setChangedAt(LocalDateTime.now());
+
+        this.predmetStatusRepository.save(log);
+
+        return savedPredmet;
     }
 }
