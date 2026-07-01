@@ -2,6 +2,7 @@ package com.example.backend.model;
 
 public enum StatusPredmet {
     ДП_доставена_до_помошникот,
+    ДП_доставена_до_сектор,
     ДП_доставена_до_одделение,
     ДП_во_одделение_чека_odgovor,
     ИП_од_помошник,

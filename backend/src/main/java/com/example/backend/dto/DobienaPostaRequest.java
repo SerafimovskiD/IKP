@@ -9,10 +9,10 @@ import java.time.LocalDate;
 
 @Data
 public class DobienaPostaRequest {
-    private String brAkt;
-    private Integer redenBroj;
-    private Integer podBroj;
-    private Integer godina;
+//    private String brAkt;
+//    private Integer redenBroj;
+//    private Integer podBroj;
+//    private Integer godina;
     private LocalDate datumZaveduvanje;
 
     private TipPosta tipPosta;
@@ -32,7 +32,7 @@ public class DobienaPostaRequest {
 
     private Long arhivaId;
     private String zabeleska;
-    private Long roditelPredmetId;
-    private Long organizaciskaEdinicaId;
-    private StatusPredmet statusPredmet;
+//    private Long roditelPredmetId;
+//    private Long organizaciskaEdinicaId;
+//    private StatusPredmet statusPredmet;
 }
