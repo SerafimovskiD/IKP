@@ -6,6 +6,8 @@ import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
 import com.example.backend.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 
 @Service
 public class PredmetService {
@@ -25,14 +27,22 @@ public class PredmetService {
         this.orgEdinicaRepository = orgEdinicaRepository;
     }
 
+    @Transactional
     public Predmet createDobienaPosta(DobienaPostaRequest request){
         Predmet predmet = new Predmet();
-        predmet.setBrAkt(request.getBrAkt());
-        predmet.setRedenBroj(request.getRedenBroj());
-        predmet.setPodBroj(request.getPodBroj());
-        predmet.setGodina(request.getGodina());
-        predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());
-
+        LocalDate datumZaveduvanje = request.getDatumZaveduvanje() != null
+                ? request.getDatumZaveduvanje()
+                : LocalDate.now();
+        Integer godina = datumZaveduvanje.getYear();
+        Integer lastRedenBroj = this.predmetRepository.findMaxRedenBroj(godina);
+        Integer nextRedenBroj = lastRedenBroj + 1;
+        Integer podBroj = 0 ;
+        String brAkt = nextRedenBroj + "/" + godina;
+        predmet.setBrAkt(brAkt);
+        predmet.setRedenBroj(nextRedenBroj);
+        predmet.setPodBroj(podBroj);
+        predmet.setGodina(godina);
+        predmet.setDatumZaveduvanje(datumZaveduvanje);
         predmet.setTipPosta(request.getTipPosta());
         predmet.setPrioritet(request.getPrioritet());
 

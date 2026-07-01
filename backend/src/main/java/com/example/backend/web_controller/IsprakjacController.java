@@ -1,5 +1,6 @@
 package com.example.backend.web_controller;
 
+import com.example.backend.dto.IsprakjacRequest;
 import com.example.backend.model.Isprakjac;
 import com.example.backend.service.nomenclature.IsprakjacService;
 import org.springframework.web.bind.annotation.*;
@@ -25,12 +26,12 @@ public class IsprakjacController {
     }
 
     @PostMapping
-    public Isprakjac createIsprakjac(@RequestBody Isprakjac isprakjac) {
-        return isprakjacService.createIsprakjac(isprakjac);
+    public Isprakjac createIsprakjac(@RequestBody IsprakjacRequest request) {
+        return isprakjacService.createIsprakjac(request);
     }
     @PutMapping("/{id}")
-    public Isprakjac updateIsprakjac(@PathVariable Long id, @RequestBody Isprakjac isprakjac) {
-        return this.isprakjacService.updateIsprakjac(id, isprakjac);
+    public Isprakjac updateIsprakjac(@PathVariable Long id, @RequestBody IsprakjacRequest request) {
+        return this.isprakjacService.updateIsprakjac(id, request);
     }
     @DeleteMapping("/{id}")
     public void deleteIsprakjacById(@PathVariable Long id) {

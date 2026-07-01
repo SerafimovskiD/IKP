@@ -1,5 +1,7 @@
 package com.example.backend.web_controller;
 
+import com.example.backend.dto.IsprakjacRequest;
+import com.example.backend.dto.IspratenDoRequest;
 import com.example.backend.model.IspratenDo;
 import com.example.backend.service.nomenclature.IspratenDoService;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +26,12 @@ public class IspratenDoController {
         return this.ispratenDoService.getIspratenDoById(id);
     }
     @PostMapping
-    public IspratenDo createIspratenDo(@RequestBody IspratenDo ispratenDo){
-        return this.ispratenDoService.createIspratenDo(ispratenDo);
+    public IspratenDo createIspratenDo(@RequestBody IspratenDoRequest request){
+        return this.ispratenDoService.createIspratenDo(request);
     }
     @PutMapping("/{id}")
-    public IspratenDo updateIspratenDo(@PathVariable Long id, @RequestBody IspratenDo ispratenDo){
-        return this.ispratenDoService.updateIspratenDo(id, ispratenDo);
+    public IspratenDo updateIspratenDo(@PathVariable Long id, @RequestBody IspratenDoRequest request){
+        return this.ispratenDoService.updateIspratenDo(id, request);
     }
     @DeleteMapping("/{id}")
     public void deleteIspratenDoById(@PathVariable Long id) {

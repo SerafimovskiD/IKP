@@ -1,5 +1,6 @@
 package com.example.backend.service.nomenclature;
 
+import com.example.backend.dto.IspratenDoRequest;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.IspratenDo;
 import com.example.backend.repository.IspratenDoRepository;
@@ -22,12 +23,14 @@ public class IspratenDoService {
         return this.ispratenDoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Испратен до", id));
     }
-    public IspratenDo createIspratenDo(IspratenDo ispratenDo) {
+    public IspratenDo createIspratenDo(IspratenDoRequest request) {
+        IspratenDo ispratenDo = new IspratenDo();
+        ispratenDo.setNaziv(request.getNaziv());
         return this.ispratenDoRepository.save(ispratenDo);
     }
-    public IspratenDo updateIspratenDo(Long id,IspratenDo ispratenDo) {
+    public IspratenDo updateIspratenDo(Long id,IspratenDoRequest request) {
         IspratenDo existingIspratenDo = getIspratenDoById(id);
-        existingIspratenDo.setNaziv(ispratenDo.getNaziv());
+        existingIspratenDo.setNaziv(request.getNaziv());
         return this.ispratenDoRepository.save(existingIspratenDo);
     }
     public void deleteIspratenDoById(Long id) {

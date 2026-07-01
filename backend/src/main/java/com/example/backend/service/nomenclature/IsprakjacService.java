@@ -4,6 +4,7 @@ import com.example.backend.model.Isprakjac;
 import com.example.backend.repository.IsprakjacRepository;
 import org.springframework.stereotype.Service;
 import com.example.backend.exceptions.ResourceNotFoundException;
+import com.example.backend.dto.IsprakjacRequest;
 
 
 import java.util.List;
@@ -26,13 +27,15 @@ public class IsprakjacService {
                 .orElseThrow(() -> new ResourceNotFoundException("Испраќач", id));
     }
 
-    public Isprakjac createIsprakjac(Isprakjac isprakjac) {
+    public Isprakjac createIsprakjac(IsprakjacRequest request) {
+        Isprakjac isprakjac = new Isprakjac();
+        isprakjac.setNaziv(request.getNaziv());
         return this.isprakjacRepository.save(isprakjac);
     }
 
-    public Isprakjac updateIsprakjac(Long id, Isprakjac updatedIsprakjac) {
+    public Isprakjac updateIsprakjac(Long id, IsprakjacRequest request) {
         Isprakjac existingIsprakjac = getIsprakjacById(id);
-        existingIsprakjac.setNaziv(updatedIsprakjac.getNaziv());
+        existingIsprakjac.setNaziv(request.getNaziv());
         return this.isprakjacRepository.save(existingIsprakjac);
     }
     public void deleteIsprakjacById(Long id) {

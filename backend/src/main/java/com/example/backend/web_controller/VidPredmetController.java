@@ -1,5 +1,6 @@
 package com.example.backend.web_controller;
 
+import com.example.backend.dto.VidPredmetRequest;
 import com.example.backend.model.VidPredmet;
 import com.example.backend.service.nomenclature.VidPredmetService;
 import org.springframework.web.bind.annotation.*;
@@ -23,12 +24,12 @@ public class VidPredmetController {
         return this.vidPredmetService.getVidPredmetById(id);
     }
     @PostMapping
-    public VidPredmet createVidPredmet(@RequestBody VidPredmet vidPredmet) {
-        return this.vidPredmetService.createVidPredmet(vidPredmet);
+    public VidPredmet createVidPredmet(@RequestBody VidPredmetRequest request) {
+        return this.vidPredmetService.createVidPredmet(request);
     }
     @PutMapping("/{id}")
-    public VidPredmet updateVidPredmet(@PathVariable Long id, @RequestBody VidPredmet vidPredmet) {
-        return this.vidPredmetService.updateVidPredmet(id, vidPredmet);
+    public VidPredmet updateVidPredmet(@PathVariable Long id, @RequestBody VidPredmetRequest request) {
+        return this.vidPredmetService.updateVidPredmet(id, request);
     }
     @DeleteMapping("/{id}")
     public void deleteVidPredmet(@PathVariable Long id) {
