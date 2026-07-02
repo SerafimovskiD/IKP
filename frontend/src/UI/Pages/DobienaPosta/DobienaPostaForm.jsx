@@ -28,10 +28,10 @@ export default function DobienaPostaForm() {
   });
 
   useEffect(() => {
-    api.get("/isprakjac").then((r) => setIsprakjaci(r.data)).catch(() => {});
-    api.get("/vid-predmet").then((r) => setVidovi(r.data)).catch(() => {});
+    api.get("/isprakjaci").then((r) => setIsprakjaci(r.data)).catch(() => {});
+    api.get("/vidovi-predmet").then((r) => setVidovi(r.data)).catch(() => {});
     api.get("/korisnici").then((r) => setKorisnici(r.data)).catch(() => {});
-    api.get("/arhiva").then((r) => setArhivi(r.data)).catch(() => {});
+    api.get("/arhivi").then((r) => setArhivi(r.data)).catch(() => {});
   }, []);
 
   function handleChange(e) {
