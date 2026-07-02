@@ -99,7 +99,7 @@ public class PredmetService {
 //            predmet.setOrganizaciskaedinica(organizaciskaEdinica);
 //        }
 //        predmet.setStatusPredmet(request.getStatusPredmet());
-//        predmet.setTipOdgovor(TipOdgovor.добиена);
+//        predmet.setTipOdgovor(TipOdgovor.ДП_одговор);
 //        predmet.setIspratenoDo(null);
 //        return this.predmetRepository.save(predmet);
 //    }
@@ -212,7 +212,7 @@ public class PredmetService {
         }
         predmet.setStatusPredmet(request.getStatusPredmet());
 
-        predmet.setTipOdgovor(TipOdgovor.испратена);
+        predmet.setTipOdgovor(TipOdgovor.ИП_одговор);
         return this.predmetRepository.save(predmet);
     }
 
