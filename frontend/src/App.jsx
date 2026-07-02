@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import LoginPage from "./UI/Pages/LoginPage.jsx";
 import ProtectedRoute from "./components/AuthContext.jsx";
 import Dashboard from "./UI/Pages/Dashboard.jsx";
+import DobienaPostaForm from "./UI/Pages/DobienaPosta/DobienaPostaForm.jsx";
 
 export default function App() {
     return (
@@ -17,6 +18,13 @@ export default function App() {
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
                             <Dashboard />
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Форма за добиена пошта */}
+                    <Route path="/dobieni/nova" element={
+                        <ProtectedRoute roles={["OSL", "POMOCNIK", "ADMIN"]}>
+                            <DobienaPostaForm />
                         </ProtectedRoute>
                     } />
 
