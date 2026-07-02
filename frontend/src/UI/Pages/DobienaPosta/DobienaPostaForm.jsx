@@ -53,7 +53,7 @@ export default function DobienaPostaForm() {
 
     setSubmitting(true);
     try {
-      await api.post("/predmet/dobieni", {
+      await api.post("/predmet", {
         ...form,
         isprakjacId: Number(form.isprakjacId),
         vidPredmetId: form.vidPredmetId ? Number(form.vidPredmetId) : null,
