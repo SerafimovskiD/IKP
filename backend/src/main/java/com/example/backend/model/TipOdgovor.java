@@ -1,6 +1,7 @@
 package com.example.backend.model;
 
 public enum TipOdgovor {
-    испратена,
-    добиена
+    ДП_одговор,
+    ИП_одгоров,
+    СД_одговор
 }
