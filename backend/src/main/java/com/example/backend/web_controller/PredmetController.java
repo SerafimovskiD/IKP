@@ -6,6 +6,7 @@ import com.example.backend.dto.IspratenaPostaRequest;
 import com.example.backend.model.Predmet;
 import com.example.backend.service.nomenclature.PredmetService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,8 @@ public class PredmetController {
 //    public Predmet createDobienaPosta(@RequestBody DobienaPostaRequest request) {
 //        return this.predmetService.createDobienaPosta(request);
 //    }
+
+    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
     @PostMapping
     public ResponseEntity<DobienaPostaResponse> createDobienaPosta(@RequestBody DobienaPostaRequest dobienaPostaRequest, @AuthenticationPrincipal UserDetails userDetails) {
         String email =userDetails.getUsername();
@@ -34,10 +37,13 @@ public class PredmetController {
     }
 
 
+    @PreAuthorize("hasAnyRole('OSL','NACALNIK','ADMIN')")
     @PutMapping("/{id}/status")
     public Predmet updateStatusPredmet(@PathVariable Long id, @RequestBody StatusPredmetRequest request, Authentication authentication) {
         return this.predmetService.updateStatusPredmet(id, request, authentication.getName());
     }
+
+    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
     @PostMapping("/ispratena")
     public Predmet createIspratenaPosta(@RequestBody IspratenaPostaRequest request) {
         return this.predmetService.createIspratenaPosta(request);
