@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.example.backend.dto.SkeniraniDokumentiResponse;
+import org.springframework.core.io.Resource;
 
 import java.time.LocalDateTime;
 
@@ -54,5 +55,22 @@ public class SkeniraniDokumentiService {
         response.setUserId(savedDokument.getUser().getId());
         response.setUploadedBy(savedDokument.getUser().getEmail());
         return response;
+    }
+
+    @Transactional(readOnly = true)
+    public Resource loadDokument(Long dokumentId){
+        SkeniraniDokumenti dokument = this.skeniraniDokumentiRepository.findById(dokumentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Скениран документ",dokumentId));
+
+        return this.fileStorageService.loadAsResource(dokument.getPateka());
+    }
+
+    @Transactional(readOnly = true)
+    public SkeniraniDokumenti getDokument(Long dokumentId){
+        return this.skeniraniDokumentiRepository.findById(dokumentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Скениран документ",dokumentId));
+    }
+    public String getContentType(String pateka){
+        return this.fileStorageService.getContentType(pateka);
     }
 }
