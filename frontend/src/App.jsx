@@ -1,122 +1,59 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import LoginPage from "./UI/Pages/LoginPage.jsx";
+import ProtectedRoute from "./components/AuthContext.jsx";
+import Dashboard from "./UI/Pages/Dashboard.jsx";
+import DobienaPostaForm from "./UI/Pages/DobienaPosta/DobienaPostaForm.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <Routes>
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+                    {/* Јавни рути */}
+                    <Route path="/login" element={<LoginPage />} />
 
-      <div className="ticks"></div>
+                    {/* Заштитени рути — сите логирани */}
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    } />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                    {/* Форма за добиена пошта */}
+                    <Route path="/dobieni/nova" element={
+                        <ProtectedRoute roles={["OSL", "POMOCNIK", "ADMIN"]}>
+                            <DobienaPostaForm />
+                        </ProtectedRoute>
+                    } />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+                    {/* Само за ADMIN */}
+                    <Route path="/admin" element={
+                        <ProtectedRoute roles={["ADMIN"]}>
+                            {/*<AdminPage />*/}
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Само за NACALNIK и ADMIN */}
+                    <Route path="/workflow" element={
+                        <ProtectedRoute roles={["NACALNIK_SEK", "NACALNIK_ODD", "ADMIN"]}>
+                            {/*<WorkflowPage />*/}
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Default — пренасочи кон dashboard */}
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+                    {/* Forbidden страница */}
+                    <Route path="/forbidden" element={
+                        <div className="min-h-screen flex items-center justify-center">
+                            <p className="text-red-500 text-xl">Немате пристап до оваа страница</p>
+                        </div>
+                    } />
+
+                </Routes>
+            </AuthProvider>
+        </BrowserRouter>
+    );
 }
-
-export default App
