@@ -13,5 +13,5 @@ public class OrganizaciskaEdinica {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String naziv;
-
+    private String code;
 }

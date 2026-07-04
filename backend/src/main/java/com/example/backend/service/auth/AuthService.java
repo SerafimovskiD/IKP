@@ -7,6 +7,7 @@ import com.example.backend.dto.RegisterRequest;
 import com.example.backend.exceptions.BadRequestException;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.OrganizaciskaEdinica;
+import com.example.backend.model.Role;
 import com.example.backend.model.UserTable;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.repository.orgEdinicaRepository;
@@ -49,7 +50,7 @@ public class AuthService {
         String token = jwtService.generateToken(
                 userDetails,
                 user.getId(),
-                user.getUloga(),
+                String.valueOf(user.getUloga()),
                 user.getOrganizaciskaEdinica() != null
                         ? user.getOrganizaciskaEdinica().getId() : null
         );
@@ -79,8 +80,8 @@ public class AuthService {
         user.setPrezime(request.getPrezime());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setUloga(request.getUloga() != null
-                ? request.getUloga() : "OSL");
+        user.setUloga(Role.valueOf(request.getUloga() != null
+                ? request.getUloga() : "OSL"));
         user.setOrganizaciskaEdinica(organizaciska);
 
         userRepository.save(user);

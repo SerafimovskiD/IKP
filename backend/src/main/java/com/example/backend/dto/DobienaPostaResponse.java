@@ -4,6 +4,7 @@ import com.example.backend.model.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class DobienaPostaResponse {
@@ -25,21 +26,30 @@ public class DobienaPostaResponse {
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
-    private Long vidPredmetId;
-    private String vidPredmetNaziv;
+    //Naum
+    private List<Long> vidPredmetId;
+    //    private Long vidPredmetId;
+    //Mislam nema potreba da ima i naziv poso ke go dobivame preku ID <-Naum
+//    private String vidPredmetNaziv;
 
     private String sodrzina;
 
-    private Long odgovornoLiceId;
-    private String odgovornoLiceIme;
-    private String odgovornoLicePrezime;
-    private String odgovornoLiceEmail;
+    private List<Long> odgovornoLiceId;
+    //Naum
+//    private Long odgovornoLiceId;
+    //Isto ko gore <-Naum
+//    private String odgovornoLiceIme;
+//    private String odgovornoLicePrezime;
+//    private String odgovornoLiceEmail;
 
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
-    private Long arhivaId;
-    private String arhivaNaziv;
+    private List<Long> arhivaId;
+    //Naum
+//    private Long arhivaId;
+    //isto ko gore <Naum
+//    private String arhivaNaziv;
 
     private String zabeleska;
 
@@ -55,45 +65,24 @@ public class DobienaPostaResponse {
         dto.setPodBroj(predmet.getPodBroj());
         dto.setGodina(predmet.getGodina());
         dto.setDatumZaveduvanje(predmet.getDatumZaveduvanje());
-
         dto.setTipPosta(predmet.getTipPosta());
         dto.setPrioritet(predmet.getPrioritet());
-
-        if (predmet.getIsprakjac() != null) {
-            dto.setIsprakjacId(predmet.getIsprakjac().getId());
-            dto.setIsprakjacNaziv(predmet.getIsprakjac().getNaziv());
-        }
-
+        dto.setIsprakjacId(predmet.getIsprakjac().getId());
         dto.setBrAktNivni(predmet.getBrAktNivni());
         dto.setDatumIsprakjanje(predmet.getDatumIsprakjanje());
         dto.setBrAktArhivski(predmet.getBrAktArhivski());
-
-        if (predmet.getVidPredmet() != null) {
-            dto.setVidPredmetId(predmet.getVidPredmet().getId());
-            dto.setVidPredmetNaziv(predmet.getVidPredmet().getNaziv());
-        }
-
+        dto.setVidPredmetId(predmet.getVidPredmet().stream().map(VidPredmet::getId).toList());
         dto.setSodrzina(predmet.getSodrzina());
-
-        if (predmet.getOdgovornoLice() != null) {
-            dto.setOdgovornoLiceId(predmet.getOdgovornoLice().getId());
-            dto.setOdgovornoLiceIme(predmet.getOdgovornoLice().getIme());
-            dto.setOdgovornoLicePrezime(predmet.getOdgovornoLice().getPrezime());
-            dto.setOdgovornoLiceEmail(predmet.getOdgovornoLice().getEmail());
-        }
-
+        dto.setOdgovornoLiceId(predmet.getOdgovornoLice().stream().map(UserTable::getId).toList());
         dto.setInformativnaPosta(predmet.getInformativnaPosta());
         dto.setRealizirano(predmet.getRealizirano());
-
-        if (predmet.getArhiva() != null) {
-            dto.setArhivaId(predmet.getArhiva().getId());
-            dto.setArhivaNaziv(predmet.getArhiva().getNaziv());
-        }
-
+        dto.setArhivaId(predmet.getArhiva().stream().map(Arhiva::getId).toList());
         dto.setZabeleska(predmet.getZabeleska());
-
-        dto.setStatusPredmet(predmet.getStatusPredmet());
-        dto.setTipOdgovor(predmet.getTipOdgovor());
+//        dto.setRoditelPredmetId(predmet.getRoditelPredmet() != null
+//                ? predmet.getRoditelPredmet().getId() : null);
+//        dto.setOrganizaciskaEdinicaId(predmet.getOrganizaciskaedinica() != null
+//                ? predmet.getOrganizaciskaedinica().getId() : null);
+//        dto.setStatusPredmet(predmet.getStatusPredmet());
 
         return dto;
     }

@@ -11,7 +11,6 @@ import lombok.Data;
 public class Isprakjac{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //da ne se koristi
     private Long id;
     private String naziv;
 

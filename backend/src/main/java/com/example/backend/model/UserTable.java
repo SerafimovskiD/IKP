@@ -13,7 +13,7 @@ public class UserTable {
     private String prezime;
     private String password;
     private String email;
-    private String uloga;
+    private Role uloga;
 
     @ManyToOne
     @JoinColumn(name = "organizaciskaedinica_id")

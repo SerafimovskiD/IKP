@@ -6,6 +6,7 @@ import com.example.backend.model.TipPosta;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class DobienaPostaRequest {
@@ -23,16 +24,16 @@ public class DobienaPostaRequest {
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
-    private Long vidPredmetId;
+    private List<Long> vidPredmetId;
     private String sodrzina;
-    private Long odgovornoLiceId;
+    private List<Long> odgovornoLiceId;
 
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
-    private Long arhivaId;
+    private List<Long> arhivaId;
     private String zabeleska;
 //    private Long roditelPredmetId;
 //    private Long organizaciskaEdinicaId;
-//    private StatusPredmet statusPredmet;
+    private StatusPredmet statusPredmet;
 }

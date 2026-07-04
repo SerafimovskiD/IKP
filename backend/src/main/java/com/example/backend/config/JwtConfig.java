@@ -15,7 +15,6 @@ public class JwtConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    // Инјектирај CustomUserDetailsService директно, не интерфејсот
     public JwtConfig(CustomUserDetailsService customUserDetailsService,
                      PasswordEncoder passwordEncoder) {
         this.customUserDetailsService = customUserDetailsService;

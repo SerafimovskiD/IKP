@@ -5,6 +5,7 @@ import lombok.Data;
 
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
@@ -17,12 +18,12 @@ public class Predmet {
     private Integer podBroj;
     private Integer godina;
     private LocalDate datumZaveduvanje;
-
     @Enumerated(EnumType.STRING)
     private TipPosta tipPosta;
     @Enumerated(EnumType.STRING)
     private Prioritet prioritet;
 
+    //mislam 1 bese isprakjac nemoze pojke da se <-Naum
     @ManyToOne
     @JoinColumn(name = "isprakjac_id")
     private Isprakjac isprakjac;
@@ -30,35 +31,40 @@ public class Predmet {
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
-    @ManyToOne
-    @JoinColumn(name = "vid_predmet_id")
-    private VidPredmet vidPredmet;
 
+    @ManyToMany
+//    @JoinTable(
+//            name = "vid_predmet",
+//            joinColumns = @JoinColumn(name = "vid_predmet_id"),
+//            inverseJoinColumns = @JoinColumn(name = "vid_predmet_id")
+//    )
+//    @JoinColumn(name = "vid_predmet_id")
+    private List<VidPredmet> vidPredmet;
+
+    @Column(length = 2000)
     private String sodrzina;
-    @ManyToOne
-    @JoinColumn(name = "odgovorno_lice_id")
-    private UserTable odgovornoLice;
+    @ManyToMany
+//    @JoinColumn(name = "odgovorno_lice_id")
+    private List<UserTable> odgovornoLice;
 
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
-    @ManyToOne
-    @JoinColumn(name = "arhiva_id")
-    private Arhiva arhiva;
+    @ManyToMany
+//    @JoinColumn(name = "arhiva_id")
+    private List<Arhiva> arhiva;
 
+    @Column(length = 2000)
     private String zabeleska;
 
     @ManyToOne
-    @JoinColumn(name = "roditel_predmet_id")
+//    @JoinColumn(name = "roditel_predmet_id")
     private Predmet roditelPredmet;
-
-    @ManyToOne
-    @JoinColumn(name = "isprateno_do_id")
-    private IspratenDo ispratenoDo;
 
     @Enumerated(EnumType.STRING)
     private TipOdgovor tipOdgovor;
 
+    //mozda visak <-Naum
     @ManyToOne
     @JoinColumn(name = "organizaciskaedinica_id")
     private OrganizaciskaEdinica organizaciskaedinica;
