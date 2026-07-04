@@ -5,3 +5,5 @@ public enum TipOdgovor {
     ИП_одговор,
     СД_одговор
 }
+
+

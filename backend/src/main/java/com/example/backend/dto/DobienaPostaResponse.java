@@ -8,37 +8,44 @@ import java.time.LocalDate;
 @Data
 public class DobienaPostaResponse {
     private Long id;
+
     private String brAkt;
     private Integer redenBroj;
     private Integer podBroj;
     private Integer godina;
-
     private LocalDate datumZaveduvanje;
 
     private TipPosta tipPosta;
     private Prioritet prioritet;
-    private Isprakjac isprakjac;
+
+    private Long isprakjacId;
+    private String isprakjacNaziv;
 
     private String brAktNivni;
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
-    private VidPredmet vidPredmet;
+    private Long vidPredmetId;
+    private String vidPredmetNaziv;
+
     private String sodrzina;
-    private UserTable odgovornoLice;
+
+    private Long odgovornoLiceId;
+    private String odgovornoLiceIme;
+    private String odgovornoLicePrezime;
+    private String odgovornoLiceEmail;
 
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
-    private Arhiva arhiva;
+    private Long arhivaId;
+    private String arhivaNaziv;
+
     private String zabeleska;
-//    private Long roditelPredmetId;
-//    private Long organizaciskaEdinicaId;
-//    private StatusPredmet statusPredmet;
 
+    private StatusPredmet statusPredmet;
+    private TipOdgovor tipOdgovor;
 
-    //Na pocetok ke prakjame site podatoci za da
-    // znaeme so e kako e posle moze samo toa sto ke ni treba
     public static DobienaPostaResponse from(Predmet predmet) {
         DobienaPostaResponse dto = new DobienaPostaResponse();
 
@@ -48,24 +55,45 @@ public class DobienaPostaResponse {
         dto.setPodBroj(predmet.getPodBroj());
         dto.setGodina(predmet.getGodina());
         dto.setDatumZaveduvanje(predmet.getDatumZaveduvanje());
+
         dto.setTipPosta(predmet.getTipPosta());
         dto.setPrioritet(predmet.getPrioritet());
-        dto.setIsprakjac(predmet.getIsprakjac());
+
+        if (predmet.getIsprakjac() != null) {
+            dto.setIsprakjacId(predmet.getIsprakjac().getId());
+            dto.setIsprakjacNaziv(predmet.getIsprakjac().getNaziv());
+        }
+
         dto.setBrAktNivni(predmet.getBrAktNivni());
         dto.setDatumIsprakjanje(predmet.getDatumIsprakjanje());
         dto.setBrAktArhivski(predmet.getBrAktArhivski());
-        dto.setVidPredmet(predmet.getVidPredmet());
+
+        if (predmet.getVidPredmet() != null) {
+            dto.setVidPredmetId(predmet.getVidPredmet().getId());
+            dto.setVidPredmetNaziv(predmet.getVidPredmet().getNaziv());
+        }
+
         dto.setSodrzina(predmet.getSodrzina());
-        dto.setOdgovornoLice(predmet.getOdgovornoLice());
+
+        if (predmet.getOdgovornoLice() != null) {
+            dto.setOdgovornoLiceId(predmet.getOdgovornoLice().getId());
+            dto.setOdgovornoLiceIme(predmet.getOdgovornoLice().getIme());
+            dto.setOdgovornoLicePrezime(predmet.getOdgovornoLice().getPrezime());
+            dto.setOdgovornoLiceEmail(predmet.getOdgovornoLice().getEmail());
+        }
+
         dto.setInformativnaPosta(predmet.getInformativnaPosta());
         dto.setRealizirano(predmet.getRealizirano());
-        dto.setArhiva(predmet.getArhiva());
+
+        if (predmet.getArhiva() != null) {
+            dto.setArhivaId(predmet.getArhiva().getId());
+            dto.setArhivaNaziv(predmet.getArhiva().getNaziv());
+        }
+
         dto.setZabeleska(predmet.getZabeleska());
-//        dto.setRoditelPredmetId(predmet.getRoditelPredmet() != null
-//                ? predmet.getRoditelPredmet().getId() : null);
-//        dto.setOrganizaciskaEdinicaId(predmet.getOrganizaciskaedinica() != null
-//                ? predmet.getOrganizaciskaedinica().getId() : null);
-//        dto.setStatusPredmet(predmet.getStatusPredmet());
+
+        dto.setStatusPredmet(predmet.getStatusPredmet());
+        dto.setTipOdgovor(predmet.getTipOdgovor());
 
         return dto;
     }

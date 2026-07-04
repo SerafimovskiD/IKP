@@ -36,7 +36,7 @@ public class PredmetController {
     @PostMapping
     public ResponseEntity<DobienaPostaResponse> createDobienaPosta(@RequestBody DobienaPostaRequest dobienaPostaRequest, @AuthenticationPrincipal UserDetails userDetails) {
         String email =userDetails.getUsername();
-        return ResponseEntity.ok(predmetService.createDobienaPosta(dobienaPostaRequest,email));
+        return ResponseEntity.ok(predmetService.createDobienaPosta(dobienaPostaRequest));
     }
 
 

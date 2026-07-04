@@ -20,8 +20,9 @@ public class PredmetStatusLog {
 
     @Enumerated(EnumType.STRING)
     private StatusPredmet newStatus;
-
-    private String changedBy;
+    @ManyToOne
+    @JoinColumn(name = "changed_by_id")
+    private UserTable changedBy;
 
     private LocalDateTime changedAt;
 
