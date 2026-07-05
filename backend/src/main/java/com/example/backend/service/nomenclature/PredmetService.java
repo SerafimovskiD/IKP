@@ -7,6 +7,7 @@ import com.example.backend.exceptions.BadRequestException;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
 import com.example.backend.repository.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.example.backend.dto.StatusPredmetRequest;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -129,19 +131,19 @@ public class PredmetService {
     //NAUM
     @Transactional
     public DobienaPostaResponse createDobienaPosta(DobienaPostaRequest request, String email) {
-        System.out.println("EMAIL: " + email);
+
         UserTable user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
                 .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
         List<VidPredmet> vidPredmet = request.getVidPredmetId().stream()
                 .map(id->vidPredmetRepository.findById(id)
-                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).toList();
+                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
         List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
-                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).toList();
+                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
         List<Arhiva> arhiva = request.getArhivaId().stream()
                 .map(id->arhivaRepository.findById(id)
-                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).toList();
+                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
         //Mislam nema potreba od pravenje na zadolzitelni polinja vo
         // backend pobrzo e za testiranje a na frontend posekako
         // ke stavime required na polinjata koi se zadolzitelni
@@ -154,27 +156,53 @@ public class PredmetService {
         predmet.setRedenBroj(redenBroj);
         predmet.setPodBroj(1);
         predmet.setGodina(godina);
+        return getDobienaPostaResponse(request, isprakjac, vidPredmet, odgovornoLice, arhiva, predmet);
+    }
+    //delumno e napravena nekoi testiranja da se napravat treba mozda <-Naum
+    public DobienaPostaResponse odgovorDobienaPosta(DobienaPostaRequest request, String email,Integer predmetSoRedBr,Integer godina) {
+//        UserTable user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
+                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
+        List<VidPredmet> vidPredmet = request.getVidPredmetId().stream()
+                .map(id->vidPredmetRepository.findById(id)
+                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
+        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
+                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
+        List<Arhiva> arhiva = request.getArhivaId().stream()
+                .map(id->arhivaRepository.findById(id)
+                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
+        Predmet predmet = predmetRepository.findPredmetByRedenBrojAndGodina(predmetSoRedBr,godina).getLast();
+        predmet.setPodBroj(predmet.getPodBroj()+1);
+        //tuka ke gi stavam site polinja da moze da se
+        // smenat koga se pravi nov podbroj za pocetok
+        // sledno ke prasame sto ke smee da se menuva  <-Naum
+        return getDobienaPostaResponse(request, isprakjac, vidPredmet, odgovornoLice, arhiva, predmet);
+
+    }
+
+    private DobienaPostaResponse getDobienaPostaResponse(DobienaPostaRequest request, Isprakjac isprakjac, List<VidPredmet> vidPredmet, List<UserTable> odgovornoLice, List<Arhiva> arhiva, Predmet predmet) {
+        predmet.setVidPredmet(vidPredmet);
+        predmet.setIsprakjac(isprakjac);
+        predmet.setArhiva(arhiva);
         predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());
         predmet.setTipPosta(request.getTipPosta());
         predmet.setPrioritet(request.getPrioritet());
-        predmet.setIsprakjac(isprakjac);
         predmet.setBrAktNivni(request.getBrAktNivni());
         predmet.setDatumIsprakjanje(request.getDatumIsprakjanje());
         predmet.setBrAktArhivski(request.getBrAktArhivski());
-        predmet.setVidPredmet(vidPredmet);
         predmet.setSodrzina(request.getSodrzina());
         predmet.setOdgovornoLice(odgovornoLice);
         predmet.setInformativnaPosta(request.getInformativnaPosta());
         predmet.setRealizirano(request.getRealizirano());
-        predmet.setArhiva(arhiva);
         predmet.setZabeleska(request.getZabeleska());
         predmet.setStatusPredmet(request.getStatusPredmet());
+
         Predmet saved = predmetRepository.save(predmet);
         Predmet refreshed = predmetRepository.findById(saved.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
         return DobienaPostaResponse.from(refreshed);
     }
-
 
     @Transactional
     public Predmet createIspratenaPosta(IspratenaPostaRequest request) {

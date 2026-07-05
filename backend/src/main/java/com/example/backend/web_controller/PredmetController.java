@@ -39,6 +39,13 @@ public class PredmetController {
         return ResponseEntity.ok(predmetService.createDobienaPosta(dobienaPostaRequest,email));
     }
 
+    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
+    @PostMapping("/odgovorDobienaPosta")
+    public ResponseEntity<DobienaPostaResponse> odgovorDobienaPosta(@RequestBody DobienaPostaRequest dobienaPostaRequest, @AuthenticationPrincipal UserDetails userDetails,@RequestParam Integer predmetSoRedBr,@RequestParam Integer godina) {
+        String email =userDetails.getUsername();
+        return ResponseEntity.ok(predmetService.odgovorDobienaPosta(dobienaPostaRequest,email,predmetSoRedBr,godina));
+    }
+
 
     @PreAuthorize("hasAnyRole('OSL','NACALNIK','ADMIN')")
     @PutMapping("/{id}/status")
