@@ -4,6 +4,7 @@ import LoginPage from "./UI/Pages/LoginPage.jsx";
 import ProtectedRoute from "./components/AuthContext.jsx";
 import Dashboard from "./UI/Pages/Dashboard.jsx";
 import DobienaPostaForm from "./UI/Pages/DobienaPosta/DobienaPostaForm.jsx";
+import TESTFORMA from "./UI/Pages/TEST slicna forma.jsx";
 
 export default function App() {
     return (
@@ -13,7 +14,7 @@ export default function App() {
 
                     {/* Јавни рути */}
                     <Route path="/login" element={<LoginPage />} />
-
+                    <Route path="/TEST" element={<TESTFORMA/>}/>
                     {/* Заштитени рути — сите логирани */}
                     <Route path="/dashboard" element={
                         <ProtectedRoute>

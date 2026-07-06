@@ -1,309 +1,318 @@
-import { useState, useEffect } from "react";
-import api from "../../../api/api";
+import { useState } from 'react';
+import {
+    Box,
+    Container,
+    Typography,
+    Grid,
+    TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Switch,
+    FormControlLabel,
+    InputAdornment,
+    IconButton,
+    Paper
+} from '@mui/material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import SearchIcon from '@mui/icons-material/Search';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import dayjs from 'dayjs';
+import useDobienaPosta from "../../../hooks/useDobienaPosta.js";
 
-export default function DobienaPostaForm() {
-  const [isprakjaci, setIsprakjaci] = useState([]);
-  const [vidovi, setVidovi] = useState([]);
-  const [korisnici, setKorisnici] = useState([]);
-  const [arhivi, setArhivi] = useState([]);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+const COLORS = {
+    goldHeader: '#C1A460',
+    sectionBorder: '#B83239',
+    bgSectionHeader: '#CBAE6C',
+    grayText: '#666666',
+    photoBg: '#F0EDED',
+};
 
-  const [form, setForm] = useState({
-    datumZaveduvanje: "",
-    tipPosta: "DOBIEN",
-    prioritet: "NORMALEN",
-    isprakjacId: "",
-    brAktNivni: "",
-    datumIsprakjanje: "",
-    brAktArhivski: "",
-    vidPredmetId: "",
-    sodrzina: "",
-    odgovornoLiceId: "",
-    informativnaPosta: false,
-    realizirano: false,
-    arhivaId: "",
-    zabeleska: "",
-  });
-
-  useEffect(() => {
-    api.get("/isprakjaci").then((r) => setIsprakjaci(r.data)).catch(() => {});
-    api.get("/vidovi-predmet").then((r) => setVidovi(r.data)).catch(() => {});
-    api.get("/korisnici").then((r) => setKorisnici(r.data)).catch(() => {});
-    api.get("/arhivi").then((r) => setArhivi(r.data)).catch(() => {});
-  }, []);
-
-  function handleChange(e) {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
-
-    if (!form.datumZaveduvanje) return setError("Датумот на заведување е задолжителен");
-    if (!form.isprakjacId) return setError("Испраќачот е задолжителен");
-    if (!form.sodrzina) return setError("Содржината е задолжителна");
-
-    setSubmitting(true);
-    try {
-      await api.post("/predmet", {
-        ...form,
-        isprakjacId: Number(form.isprakjacId),
-        vidPredmetId: form.vidPredmetId ? Number(form.vidPredmetId) : null,
-        odgovornoLiceId: form.odgovornoLiceId ? Number(form.odgovornoLiceId) : null,
-        arhivaId: form.arhivaId ? Number(form.arhivaId) : null,
-      });
-      setSuccess(true);
-      setForm({
-        datumZaveduvanje: "",
-        tipPosta: "DOBIEN",
-        prioritet: "NORMALEN",
-        isprakjacId: "",
+const DobienaPostaForm=()=> {
+    const today = new Date().toLocaleDateString;
+    const [form, setForm] = useState({
+        datumZaveduvanje: today,
+        tipPosta: "",
+        prioritet: "",
+        isprakjacId: 0,
         brAktNivni: "",
         datumIsprakjanje: "",
         brAktArhivski: "",
-        vidPredmetId: "",
+        vidPredmetId: [
+            0
+        ],
         sodrzina: "",
-        odgovornoLiceId: "",
+        odgovornoLiceId: [
+            0
+        ],
         informativnaPosta: false,
         realizirano: false,
-        arhivaId: "",
+        arhivaId: [
+            0
+        ],
         zabeleska: "",
-      });
-    } catch (err) {
-      setError(err.response?.data?.message || "Грешка при зачувување");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+        statusPredmet: ""
+    })
+    const {createDobienaPosta,loading,error,reset} = useDobienaPosta();
 
-  return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-6">Внес на добиена пошта</h2>
+    const [consent, setConsent] = useState(true);
+    const [dateEntry, setDateEntry] = useState(null);
+    const [dateInterview, setDateInterview] = useState(dayjs('2026-06-15'));
+    const [dob, setDob] = useState(null);
+    const [military, setMilitary] = useState(false);
 
-      {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
-          Предметот е успешно зачуван!
-        </div>
-      )}
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded">
-          {error}
-        </div>
-      )}
+    return (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Container maxWidth="xl" sx={{ bgcolor: '#FAF9F6', py: 2, minHeight: '100vh' }}>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+                {/* TOP MAIN HEADER */}
+                <Box sx={{ bgcolor: COLORS.goldHeader, p: 1, mb: 3 }}>
+                    <Typography variant="h6" sx={{ color: '#fff', fontWeight: '500', fontSize: '1.1rem' }}>
+                        MAIN HEADER
+                    </Typography>
+                </Box>
 
-        {/* Датум на заведување */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Датум на заведување *
-          </label>
-          <input
-            type="date"
-            name="datumZaveduvanje"
-            value={form.datumZaveduvanje}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
 
-        {/* Приоритет */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Приоритет
-          </label>
-          <select
-            name="prioritet"
-            value={form.prioritet}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="NORMALEN">Нормален</option>
-            <option value="VISOK">Висок</option>
-          </select>
-        </div>
+                <Box sx={{ mb: 3, border: `1px solid ${COLORS.sectionBorder}`, borderRadius: '4px', overflow: 'hidden' }}>
+                    <Box sx={{ bgcolor: COLORS.bgSectionHeader, px: 2, py: 0.5 }}>
+                        <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 'bold' }}>
+                            SECTION
+                        </Typography>
+                    </Box>
+                    <Box sx={{ p: 2, bgcolor: '#fff' }}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} md={3}>
+                                <DatePicker
+                                    label="DATE OF ENTRY"
+                                    value={dateEntry}
+                                    onChange={(newValue) => setDateEntry(newValue)}
+                                    slotProps={{ textField: { fullWidth: true, size: 'small', variant: 'outlined' } }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField fullWidth size="small" label="Interview location" variant="outlined" placeholder="Interview location" InputLabelProps={{ shrink: true }} />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <DatePicker
+                                    label="DATE OF INTERVIEW"
+                                    value={dateInterview}
+                                    onChange={(newValue) => setDateInterview(newValue)}
+                                    slotProps={{ textField: { fullWidth: true, size: 'small', variant: 'standard', helperText: '' } }}
+                                />
+                            </Grid>
 
-        {/* Испраќач */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Испраќач *
-          </label>
-          <select
-            name="isprakjacId"
-            value={form.isprakjacId}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Избери испраќач --</option>
-            {isprakjaci.map((i) => (
-              <option key={i.id} value={i.id}>{i.naziv}</option>
-            ))}
-          </select>
-        </div>
+                            <Grid item xs={12} md={6}>
+                                <TextField fullWidth size="small" label="Person conducting the interview / interviewer (Organization and name)" variant="outlined" />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField fullWidth size="small" label="Translator (name)" variant="outlined" />
+                            </Grid>
 
-        {/* Нивни број на акт */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Нивни број на акт
-          </label>
-          <input
-            type="text"
-            name="brAktNivni"
-            value={form.brAktNivni}
-            onChange={handleChange}
-            placeholder="пр. 12.1.2-9/1-2026"
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Translation language</InputLabel>
+                                    <Select label="Translation language" defaultValue="" endAdornment={
+                                        <InputAdornment position="end" sx={{ mr: 2 }}><IconButton size="small"><SearchIcon fontSize="small" /></IconButton></InputAdornment>
+                                    }>
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                        <MenuItem value="en">English</MenuItem>
+                                        <MenuItem value="mk">Macedonian</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
 
-        {/* Датум на испраќање */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Датум на испраќање
-          </label>
-          <input
-            type="date"
-            name="datumIsprakjanje"
-            value={form.datumIsprakjanje}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+                            <Grid item xs={12} md={4}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Interview modality</InputLabel>
+                                    <Select label="Interview modality" defaultValue="" endAdornment={
+                                        <InputAdornment position="end" sx={{ mr: 2 }}><IconButton size="small"><SearchIcon fontSize="small" /></IconButton></InputAdornment>
+                                    }>
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                        <MenuItem value="in-person">In-Person</MenuItem>
+                                        <MenuItem value="remote">Remote</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </Box>
 
-        {/* Архивски број */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Архивски број на акт
-          </label>
-          <input
-            type="text"
-            name="brAktArhivski"
-            value={form.brAktArhivski}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+                {/* ========================================== */}
+                {/* SECTION 3: PERSONAL DATA */}
+                {/* ========================================== */}
+                <Box sx={{ mb: 3, border: `1px solid ${COLORS.sectionBorder}`, borderRadius: '4px', overflow: 'hidden' }}>
+                    <Box sx={{ bgcolor: COLORS.bgSectionHeader, px: 2, py: 0.5 }}>
+                        <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 'bold' }}>
+                            PERSONAL DATA
+                        </Typography>
+                    </Box>
+                    <Box sx={{ p: 2, bgcolor: '#fff' }}>
+                        <Grid container spacing={2}>
 
-        {/* Вид на предмет */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Вид на предмет
-          </label>
-          <select
-            name="vidPredmetId"
-            value={form.vidPredmetId}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Избери вид --</option>
-            {vidovi.map((v) => (
-              <option key={v.id} value={v.id}>{v.naziv}</option>
-            ))}
-          </select>
-        </div>
+                            {/* Left Column: Photo Placeholder */}
+                            <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
+                                <Box sx={{
+                                    width: '100%',
+                                    minHeight: '140px',
+                                    bgcolor: COLORS.photoBg,
+                                    border: '1px dashed #ccc',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: COLORS.grayText,
+                                    borderRadius: '4px'
+                                }}>
+                                    <Typography variant="body2">Photo of the person</Typography>
+                                </Box>
+                            </Grid>
 
-        {/* Содржина */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Содржина *
-          </label>
-          <textarea
-            name="sodrzina"
-            value={form.sodrzina}
-            onChange={handleChange}
-            rows={3}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+                            {/* Right Column Grid: Core Identification Info */}
+                            <Grid item xs={12} md={8}>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField fullWidth size="small" label="FIRST NAME" variant="outlined" />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField fullWidth size="small" label="ORIGINAL FIRST NAME" variant="outlined" />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField fullWidth size="small" label="LAST NAME" variant="outlined" />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField fullWidth size="small" label="ORIGINAL LAST NAME" variant="outlined" />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <DatePicker
+                                            label="DATE OF BIRTH"
+                                            value={dob}
+                                            onChange={(newValue) => setDob(newValue)}
+                                            slotProps={{ textField: { fullWidth: true, size: 'small', variant: 'outlined' } }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth size="small">
+                                            <InputLabel>GENDER</InputLabel>
+                                            <Select label="GENDER" defaultValue="">
+                                                <MenuItem value=""><em>Select</em></MenuItem>
+                                                <MenuItem value="male">Male</MenuItem>
+                                                <MenuItem value="female">Female</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
 
-        {/* Одговорно лице */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Одговорно лице
-          </label>
-          <select
-            name="odgovornoLiceId"
-            value={form.odgovornoLiceId}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Избери лице --</option>
-            {korisnici.map((k) => (
-              <option key={k.id} value={k.id}>{k.ime} {k.prezime}</option>
-            ))}
-          </select>
-        </div>
+                            {/* Continuing Fields Below Photo Row */}
+                            <Grid item xs={12} md={4}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Country of origin</InputLabel>
+                                    <Select label="Country of origin" defaultValue="">
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={4}>
+                                <TextField fullWidth size="small" label="PLACE OF RESIDENCE" variant="outlined" />
+                            </Grid>
+                            <Grid item xs={12} md={4}>
+                                <TextField fullWidth size="small" label="ETHNIC AFFILIATION" variant="outlined" />
+                            </Grid>
 
-        {/* Архива */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Архива
-          </label>
-          <select
-            name="arhivaId"
-            value={form.arhivaId}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Избери архива --</option>
-            {arhivi.map((a) => (
-              <option key={a.id} value={a.id}>{a.naziv}</option>
-            ))}
-          </select>
-        </div>
+                            <Grid item xs={12} md={3}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>FAMILY STATUS</InputLabel>
+                                    <Select label="FAMILY STATUS" defaultValue="" endAdornment={
+                                        <InputAdornment position="end" sx={{ mr: 2 }}><IconButton size="small"><SearchIcon fontSize="small" /></IconButton></InputAdornment>
+                                    }>
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={9}>
+                                <TextField fullWidth size="small" label="Other accompanying family members:" variant="outlined" />
+                            </Grid>
 
-        {/* Забелешка */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Забелешка
-          </label>
-          <textarea
-            name="zabeleska"
-            value={form.zabeleska}
-            onChange={handleChange}
-            rows={2}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+                            <Grid item xs={12}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>RELIGION</InputLabel>
+                                    <Select label="RELIGION" defaultValue="" endAdornment={
+                                        <InputAdornment position="end" sx={{ mr: 2 }}><IconButton size="small"><SearchIcon fontSize="small" /></IconButton></InputAdornment>
+                                    }>
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
 
-        {/* Checkboxes */}
-        <div className="flex gap-6">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              name="informativnaPosta"
-              checked={form.informativnaPosta}
-              onChange={handleChange}
-            />
-            Информативна пошта
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              name="realizirano"
-              checked={form.realizirano}
-              onChange={handleChange}
-            />
-            Реализирано
-          </label>
-        </div>
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>EDUCATION</InputLabel>
+                                    <Select label="EDUCATION" defaultValue="" endAdornment={
+                                        <InputAdornment position="end" sx={{ mr: 2 }}><IconButton size="small"><SearchIcon fontSize="small" /></IconButton></InputAdornment>
+                                    }>
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField fullWidth size="small" label="PROFESSION" variant="outlined" />
+                            </Grid>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {submitting ? "Се зачувува..." : "Зачувај"}
-        </button>
-      </form>
-    </div>
-  );
+                            <Grid item xs={12}>
+                                <TextField fullWidth size="small" label="The work you did in your home country" variant="outlined" />
+                            </Grid>
+
+                            {/* Military Switch Section */}
+                            <Grid item xs={12} sx={{ mt: 1 }}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={military}
+                                            onChange={(e) => setMilitary(e.target.checked)}
+                                            sx={{
+                                                '& .MuiSwitch-switchBase.Mui-checked': { color: COLORS.goldHeader },
+                                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: COLORS.goldHeader }
+                                            }}
+                                        />
+                                    }
+                                    label="SERVED IN THE MILITARY"
+                                    sx={{ color: '#333', fontWeight: 'bold' }}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>DOCUMENTS</InputLabel>
+                                    <Select label="DOCUMENTS" defaultValue="" endAdornment={
+                                        <InputAdornment position="end" sx={{ mr: 2 }}><IconButton size="small"><SearchIcon fontSize="small" /></IconButton></InputAdornment>
+                                    }>
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>VULNERABILITY</InputLabel>
+                                    <Select label="VULNERABILITY" defaultValue="">
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </Box>
+
+                {/* Footer App Version Branding */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                    <Typography variant="caption" sx={{ color: '#999' }}>
+                        app 1.2.0
+                    </Typography>
+                </Box>
+
+            </Container>
+        </LocalizationProvider>
+    );
 }
+export default DobienaPostaForm;
