@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/api/isprakjaci/**",
                                 "/api/arhivi/**",
                                 "/api/isprateni-do/**",
-                                "/api/vidovi-predmet/**"
+                                "/api/vidovi-predmet/**",
+                                "/api/orgEdinica/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

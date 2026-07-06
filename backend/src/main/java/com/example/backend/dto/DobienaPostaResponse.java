@@ -1,12 +1,22 @@
 package com.example.backend.dto;
 
 import com.example.backend.model.*;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
+@JsonPropertyOrder({
+        "id", "brAkt", "redenBroj", "podBroj", "godina",
+        "datumZaveduvanje", "tipPosta", "prioritet",
+        "isprakjacId", "isprakjacNaziv", "brAktNivni",
+        "datumIsprakjanje", "brAktArhivski", "vidPredmetId",
+        "sodrzina", "odgovornoLiceId", "informativnaPosta",
+        "realizirano", "arhivaId", "zabeleska",
+        "statusPredmet", "tipOdgovor"
+})
 public class DobienaPostaResponse {
     private Long id;
 
