@@ -24,7 +24,7 @@ public class DobienaPostaRequest {
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
-    private List<Long> vidPredmetId;
+    private List<Long> vidPredmetDobienaId;
     private String sodrzina;
     private List<Long> odgovornoLiceId;
 

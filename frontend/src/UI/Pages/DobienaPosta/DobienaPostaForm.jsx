@@ -13,14 +13,14 @@ import {
     FormControlLabel,
     InputAdornment,
     IconButton,
-    Paper
+    Paper, FormLabel, RadioGroup, Radio
 } from '@mui/material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import SearchIcon from '@mui/icons-material/Search';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import dayjs from 'dayjs';
 import useDobienaPosta from "../../../hooks/useDobienaPosta.js";
+import {useEnums} from "../../../hooks/useEnums.js";
 
 const COLORS = {
     goldHeader: '#C1A460',
@@ -55,6 +55,11 @@ const DobienaPostaForm=()=> {
         zabeleska: "",
         statusPredmet: ""
     })
+    const { prioritet ,tipPosta,tipOdgovor,statusPredmet} = useEnums();
+    console.log('prioritet', prioritet);
+    console.log('tipPosta', tipPosta);
+    console.log('tipOdgovor', tipOdgovor);
+    console.log("statusPredmet", statusPredmet);
     const {createDobienaPosta,loading,error,reset} = useDobienaPosta();
 
     const [consent, setConsent] = useState(true);
@@ -73,7 +78,6 @@ const DobienaPostaForm=()=> {
                         MAIN HEADER
                     </Typography>
                 </Box>
-
 
                 <Box sx={{ mb: 3, border: `1px solid ${COLORS.sectionBorder}`, borderRadius: '4px', overflow: 'hidden' }}>
                     <Box sx={{ bgcolor: COLORS.bgSectionHeader, px: 2, py: 0.5 }}>

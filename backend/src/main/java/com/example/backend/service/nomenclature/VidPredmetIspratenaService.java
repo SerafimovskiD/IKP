@@ -2,40 +2,41 @@ package com.example.backend.service.nomenclature;
 
 import com.example.backend.dto.VidPredmetRequest;
 import com.example.backend.exceptions.ResourceNotFoundException;
-import com.example.backend.model.VidPredmet;
-import com.example.backend.repository.VidPredmetRepository;
+import com.example.backend.model.VidPredmetIspratena;
+import com.example.backend.repository.VidPredmetIspratenaRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class VidPredmetService {
-    private final VidPredmetRepository vidPredmetRepository;
+public class VidPredmetIspratenaService {
+    private final VidPredmetIspratenaRepository vidPredmetRepository;
 
-    public VidPredmetService(VidPredmetRepository vidPredmetRepository) {
+    public VidPredmetIspratenaService(VidPredmetIspratenaRepository vidPredmetRepository) {
         this.vidPredmetRepository = vidPredmetRepository;
     }
 
-    public List<VidPredmet> getAllVidPredmet() {
+    public List<VidPredmetIspratena> getAllVidPredmet() {
         return this.vidPredmetRepository.findAll();
     }
 
-    public VidPredmet getVidPredmetById(Long id) {
+    public VidPredmetIspratena getVidPredmetById(Long id) {
         return this.vidPredmetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Вид на предмет", id));
     }
-    public VidPredmet createVidPredmet(VidPredmetRequest request) {
-        VidPredmet vidPredmet = new VidPredmet();
+    public VidPredmetIspratena createVidPredmet(VidPredmetRequest request) {
+        VidPredmetIspratena vidPredmet = new VidPredmetIspratena();
         vidPredmet.setNaziv(request.getNaziv());
         return this.vidPredmetRepository.save(vidPredmet);
     }
-    public VidPredmet updateVidPredmet(Long id,VidPredmetRequest request) {
-        VidPredmet existingVidPredmet = this.getVidPredmetById(id);
+    public VidPredmetIspratena updateVidPredmet(Long id,VidPredmetRequest request) {
+        VidPredmetIspratena existingVidPredmet = this.getVidPredmetById(id);
         existingVidPredmet.setNaziv(request.getNaziv());
         return this.vidPredmetRepository.save(existingVidPredmet);
     }
     public void deleteVidPredmetById(Long id) {
-        VidPredmet existingVidPredmet = this.getVidPredmetById(id);
+        VidPredmetIspratena existingVidPredmet = this.getVidPredmetById(id);
         this.vidPredmetRepository.delete(existingVidPredmet);
     }
 }
+

@@ -39,8 +39,10 @@ public class Predmet {
 //            inverseJoinColumns = @JoinColumn(name = "vid_predmet_id")
 //    )
 //    @JoinColumn(name = "vid_predmet_id")
-    private List<VidPredmet> vidPredmet;
+    private List<VidPredmetDobiena> vidPredmetDobiena;
 
+    @ManyToMany
+    private List<VidPredmetIspratena> vidPredmetIspratena;
     @Column(length = 2000)
     private String sodrzina;
     @ManyToMany

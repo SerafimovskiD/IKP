@@ -1,9 +1,9 @@
 package com.example.backend.repository;
 
-import com.example.backend.model.VidPredmet;
+import com.example.backend.model.VidPredmetDobiena;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface VidPredmetRepository extends JpaRepository<VidPredmet, Long> {
+public interface VidPredmetDobienaRepository extends JpaRepository<VidPredmetDobiena, Long> {
 }

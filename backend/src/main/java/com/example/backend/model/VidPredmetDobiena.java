@@ -8,12 +8,9 @@ import lombok.Data;
 
 @Entity
 @Data
-public class VidPredmet {
+public class VidPredmetDobiena {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String naziv;
-
-
-
 }

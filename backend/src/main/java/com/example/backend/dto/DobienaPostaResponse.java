@@ -37,7 +37,7 @@ public class DobienaPostaResponse {
     private String brAktArhivski;
 
     //Naum
-    private List<Long> vidPredmetId;
+    private List<Long> vidPredmetDobienaId;
     //    private Long vidPredmetId;
     //Mislam nema potreba da ima i naziv poso ke go dobivame preku ID <-Naum
 //    private String vidPredmetNaziv;
@@ -81,7 +81,7 @@ public class DobienaPostaResponse {
         dto.setBrAktNivni(predmet.getBrAktNivni());
         dto.setDatumIsprakjanje(predmet.getDatumIsprakjanje());
         dto.setBrAktArhivski(predmet.getBrAktArhivski());
-        dto.setVidPredmetId(predmet.getVidPredmet().stream().map(VidPredmet::getId).toList());
+        dto.setVidPredmetDobienaId(predmet.getVidPredmetDobiena().stream().map(VidPredmetDobiena::getId).toList());
         dto.setSodrzina(predmet.getSodrzina());
         dto.setOdgovornoLiceId(predmet.getOdgovornoLice().stream().map(UserTable::getId).toList());
         dto.setInformativnaPosta(predmet.getInformativnaPosta());

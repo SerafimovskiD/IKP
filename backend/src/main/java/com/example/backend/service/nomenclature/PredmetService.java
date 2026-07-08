@@ -22,13 +22,13 @@ import java.util.stream.Collectors;
 public class PredmetService {
     private final PredmetRepository predmetRepository;
     private final IsprakjacRepository isprakjacRepository;
-    private final VidPredmetRepository vidPredmetRepository;
+    private final VidPredmetDobienaRepository vidPredmetRepository;
     private final UserRepository userRepository;
     private final ArhivaRepository arhivaRepository;
     private final orgEdinicaRepository orgEdinicaRepository;
     private final PredmetStatusRepository predmetStatusRepository;
 
-    public PredmetService(PredmetRepository predmetRepository, IsprakjacRepository isprakjacRepository, VidPredmetRepository vidPredmetRepository, UserRepository userRepository, ArhivaRepository arhivaRepository, orgEdinicaRepository orgEdinicaRepository, PredmetStatusRepository predmetStatusRepository) {
+    public PredmetService(PredmetRepository predmetRepository, IsprakjacRepository isprakjacRepository, VidPredmetDobienaRepository vidPredmetRepository, UserRepository userRepository, ArhivaRepository arhivaRepository, orgEdinicaRepository orgEdinicaRepository, PredmetStatusRepository predmetStatusRepository) {
         this.predmetRepository = predmetRepository;
         this.isprakjacRepository = isprakjacRepository;
         this.vidPredmetRepository = vidPredmetRepository;
@@ -136,7 +136,7 @@ public class PredmetService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
                 .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
-        List<VidPredmet> vidPredmet = request.getVidPredmetId().stream()
+        List<VidPredmetDobiena> vidPredmet = request.getVidPredmetDobienaId().stream()
                 .map(id->vidPredmetRepository.findById(id)
                         .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
         List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
@@ -164,7 +164,7 @@ public class PredmetService {
 //                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
                 .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
-        List<VidPredmet> vidPredmet = request.getVidPredmetId().stream()
+        List<VidPredmetDobiena> vidPredmet = request.getVidPredmetDobienaId().stream()
                 .map(id->vidPredmetRepository.findById(id)
                         .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
         List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
@@ -181,8 +181,8 @@ public class PredmetService {
 
     }
 
-    private DobienaPostaResponse getDobienaPostaResponse(DobienaPostaRequest request, Isprakjac isprakjac, List<VidPredmet> vidPredmet, List<UserTable> odgovornoLice, List<Arhiva> arhiva, Predmet predmet) {
-        predmet.setVidPredmet(vidPredmet);
+    private DobienaPostaResponse getDobienaPostaResponse(DobienaPostaRequest request, Isprakjac isprakjac, List<VidPredmetDobiena> vidPredmet, List<UserTable> odgovornoLice, List<Arhiva> arhiva, Predmet predmet) {
+        predmet.setVidPredmetDobiena(vidPredmet);
         predmet.setIsprakjac(isprakjac);
         predmet.setArhiva(arhiva);
         predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());

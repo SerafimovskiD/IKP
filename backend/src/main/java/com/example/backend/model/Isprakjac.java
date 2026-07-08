@@ -1,9 +1,6 @@
 package com.example.backend.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -12,6 +9,13 @@ public class Isprakjac{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    //Neznam dali e tocno tuka ke napravam code od orgEdinica no mozebi
+    // i da e drug vo dokumentot koj mi go prati mentorot pisuva broj
+    // na organizaciska ednica no dali e istoto ne sum siguren <-Naum
+    @ManyToOne
+    @JoinColumn(name = "organizaciska_edinica_id",
+            referencedColumnName = "code")
+    private OrganizaciskaEdinica organizaciskaEdinica;
     private String naziv;
 
 }
