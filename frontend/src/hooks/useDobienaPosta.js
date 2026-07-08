@@ -1,5 +1,5 @@
 import {useState} from "react";
-import predmetiApi from "../api/predmeti.js";
+import {predmetiApi} from "../api/predmeti.js";
 
 const useDobienaPosta=()=>{
     const [loading, setLoading] = useState(false);

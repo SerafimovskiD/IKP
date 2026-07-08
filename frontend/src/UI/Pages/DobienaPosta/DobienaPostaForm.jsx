@@ -224,7 +224,8 @@ const DobienaPostaForm = () => {
 
     const [attachedFiles, setAttachedFiles] = useState([]);
 
-    const { prioritet, tipPosta } = useEnums();
+    const { prioritet, tipPosta,statusPredmet } = useEnums();
+    console.log(statusPredmet)
     const { createDobienaPosta, loading, error } = useDobienaPosta();
     const { isprakjaci } = useIsprakjac();
     const { arhiva } = useArhiva();
@@ -241,7 +242,6 @@ const DobienaPostaForm = () => {
     const handleRemoveFile = (index) => {
         setAttachedFiles(prev => prev.filter((_, i) => i !== index));
     };
-
     const handleSubmit = async () => {
         const payload = {
             ...form,
@@ -249,11 +249,11 @@ const DobienaPostaForm = () => {
             datumIsprakjanje: form.datumIsprakjanje?.format('YYYY-MM-DD') || null,
             isprakjacId: Number(form.isprakjacId),
         };
+        console.log("PAYLOAD:", JSON.stringify(payload, null, 2)); // ← додај
         try {
             await createDobienaPosta(payload);
-            alert('Успешно зачувано!');
         } catch (e) {
-            console.error(e);
+            console.error("BACKEND ERROR:", e.response?.data); // ← додај
         }
     };
 
@@ -277,6 +277,23 @@ const DobienaPostaForm = () => {
                     <Typography sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#5A3000' }}>
                         Деловодник на добиена пошта за {today.year()} година
                     </Typography>
+                </Box>
+                <Box sx={{ mb: 1.5 }}>
+                    <Label>Статус на предмет:</Label>
+                    <FormControl size="small" sx={{ mt: 0.5, minWidth: 350, bgcolor: '#fff' }}>
+                        <InputLabel>Избери статус</InputLabel>
+                        <Select
+                            label="Избери статус"
+                            value={form.statusPredmet}
+                            onChange={(e) => handleChange('statusPredmet', e.target.value)}
+                            MenuProps={MENU_PROPS}
+                        >
+                            <MenuItem value=""><em>— Избери —</em></MenuItem>
+                            {statusPredmet.map(s => (
+                                <MenuItem key={s} value={s}>{s}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </Box>
 
                 {/* ГЛАВНА ФОРМА */}
