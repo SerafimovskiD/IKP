@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
             prezime: res.prezime,
             email: res.email,
             uloga: res.uloga,
-            orgEdiniciId: res.orgEdiniciId,
+            organizaciskaEdinicaId: res.organizaciskaEdinicaId,
         };
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);

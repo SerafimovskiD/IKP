@@ -29,26 +29,57 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-
-                <h1 className="text-2xl font-bold text-center text-purple-700 mb-2">
-                    ИКП
-                </h1>
-                <p className="text-center text-gray-500 mb-6">
-                    Интерна книга на пошта
-                </p>
+        <div style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#ffffff'
+        }}>
+            <div style={{
+                width: '100%',
+                maxWidth: '500px',
+                padding: '40px'
+            }}>
+                {/* Logo */}
+                <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+                    <img 
+                        src="/logo.png" 
+                        alt="Лого"
+                        style={{
+                            height: '300px',
+                            marginBottom: '30px'
+                        }}
+                    />
+                    <h1 style={{
+                        fontSize: '24px',
+                        fontWeight: 'normal',
+                        color: '#000',
+                        margin: '0'
+                    }}>
+                        Интерна книга на пошта
+                    </h1>
+                </div>
 
                 {error && (
-                    <div className="bg-red-50 border border-red-300 text-red-700
-                          rounded-lg p-3 mb-4 text-sm">
+                    <div style={{
+                        border: '1px solid #ff0000',
+                        color: '#ff0000',
+                        padding: '12px',
+                        marginBottom: '25px',
+                        fontSize: '14px'
+                    }}>
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                <form onSubmit={handleSubmit}>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{
+                            display: 'block',
+                            marginBottom: '8px',
+                            fontSize: '15px'
+                        }}>
                             Email
                         </label>
                         <input
@@ -57,14 +88,22 @@ export default function LoginPage() {
                             value={form.email}
                             onChange={handleChange}
                             required
-                            placeholder="naum@mvr.gov.mk"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2
-                         focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                border: '1px solid #000',
+                                fontSize: '15px',
+                                boxSizing: 'border-box'
+                            }}
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div style={{ marginBottom: '25px' }}>
+                        <label style={{
+                            display: 'block',
+                            marginBottom: '8px',
+                            fontSize: '15px'
+                        }}>
                             Лозинка
                         </label>
                         <input
@@ -73,20 +112,31 @@ export default function LoginPage() {
                             value={form.password}
                             onChange={handleChange}
                             required
-                            placeholder="••••••••"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2
-                         focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                border: '1px solid #000',
+                                fontSize: '15px',
+                                boxSizing: 'border-box'
+                            }}
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-purple-700 text-white py-2 rounded-lg
-                       font-medium hover:bg-purple-800 disabled:opacity-50
-                       transition-colors"
+                        style={{
+                            width: '100%',
+                            padding: '14px',
+                            backgroundColor: '#000',
+                            color: '#fff',
+                            border: 'none',
+                            fontSize: '16px',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.5 : 1
+                        }}
                     >
-                        {loading ? "Се вчитува..." : "Најави се"}
+                        {loading ? "Се најавувате..." : "Најави се"}
                     </button>
                 </form>
 
