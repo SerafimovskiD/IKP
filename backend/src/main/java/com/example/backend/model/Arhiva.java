@@ -10,7 +10,7 @@ public class Arhiva {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String naziv;
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizaciskaedinica_id")
     private OrganizaciskaEdinica organizaciskaedinica;
 }

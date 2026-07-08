@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import LoginPage from "./UI/Pages/LoginPage.jsx";
-import ProtectedRoute from "./components/AuthContext.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Dashboard from "./UI/Pages/Dashboard.jsx";
 import DobienaPostaForm from "./UI/Pages/DobienaPosta/DobienaPostaForm.jsx";
 import TESTFORMA from "./UI/Pages/TEST slicna forma.jsx";

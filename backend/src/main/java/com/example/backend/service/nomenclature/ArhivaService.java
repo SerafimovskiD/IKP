@@ -21,7 +21,7 @@ public class ArhivaService {
     }
 
     public List<Arhiva> getAllArhivi(){
-        return this.arhivaRepository.findAll();
+        return this.arhivaRepository.findAllWithOrgEdinica();
     }
     public Arhiva getArhivaById(Long id){
         return this.arhivaRepository.findById(id)

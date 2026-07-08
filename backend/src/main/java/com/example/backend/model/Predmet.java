@@ -24,7 +24,7 @@ public class Predmet {
     private Prioritet prioritet;
 
     //mislam 1 bese isprakjac nemoze pojke da se <-Naum
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "isprakjac_id")
     private Isprakjac isprakjac;
     private String brAktNivni;
@@ -59,7 +59,7 @@ public class Predmet {
     @Column(length = 2000)
     private String zabeleska;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "roditel_predmet_id")
     private Predmet roditelPredmet;
 
@@ -67,7 +67,7 @@ public class Predmet {
     private TipOdgovor tipOdgovor;
 
     //mozda visak <-Naum
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizaciskaedinica_id")
     private OrganizaciskaEdinica organizaciskaedinica;
 

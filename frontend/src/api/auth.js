@@ -15,4 +15,10 @@ export const authApi = {
         return res.data;
     },
 
+    getUsersOdgovornoLice: async () => {
+        const res = await api.get("/auth/odgovorno-lice");
+        console.log("ODG",res)
+        return res.data;
+    }
+
 };

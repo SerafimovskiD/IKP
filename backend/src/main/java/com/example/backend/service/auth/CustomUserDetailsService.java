@@ -3,6 +3,7 @@ package com.example.backend.service.auth;
 
 import com.example.backend.model.UserTable;
 import com.example.backend.repository.UserRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,6 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#email")
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
         UserTable user = userRepository.findByEmail(email)

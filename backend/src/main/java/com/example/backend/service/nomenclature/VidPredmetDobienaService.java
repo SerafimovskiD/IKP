@@ -4,6 +4,8 @@ import com.example.backend.dto.VidPredmetRequest;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.VidPredmetDobiena;
 import com.example.backend.repository.VidPredmetDobienaRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +18,7 @@ public class VidPredmetDobienaService {
         this.vidPredmetRepository = vidPredmetRepository;
     }
 
+    @Cacheable("vidPredmetDobiena")
     public List<VidPredmetDobiena> getAllVidPredmet() {
         return this.vidPredmetRepository.findAll();
     }
@@ -24,16 +27,22 @@ public class VidPredmetDobienaService {
         return this.vidPredmetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Вид на предмет", id));
     }
+
+    @CacheEvict(value = "vidPredmetDobiena", allEntries = true)
     public VidPredmetDobiena createVidPredmet(VidPredmetRequest request) {
         VidPredmetDobiena vidPredmet = new VidPredmetDobiena();
         vidPredmet.setNaziv(request.getNaziv());
         return this.vidPredmetRepository.save(vidPredmet);
     }
-    public VidPredmetDobiena updateVidPredmet(Long id,VidPredmetRequest request) {
+
+    @CacheEvict(value = "vidPredmetDobiena", allEntries = true)
+    public VidPredmetDobiena updateVidPredmet(Long id, VidPredmetRequest request) {
         VidPredmetDobiena existingVidPredmet = this.getVidPredmetById(id);
         existingVidPredmet.setNaziv(request.getNaziv());
         return this.vidPredmetRepository.save(existingVidPredmet);
     }
+
+    @CacheEvict(value = "vidPredmetDobiena", allEntries = true)
     public void deleteVidPredmetById(Long id) {
         VidPredmetDobiena existingVidPredmet = this.getVidPredmetById(id);
         this.vidPredmetRepository.delete(existingVidPredmet);

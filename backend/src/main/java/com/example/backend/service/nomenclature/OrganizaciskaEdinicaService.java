@@ -5,6 +5,8 @@ import com.example.backend.dto.OrgEdinicaResponse;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.OrganizaciskaEdinica;
 import com.example.backend.repository.orgEdinicaRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,28 +18,37 @@ public class OrganizaciskaEdinicaService {
     public OrganizaciskaEdinicaService(orgEdinicaRepository orgEdinicaRepository) {
         this.orgEdinicaRepository = orgEdinicaRepository;
     }
-    public List<OrgEdinicaResponse> findAll(){
+
+    @Cacheable("orgEdinici")
+    public List<OrgEdinicaResponse> findAll() {
         return OrgEdinicaResponse.from(orgEdinicaRepository.findAll());
     }
 
-    public OrgEdinicaResponse findById(Long id){
-        return OrgEdinicaResponse.from(orgEdinicaRepository.findById(id).get());
+    @Cacheable(value = "orgEdiniciById", key = "#id")
+    public OrgEdinicaResponse findById(Long id) {
+        return OrgEdinicaResponse.from(orgEdinicaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizaciska edinica", id)));
     }
-    public OrgEdinicaResponse create(OrgEdinicaRequest orgEdinicaRequest){
+
+    @CacheEvict(value = {"orgEdinici", "orgEdiniciById"}, allEntries = true)
+    public OrgEdinicaResponse create(OrgEdinicaRequest orgEdinicaRequest) {
         OrganizaciskaEdinica organizaciskaEdinica = new OrganizaciskaEdinica();
         organizaciskaEdinica.setNaziv(orgEdinicaRequest.getNaziv());
         organizaciskaEdinica.setCode(orgEdinicaRequest.getCode());
         return OrgEdinicaResponse.from(orgEdinicaRepository.save(organizaciskaEdinica));
     }
-    public OrgEdinicaResponse update(Long id,OrgEdinicaRequest orgEdinicaRequest){
-        OrganizaciskaEdinica organizaciskaEdinica = orgEdinicaRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Organizaciska edinica so id: "+id+" ne postoi"));
 
+    @CacheEvict(value = {"orgEdinici", "orgEdiniciById"}, allEntries = true)
+    public OrgEdinicaResponse update(Long id, OrgEdinicaRequest orgEdinicaRequest) {
+        OrganizaciskaEdinica organizaciskaEdinica = orgEdinicaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizaciska edinica so id: " + id + " ne postoi"));
         organizaciskaEdinica.setNaziv(orgEdinicaRequest.getNaziv());
         organizaciskaEdinica.setCode(orgEdinicaRequest.getCode());
         return OrgEdinicaResponse.from(orgEdinicaRepository.save(organizaciskaEdinica));
     }
 
-    public void delete(Long id){
+    @CacheEvict(value = {"orgEdinici", "orgEdiniciById"}, allEntries = true)
+    public void delete(Long id) {
         orgEdinicaRepository.deleteById(id);
     }
 }
