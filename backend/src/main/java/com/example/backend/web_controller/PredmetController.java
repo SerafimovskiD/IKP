@@ -1,6 +1,7 @@
 package com.example.backend.web_controller;
 
 import com.example.backend.dto.*;
+import com.example.backend.repository.PredmetRepository;
 import com.example.backend.service.nomenclature.SkeniraniDokumentiService;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -17,15 +18,18 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/api/predmet")
 public class PredmetController {
     private final PredmetService predmetService;
     private final SkeniraniDokumentiService skeniraniDokumentiService;
-
-    public PredmetController(PredmetService predmetService, SkeniraniDokumentiService skeniraniDokumentiService) {
+    private final PredmetRepository predmetRepository;
+    public PredmetController(PredmetService predmetService, SkeniraniDokumentiService skeniraniDokumentiService, PredmetRepository predmetRepository) {
         this.skeniraniDokumentiService = skeniraniDokumentiService;
         this.predmetService = predmetService;
+        this.predmetRepository = predmetRepository;
     }
 
 //    @PostMapping
@@ -75,5 +79,11 @@ public class PredmetController {
             @ParameterObject
             @PageableDefault(size = 20,sort = "datumZaveduvanje",direction = Sort.Direction.DESC)Pageable pageable) {
         return ResponseEntity.ok(predmetService.getAllPredmeti(pageable));
+    }
+    @GetMapping("/next-reden-broj")
+    public ResponseEntity<Integer> getNextRedenBroj() {
+        Integer godina = LocalDate.now().getYear();
+        Integer next = predmetRepository.findMaxRedenBroj(godina) + 1;
+        return ResponseEntity.ok(next);
     }
 }

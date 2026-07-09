@@ -24,7 +24,7 @@ export default function App() {
 
                     {/* Форма за добиена пошта */}
                     <Route path="/dobieni/nova" element={
-                        <ProtectedRoute roles={["OSL", "POMOCNIK", "ADMIN"]}>
+                        <ProtectedRoute roles={["OSL", "POMOSNIK", "ADMIN"]}>
                             <DobienaPostaForm />
                         </ProtectedRoute>
                     } />

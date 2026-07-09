@@ -17,7 +17,6 @@ export const authApi = {
 
     getUsersOdgovornoLice: async () => {
         const res = await api.get("/auth/odgovorno-lice");
-        console.log("ODG",res)
         return res.data;
     }
 
