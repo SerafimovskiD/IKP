@@ -1,16 +1,16 @@
 package com.example.backend.service.nomenclature;
 
-import com.example.backend.dto.DobienaPostaRequest;
-import com.example.backend.dto.DobienaPostaResponse;
-import com.example.backend.dto.IspratenaPostaRequest;
+import com.example.backend.dto.*;
 import com.example.backend.exceptions.BadRequestException;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
 import com.example.backend.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import com.example.backend.dto.StatusPredmetRequest;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -302,6 +302,10 @@ public class PredmetService {
         this.predmetStatusRepository.save(log);
 
         return savedPredmet;
+    }
+
+    public Page<PredmetListResponse> getAllPredmeti(Pageable pageable){
+        return predmetRepository.findAll(pageable).map(PredmetListResponse::from);
     }
 
 }
