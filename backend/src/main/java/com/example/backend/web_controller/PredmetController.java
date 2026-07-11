@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
+import java.security.Principal;
 import java.time.LocalDate;
 
 @RestController
@@ -52,16 +53,17 @@ public class PredmetController {
     }
 
 
-    @PreAuthorize("hasAnyRole('OSL','NACALNIK','ADMIN')")
-    @PutMapping("/{id}/status")
-    public Predmet updateStatusPredmet(@PathVariable Long id, @RequestBody StatusPredmetRequest request, Authentication authentication) {
-        return this.predmetService.updateStatusPredmet(id, request, authentication.getName());
-    }
+//    @PreAuthorize("hasAnyRole('OSL','NACALNIK','ADMIN')")
+//    @PutMapping("/{id}/status")
+//    public Predmet updateStatusPredmet(@PathVariable Long id, @RequestBody StatusPredmetRequest request, Authentication authentication) {
+//        return this.predmetService.updateStatusPredmet(id, request, authentication.getName());
+//    }
 
     @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
     @PostMapping("/ispratena")
-    public Predmet createIspratenaPosta(@RequestBody IspratenaPostaRequest request) {
-        return this.predmetService.createIspratenaPosta(request);
+    public ResponseEntity<IspratenaPostaResponse> createIspratenaPosta(@RequestBody IspratenaPostaRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+        String email =userDetails.getUsername();
+        return ResponseEntity.ok(predmetService.createIspratenaPosta(request,email));
     }
     @PostMapping("/{predmetId}/skenirani-dokumenti/upload")
     public SkeniraniDokumentiResponse uploadSkeniraniDokumenti(@PathVariable Long predmetId,
