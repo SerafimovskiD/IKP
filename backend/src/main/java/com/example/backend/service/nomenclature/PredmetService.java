@@ -1,19 +1,23 @@
 package com.example.backend.service.nomenclature;
 
 import com.example.backend.dto.*;
-import com.example.backend.exceptions.BadRequestException;
+
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
 import com.example.backend.repository.*;
+import com.example.backend.repository.specification.PredmetSpecification;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
+
+import org.springframework.data.jpa.domain.Specification;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -280,8 +284,28 @@ public class PredmetService {
 //        return savedPredmet;
 //    }
 
-    public Page<PredmetListResponse> getAllPredmeti(Pageable pageable){
-        return predmetRepository.findAll(pageable).map(PredmetListResponse::from);
+    public Page<PredmetListResponse> getAllPredmeti(
+            Pageable pageable,
+            Integer godina,
+            Integer redenBroj,
+            Long isprakjacId,
+            Long odgovornoLiceId,
+            Long vidPredmetDobienaId,
+            Long vidPredmetIspratenaId,
+            Boolean realizirano
+    )
+    {
+
+        Specification<Predmet> spec= Specification
+                .where(PredmetSpecification.hasGodina(godina))
+                .and(PredmetSpecification.hasRedenBroj(redenBroj))
+                .and(PredmetSpecification.hasIsprakjac(isprakjacId))
+                .and(PredmetSpecification.hasOdgovornoLice(odgovornoLiceId))
+                .and(PredmetSpecification.hasVidPredmetDobiena(vidPredmetDobienaId))
+                .and(PredmetSpecification.hasVidPredmetIspratena(vidPredmetIspratenaId))
+                .and(PredmetSpecification.isRealizirano(realizirano));
+
+        return predmetRepository.findAll(spec,pageable).map(PredmetListResponse::from);
     }
 
 }

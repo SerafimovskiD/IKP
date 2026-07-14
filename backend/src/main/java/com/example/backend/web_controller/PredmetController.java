@@ -79,8 +79,16 @@ public class PredmetController {
     @GetMapping
     public ResponseEntity<Page<PredmetListResponse>> getAllPredmeti(
             @ParameterObject
-            @PageableDefault(size = 20,sort = "datumZaveduvanje",direction = Sort.Direction.DESC)Pageable pageable) {
-        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable));
+            @PageableDefault(size = 20,sort = "datumZaveduvanje",direction = Sort.Direction.DESC)Pageable pageable,
+            @RequestParam(required = false) Integer godina,
+            @RequestParam(required = false) Integer redenBroj,
+            @RequestParam(required = false) Long isprakjacId,
+            @RequestParam(required = false) Long odgovornoLiceId,
+            @RequestParam(required = false) Long vidPredmetDobienaId,
+            @RequestParam(required = false) Long vidPredmetIspratenaId,
+            @RequestParam(required = false) Boolean realizirano
+    ){
+        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable,godina,redenBroj,isprakjacId,odgovornoLiceId,vidPredmetDobienaId,vidPredmetIspratenaId,realizirano));
     }
     @GetMapping("/next-reden-broj")
     public ResponseEntity<Integer> getNextRedenBroj() {
