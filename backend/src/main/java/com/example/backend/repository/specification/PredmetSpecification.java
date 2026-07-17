@@ -1,4 +1,5 @@
 package com.example.backend.repository.specification;
+import jakarta.persistence.criteria.JoinType;
 
 import com.example.backend.model.Predmet;
 import org.springframework.data.jpa.domain.Specification;
@@ -43,5 +44,34 @@ public class PredmetSpecification {
     public static Specification<Predmet> isRealizirano(Boolean realizirano) {
         return (root, query, cb) ->
                 realizirano == null ? null : cb.equal(root.get("realizirano"), realizirano);
+    }
+
+    public static Specification<Predmet> searchText(String search){
+        return (root, query, cb) -> {
+            if (search==null || search.isEmpty()) return null;
+            query.distinct(true);
+            String pattern = "%" +  search.toLowerCase() + "%";
+
+            var isprakjac=root.join("isprakjac", JoinType.LEFT);
+            var odgovornoLice=root.join("odgovornoLice", JoinType.LEFT);
+            var vidDobiena=root.join("vidPredmetDobiena", JoinType.LEFT);
+            var vidIspratena=root.join("vidPredmetIspratena", JoinType.LEFT);
+            var arhiva=root.join("arhiva", JoinType.LEFT);
+
+            return cb.or(
+                    cb.like(cb.lower(root.get("brAkt")), pattern),
+                    cb.like(cb.lower(root.get("brAktNivni")), pattern),
+                    cb.like(cb.lower(root.get("tipPosta").as(String.class)), pattern),
+                    cb.like(cb.lower(root.get("sodrzina")), pattern),
+                    cb.like(cb.lower(root.get("zabeleska")), pattern),
+                    cb.like(cb.lower(isprakjac.get("naziv")), pattern),
+                    cb.like(cb.lower(odgovornoLice.get("ime")), pattern),
+                    cb.like(cb.lower(odgovornoLice.get("prezime")), pattern),
+                    cb.like(cb.lower(vidDobiena.get("naziv")), pattern),
+                    cb.like(cb.lower(vidIspratena.get("naziv")), pattern),
+                    cb.like(cb.lower(arhiva.get("naziv")), pattern)
+            );
+
+        };
     }
 }

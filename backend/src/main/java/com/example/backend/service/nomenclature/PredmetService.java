@@ -292,7 +292,8 @@ public class PredmetService {
             Long odgovornoLiceId,
             Long vidPredmetDobienaId,
             Long vidPredmetIspratenaId,
-            Boolean realizirano
+            Boolean realizirano,
+            String search
     )
     {
 
@@ -303,7 +304,8 @@ public class PredmetService {
                 .and(PredmetSpecification.hasOdgovornoLice(odgovornoLiceId))
                 .and(PredmetSpecification.hasVidPredmetDobiena(vidPredmetDobienaId))
                 .and(PredmetSpecification.hasVidPredmetIspratena(vidPredmetIspratenaId))
-                .and(PredmetSpecification.isRealizirano(realizirano));
+                .and(PredmetSpecification.isRealizirano(realizirano))
+                .and(PredmetSpecification.searchText(search));
 
         return predmetRepository.findAll(spec,pageable).map(PredmetListResponse::from);
     }

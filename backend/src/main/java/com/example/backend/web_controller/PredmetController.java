@@ -86,9 +86,10 @@ public class PredmetController {
             @RequestParam(required = false) Long odgovornoLiceId,
             @RequestParam(required = false) Long vidPredmetDobienaId,
             @RequestParam(required = false) Long vidPredmetIspratenaId,
-            @RequestParam(required = false) Boolean realizirano
+            @RequestParam(required = false) Boolean realizirano,
+            @RequestParam(required = false) String search
     ){
-        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable,godina,redenBroj,isprakjacId,odgovornoLiceId,vidPredmetDobienaId,vidPredmetIspratenaId,realizirano));
+        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable,godina,redenBroj,isprakjacId,odgovornoLiceId,vidPredmetDobienaId,vidPredmetIspratenaId,realizirano,search));
     }
     @GetMapping("/next-reden-broj")
     public ResponseEntity<Integer> getNextRedenBroj() {
