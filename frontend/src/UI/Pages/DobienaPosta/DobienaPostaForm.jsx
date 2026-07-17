@@ -3,7 +3,7 @@ import {
     Box, Container, Typography, Grid, TextField,
     FormControl, RadioGroup, FormControlLabel, Radio,
     Button, Chip, OutlinedInput, Select, MenuItem,
-    InputLabel, InputAdornment, ListSubheader, Divider
+    InputLabel, InputAdornment, ListSubheader, Divider, CircularProgress
 } from '@mui/material';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
@@ -214,12 +214,13 @@ const DobienaPostaForm = () => {
 
     const {prioritet, tipPosta, statusPredmet} = useEnums();
     const {createDobienaPosta, loading, error, nextRedenBroj} = usePredmeti();
-    const {isprakjaci} = useIsprakjac();
-    const {arhiva} = useArhiva();
-    const {vidPredmetD} = useVidPredmetDobieno();
-    const {odgovornoLice} = useUsersOdgovornoLice();
+    const {isprakjaci,loading: loadingIsprakjaci} = useIsprakjac();
+    const {arhiva,loading: loadingArhiva} = useArhiva();
+    const {vidPredmetD,loading: loadingVidPredmet} = useVidPredmetDobieno();
+    const {odgovornoLice,loading: loadingOdgLice} = useUsersOdgovornoLice();
     const [orgEdinica, setOrgEdinica] = useState(null);
     const {user} = useAuth();
+    const isPageLoaded = loading || loadingArhiva || loadingIsprakjaci || loadingVidPredmet|| loadingOdgLice
     const {getOrgEdinicaById} = useOrgEdinica()
     useEffect(() => {
         if (user?.organizaciskaEdinicaId) {
@@ -258,7 +259,23 @@ const DobienaPostaForm = () => {
     const selectedVidPredmet = (vidPredmetD || []).filter(v => form.vidPredmetDobienaId.includes(v.id));
     const selectedOdgovornoLice = (odgovornoLice || []).filter(u => form.odgovornoLiceId.includes(u.id));
     const selectedArhiva = (arhiva || []).filter(a => form.arhivaId.includes(a.id));
-
+    if (isPageLoaded) {
+        return (
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '60vh',
+                gap: 2
+            }}>
+                <CircularProgress sx={{ color: COLORS.gold }} size={48} />
+                <Typography sx={{ color: COLORS.labelColor, fontWeight: 'bold' }}>
+                    Се вчитуваат податоците...
+                </Typography>
+            </Box>
+        );
+    }
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Container maxWidth="md" sx={{py: 2}}>
@@ -312,7 +329,11 @@ const DobienaPostaForm = () => {
                                     py: 0.3
                                 }}>
                                     <Typography
-                                        sx={{fontWeight: 'bold', color: '#333', fontSize: '0.95rem'}}>{orgEdinica.code}</Typography>
+                                        sx={{
+                                            fontWeight: 'bold',
+                                            color: '#333',
+                                            fontSize: '0.95rem'
+                                        }}>{orgEdinica?.code ?? "..."}</Typography>
                                 </Box>
                                 <Typography sx={{fontWeight: 'bold'}}>-</Typography>
                                 <Box sx={{
