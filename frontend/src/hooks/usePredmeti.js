@@ -28,11 +28,11 @@ const usePredmeti = () => {
         }
     }, []);
 
-    const createDobienaPosta = async (data) =>{
+    const createPosta = async (data,tipDelovink) =>{
         setLoading(true);
         setError(null);
         try {
-            const response = await predmetiApi.createDobienaPosta(data);
+            const response = await predmetiApi.createPosta(data,tipDelovink);
             setPredmeti(response);
         }catch (err){
             const message = err.response?.data?.message || "Грешка при внесување на пошта";
@@ -41,14 +41,13 @@ const usePredmeti = () => {
         } finally {
             setLoading(false);
         }
-
     }
     useEffect(() => {
         fetchPredmeti();
         fetchNextRedenBroj();
     }, [fetchPredmeti,fetchNextRedenBroj]);
 
-    return { predmeti,createDobienaPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj };
+    return { predmeti,createPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj };
 };
 
 export default usePredmeti;

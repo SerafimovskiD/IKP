@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import vidPredmet from "../api/vidPredmet.js";
 
-const useVidPredmetDobieno = () => {
+const useVidPredmetIspratena = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [vidPredmetD, setVidPredmetD] = useState([]);
+    const [vidPredmetI, setVidPredmetI] = useState([]);
 
     const fetchVidPredmet = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await vidPredmet.getAllVidPredmetDobiena();
-            setVidPredmetD(response);
+            const response = await vidPredmet.getAllvidPredmetIspratena();
+            setVidPredmetI(response);
         } catch (err) {
             const message = err.response?.data?.message || "Грешка при вчитување на Вид на Предмет";
             setError(message);
@@ -24,7 +24,7 @@ const useVidPredmetDobieno = () => {
         fetchVidPredmet();
     }, [fetchVidPredmet]);
 
-    return { vidPredmetD, loading, error, refetch: fetchVidPredmet};
+    return { vidPredmetI, loading, error, refetch: fetchVidPredmet};
 };
 
-export default useVidPredmetDobieno;
+export default useVidPredmetIspratena;

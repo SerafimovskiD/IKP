@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @JsonPropertyOrder({
@@ -15,9 +17,9 @@ import java.util.List;
         "datumIsprakjanje", "brAktArhivski", "vidPredmetId",
         "sodrzina", "odgovornoLiceId", "informativnaPosta",
         "realizirano", "arhivaId", "zabeleska",
-        "statusPredmet", "tipOdgovor"
+        "statusPredmet", "tipDelovnik"
 })
-public class DobienaPostaResponse {
+public class PostaResponse {
     private Long id;
 
     private String brAkt;
@@ -37,6 +39,7 @@ public class DobienaPostaResponse {
 
     //Naum
     private List<Long> vidPredmetDobienaId;
+    private List<Long> vidPredmetIspratenaId;
     //    private Long vidPredmetId;
     //Mislam nema potreba da ima i naziv poso ke go dobivame preku ID <-Naum
 //    private String vidPredmetNaziv;
@@ -63,10 +66,10 @@ public class DobienaPostaResponse {
     private String zabeleska;
 
     private StatusPredmet statusPredmet;
-    private TipOdgovor tipOdgovor;
+    private TipDelovnik tipDelovnik;
 
-    public static DobienaPostaResponse from(Predmet predmet) {
-        DobienaPostaResponse dto = new DobienaPostaResponse();
+    public static PostaResponse from(Predmet predmet) {
+        PostaResponse dto = new PostaResponse();
 
         dto.setId(predmet.getId());
         dto.setBrAkt(predmet.getBrAkt());
@@ -80,7 +83,21 @@ public class DobienaPostaResponse {
         dto.setBrAktNivni(predmet.getBrAktNivni());
         dto.setDatumIsprakjanje(predmet.getDatumIsprakjanje());
         dto.setBrAktArhivski(predmet.getBrAktArhivski());
-        dto.setVidPredmetDobienaId(predmet.getVidPredmetDobiena().stream().map(VidPredmetDobiena::getId).toList());
+        dto.setVidPredmetDobienaId(
+                predmet.getVidPredmetDobiena() != null
+                        ? predmet.getVidPredmetDobiena().stream()
+                        .map(VidPredmetDobiena::getId)
+                        .collect(Collectors.toList())
+                        : new ArrayList<>()
+        );
+
+        dto.setVidPredmetIspratenaId(
+                predmet.getVidPredmetIspratena() != null
+                        ? predmet.getVidPredmetIspratena().stream()
+                        .map(VidPredmetIspratena::getId)
+                        .collect(Collectors.toList())
+                        : new ArrayList<>()
+        );
         dto.setSodrzina(predmet.getSodrzina());
         dto.setOdgovornoLiceId(predmet.getOdgovornoLice().stream().map(UserTable::getId).toList());
         dto.setInformativnaPosta(predmet.getInformativnaPosta());
@@ -92,7 +109,7 @@ public class DobienaPostaResponse {
 //        dto.setOrganizaciskaEdinicaId(predmet.getOrganizaciskaedinica() != null
 //                ? predmet.getOrganizaciskaedinica().getId() : null);
         dto.setStatusPredmet(predmet.getStatusPredmet());
-
+        dto.setTipDelovnik(predmet.getTipDelovnik());
         return dto;
     }
 }

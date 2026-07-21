@@ -1,6 +1,7 @@
 package com.example.backend.web_controller;
 
 import com.example.backend.dto.*;
+import com.example.backend.model.TipDelovnik;
 import com.example.backend.repository.PredmetRepository;
 import com.example.backend.service.nomenclature.SkeniraniDokumentiService;
 import org.springdoc.core.annotations.ParameterObject;
@@ -9,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.multipart.MultipartFile;
-import com.example.backend.model.Predmet;
 import com.example.backend.service.nomenclature.PredmetService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,7 +18,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
-import java.security.Principal;
 import java.time.LocalDate;
 
 @RestController
@@ -39,18 +38,22 @@ public class PredmetController {
 //    }
 
     @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
-    @PostMapping("/dobiena")
-    public ResponseEntity<DobienaPostaResponse> createDobienaPosta(@RequestBody DobienaPostaRequest dobienaPostaRequest, @AuthenticationPrincipal UserDetails userDetails) {
-        String email =userDetails.getUsername();
-        return ResponseEntity.ok(predmetService.createDobienaPosta(dobienaPostaRequest,email));
+    @PostMapping("/create")
+    public ResponseEntity<PostaResponse> createPosta(
+            @RequestBody PostaRequest request,
+            @RequestParam TipDelovnik tipDelovnik,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                predmetService.createPosta(request, userDetails.getUsername(), tipDelovnik)
+        );
     }
 
-    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
-    @PutMapping("/odgovorDobienaPosta")
-    public ResponseEntity<DobienaPostaResponse> odgovorDobienaPosta(@RequestBody DobienaPostaRequest dobienaPostaRequest, @AuthenticationPrincipal UserDetails userDetails,@RequestParam Integer predmetSoRedBr,@RequestParam Integer godina) {
-        String email =userDetails.getUsername();
-        return ResponseEntity.ok(predmetService.odgovorDobienaPosta(dobienaPostaRequest,email,predmetSoRedBr,godina));
-    }
+//    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
+//    @PutMapping("/odgovorDobienaPosta")
+//    public ResponseEntity<DobienaPostaResponse> odgovorDobienaPosta(@RequestBody DobienaPostaRequest dobienaPostaRequest, @AuthenticationPrincipal UserDetails userDetails,@RequestParam Integer predmetSoRedBr,@RequestParam Integer godina) {
+//        String email =userDetails.getUsername();
+//        return ResponseEntity.ok(predmetService.odgovorDobienaPosta(dobienaPostaRequest,email,predmetSoRedBr,godina));
+//    }
 
 
 //    @PreAuthorize("hasAnyRole('OSL','NACALNIK','ADMIN')")
@@ -59,12 +62,12 @@ public class PredmetController {
 //        return this.predmetService.updateStatusPredmet(id, request, authentication.getName());
 //    }
 
-    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
-    @PostMapping("/ispratena")
-    public ResponseEntity<IspratenaPostaResponse> createIspratenaPosta(@RequestBody IspratenaPostaRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-        String email =userDetails.getUsername();
-        return ResponseEntity.ok(predmetService.createIspratenaPosta(request,email));
-    }
+//    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
+//    @PostMapping("/ispratena")
+//    public ResponseEntity<IspratenaPostaResponse> createIspratenaPosta(@RequestBody IspratenaPostaRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+//        String email =userDetails.getUsername();
+//        return ResponseEntity.ok(predmetService.createIspratenaPosta(request,email));
+//    }
     @PostMapping("/{predmetId}/skenirani-dokumenti/upload")
     public SkeniraniDokumentiResponse uploadSkeniraniDokumenti(@PathVariable Long predmetId,
                                                        @RequestParam("file") MultipartFile file,
@@ -96,5 +99,9 @@ public class PredmetController {
         Integer godina = LocalDate.now().getYear();
         Integer next = predmetRepository.findMaxRedenBroj(godina) + 1;
         return ResponseEntity.ok(next);
+    }
+    @GetMapping("/getPostaByID")
+    public ResponseEntity<PostaResponse> findById(@RequestParam Long id){
+        return ResponseEntity.ok(predmetService.getPosta(id));
     }
 }

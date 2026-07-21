@@ -2,7 +2,7 @@ package com.example.backend.web_controller;
 
 import com.example.backend.model.Prioritet;
 import com.example.backend.model.StatusPredmet;
-import com.example.backend.model.TipOdgovor;
+import com.example.backend.model.TipDelovnik;
 import com.example.backend.model.TipPosta;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +22,8 @@ public class EnumsController {
         return List.of(TipPosta.values());
     }
     @GetMapping("/tip-odgovor")
-    public List<TipOdgovor> tipOdgovor() {
-        return List.of(TipOdgovor.values());
+    public List<TipDelovnik> tipOdgovor() {
+        return List.of(TipDelovnik.values());
     }
     @GetMapping("/status-predmet")
     public List<StatusPredmet> statusPredmet() {

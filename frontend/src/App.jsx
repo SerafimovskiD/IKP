@@ -3,8 +3,11 @@ import { AuthProvider } from "./context/AuthContext";
 import LoginPage from "./UI/Pages/LoginPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Dashboard from "./UI/Pages/Dashboard.jsx";
-import DobienaPostaForm from "./UI/Pages/DobienaPosta/DobienaPostaForm.jsx";
+import DobienaPostaForm from "./UI/Pages/DobienaPosta/CreatePostaForm.jsx";
 import TESTFORMA from "./UI/Pages/TEST slicna forma.jsx";
+import PostaDetails from "./UI/Pages/DobienaPosta/PostaDetails.jsx";
+import CreatePostaForm from "./UI/Pages/DobienaPosta/CreatePostaForm.jsx";
+import PredmetForm from "./UI/Pages/DobienaPosta/CreatePostaForm.jsx";
 
 export default function App() {
     return (
@@ -23,11 +26,17 @@ export default function App() {
                     } />
 
                     {/* Форма за добиена пошта */}
-                    <Route path="/dobieni/nova" element={
+                    <Route path="/createPosta/nova" element={
                         <ProtectedRoute roles={["OSL", "POMOSNIK", "ADMIN"]}>
-                            <DobienaPostaForm />
+                            <PredmetForm />
                         </ProtectedRoute>
                     } />
+                    <Route path="/posta/:id" element={
+                        <ProtectedRoute roles={["OSL", "POMOSNIK", "ADMIN"]}>
+                            <PostaDetails />
+                        </ProtectedRoute>
+                    }
+                           />
 
                     {/* Само за ADMIN */}
                     <Route path="/admin" element={

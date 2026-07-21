@@ -135,127 +135,191 @@ public class PredmetService {
 //    }
 
     //NAUM
-    @Transactional
-    public DobienaPostaResponse createDobienaPosta(DobienaPostaRequest request, String email) {
-
-        UserTable user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
-                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
-        List<VidPredmetDobiena> vidPredmet = request.getVidPredmetDobienaId().stream()
-                .map(id->vidPredmetDobienaRepository.findById(id)
-                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
-        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
-                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
-        List<Arhiva> arhiva = request.getArhivaId().stream()
-                .map(id->arhivaRepository.findById(id)
-                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
-        //Mislam nema potreba od pravenje na zadolzitelni polinja vo
-        // backend pobrzo e za testiranje a na frontend posekako
-        // ke stavime required na polinjata koi se zadolzitelni
-        // ^ Naum
-        String brAkt = user.getOrganizaciskaEdinica().getCode();
-        Integer godina = LocalDate.now().getYear();
-        Integer redenBroj = predmetRepository.findMaxRedenBroj(godina) + 1;
-        Predmet predmet = new Predmet();
-        predmet.setBrAkt(brAkt);
-        predmet.setRedenBroj(redenBroj);
-        predmet.setPodBroj(1);
-        predmet.setGodina(godina);
-        return getDobienaPostaResponse(request, isprakjac, vidPredmet, odgovornoLice, arhiva, predmet);
-    }
-    //delumno e napravena nekoi testiranja da se napravat treba mozda <-Naum
-    public DobienaPostaResponse odgovorDobienaPosta(DobienaPostaRequest request, String email,Integer predmetSoRedBr,Integer godina) {
+//    @Transactional
+//    public DobienaPostaResponse createDobienaPosta(DobienaPostaRequest request, String email) {
+//
 //        UserTable user = userRepository.findByEmail(email)
 //                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
-                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
-        List<VidPredmetDobiena> vidPredmet = request.getVidPredmetDobienaId().stream()
-                .map(id->vidPredmetDobienaRepository.findById(id)
-                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
-        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
-                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
-        List<Arhiva> arhiva = request.getArhivaId().stream()
-                .map(id->arhivaRepository.findById(id)
-                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
-        Predmet predmet = predmetRepository.findPredmetByRedenBrojAndGodina(predmetSoRedBr,godina).getLast();
-        predmet.setPodBroj(predmet.getPodBroj()+1);
-        //tuka ke gi stavam site polinja da moze da se
-        // smenat koga se pravi nov podbroj za pocetok
-        // sledno ke prasame sto ke smee da se menuva  <-Naum
-        return getDobienaPostaResponse(request, isprakjac, vidPredmet, odgovornoLice, arhiva, predmet);
-
-    }
-
-    private DobienaPostaResponse getDobienaPostaResponse(DobienaPostaRequest request, Isprakjac isprakjac, List<VidPredmetDobiena> vidPredmet, List<UserTable> odgovornoLice, List<Arhiva> arhiva, Predmet predmet) {
-        predmet.setVidPredmetDobiena(vidPredmet);
-        predmet.setIsprakjac(isprakjac);
-        predmet.setArhiva(arhiva);
-        predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());
-        predmet.setTipPosta(request.getTipPosta());
-        predmet.setPrioritet(request.getPrioritet());
-        predmet.setBrAktNivni(request.getBrAktNivni());
-        predmet.setDatumIsprakjanje(request.getDatumIsprakjanje());
-        predmet.setBrAktArhivski(request.getBrAktArhivski());
-        predmet.setSodrzina(request.getSodrzina());
-        predmet.setOdgovornoLice(odgovornoLice);
-        predmet.setInformativnaPosta(request.getInformativnaPosta());
-        predmet.setRealizirano(request.getRealizirano());
-        predmet.setZabeleska(request.getZabeleska());
-        predmet.setStatusPredmet(request.getStatusPredmet());
-
-        Predmet saved = predmetRepository.save(predmet);
-        Predmet refreshed = predmetRepository.findById(saved.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
-        return DobienaPostaResponse.from(refreshed);
-    }
-
+//        Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
+//        List<VidPredmetDobiena> vidPredmet = request.getVidPredmetDobienaId().stream()
+//                .map(id->vidPredmetDobienaRepository.findById(id)
+//                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
+//                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        List<Arhiva> arhiva = request.getArhivaId().stream()
+//                .map(id->arhivaRepository.findById(id)
+//                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        //Mislam nema potreba od pravenje na zadolzitelni polinja vo
+//        // backend pobrzo e za testiranje a na frontend posekako
+//        // ke stavime required na polinjata koi se zadolzitelni
+//        // ^ Naum
+//        String brAkt = user.getOrganizaciskaEdinica().getCode();
+//        Integer godina = LocalDate.now().getYear();
+//        Integer redenBroj = predmetRepository.findMaxRedenBroj(godina) + 1;
+//        Predmet predmet = new Predmet();
+//        predmet.setBrAkt(brAkt);
+//        predmet.setRedenBroj(redenBroj);
+//        predmet.setPodBroj(1);
+//        predmet.setGodina(godina);
+//        return getDobienaPostaResponse(request, isprakjac, vidPredmet, odgovornoLice, arhiva, predmet);
+//    }
     @Transactional
-    public IspratenaPostaResponse createIspratenaPosta(IspratenaPostaRequest request,String email) {
+    public PostaResponse createPosta(PostaRequest request, String email, TipDelovnik tipDelovnik) {
         UserTable user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Isprakjac ispratenaDo = isprakjacRepository.findById(request.getIspratenoDoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
-        List<VidPredmetIspratena> vidPredmet = request.getVidPredmetIspratenaId().stream()
-                .map(id->vidPredmetIspratenaRepository.findById(id)
-                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
-        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
-                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
-        List<Arhiva> arhiva = request.getArhivaId().stream()
-                .map(id->arhivaRepository.findById(id)
-                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
-        //Mislam nema potreba od pravenje na zadolzitelni polinja vo
-        // backend pobrzo e za testiranje a na frontend posekako
-        // ke stavime required na polinjata koi se zadolzitelni
-        // ^ Naum
+
         String brAkt = user.getOrganizaciskaEdinica().getCode();
         Integer godina = LocalDate.now().getYear();
         Integer redenBroj = predmetRepository.findMaxRedenBroj(godina) + 1;
+
         Predmet predmet = new Predmet();
         predmet.setBrAkt(brAkt);
         predmet.setRedenBroj(redenBroj);
         predmet.setPodBroj(1);
         predmet.setGodina(godina);
-        return getIspratenaPostaResponse(request, ispratenaDo, vidPredmet, odgovornoLice, arhiva, predmet);
-    }
-    private IspratenaPostaResponse getIspratenaPostaResponse(IspratenaPostaRequest request, Isprakjac ispratenoDo, List<VidPredmetIspratena> vidPredmet, List<UserTable> odgovornoLice, List<Arhiva> arhiva, Predmet predmet) {
-        predmet.setVidPredmetIspratena(vidPredmet);
-        predmet.setIsprakjac(ispratenoDo);
-        predmet.setArhiva(arhiva);
         predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());
         predmet.setTipPosta(request.getTipPosta());
         predmet.setSodrzina(request.getSodrzina());
-        predmet.setOdgovornoLice(odgovornoLice);
         predmet.setInformativnaPosta(request.getInformativnaPosta());
         predmet.setRealizirano(request.getRealizirano());
         predmet.setZabeleska(request.getZabeleska());
         predmet.setStatusPredmet(request.getStatusPredmet());
+        predmet.setTipDelovnik(tipDelovnik);
+        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
+                .map(id -> userRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id)))
+                .collect(Collectors.toList());
+        predmet.setOdgovornoLice(odgovornoLice);
+
+        List<Arhiva> arhiva = request.getArhivaId().stream()
+                .map(id -> arhivaRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Arhiva with ID: " + id)))
+                .collect(Collectors.toList());
+        predmet.setArhiva(arhiva);
+        Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
+                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
+        predmet.setIsprakjac(isprakjac);
+
+        if (tipDelovnik == TipDelovnik.Dobiena) {
+            predmet.setPrioritet(request.getPrioritet());
+            predmet.setBrAktNivni(request.getBrAktNivni());
+            predmet.setDatumIsprakjanje(request.getDatumIsprakjanje());
+            predmet.setBrAktArhivski(request.getBrAktArhivski());
+
+            List<VidPredmetDobiena> vidPredmet = request.getVidPredmetDobienaId().stream()
+                    .map(id -> vidPredmetDobienaRepository.findById(id)
+                            .orElseThrow(() -> new ResourceNotFoundException("VidPredmetDobiena with ID: " + id)))
+                    .collect(Collectors.toList());
+            predmet.setVidPredmetDobiena(vidPredmet);
+
+        } else {
+
+            List<VidPredmetIspratena> vidPredmet = request.getVidPredmetIspratenaId().stream()
+                    .map(id -> vidPredmetIspratenaRepository.findById(id)
+                            .orElseThrow(() -> new ResourceNotFoundException("VidPredmetIspratena with ID: " + id)))
+                    .collect(Collectors.toList());
+            predmet.setVidPredmetIspratena(vidPredmet);
+        }
 
         Predmet saved = predmetRepository.save(predmet);
         Predmet refreshed = predmetRepository.findById(saved.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
-        return IspratenaPostaResponse.from(refreshed);
+        return PostaResponse.from(refreshed);
     }
+
+    //delumno e napravena nekoi testiranja da se napravat treba mozda <-Naum
+//    public DobienaPostaResponse odgovorDobienaPosta(DobienaPostaRequest request, String email,Integer predmetSoRedBr,Integer godina) {
+////        UserTable user = userRepository.findByEmail(email)
+////                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//        Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
+//        List<VidPredmetDobiena> vidPredmet = request.getVidPredmetDobienaId().stream()
+//                .map(id->vidPredmetDobienaRepository.findById(id)
+//                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
+//                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        List<Arhiva> arhiva = request.getArhivaId().stream()
+//                .map(id->arhivaRepository.findById(id)
+//                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        Predmet predmet = predmetRepository.findPredmetByRedenBrojAndGodina(predmetSoRedBr,godina).getLast();
+//        predmet.setPodBroj(predmet.getPodBroj()+1);
+//        //tuka ke gi stavam site polinja da moze da se
+//        // smenat koga se pravi nov podbroj za pocetok
+//        // sledno ke prasame sto ke smee da se menuva  <-Naum
+//        return getPostaResponse(request, isprakjac, vidPredmet, odgovornoLice, arhiva, predmet,tipDelovnik);
+//
+//    }
+
+//    private DobienaPostaResponse getPostaResponse(DobienaPostaRequest request, Isprakjac isprakjac, List<VidPredmetDobiena> vidPredmet, List<UserTable> odgovornoLice, List<Arhiva> arhiva, Predmet predmet,TipDelovnik tipDelovnik) {
+//        predmet.setVidPredmetDobiena(vidPredmet);
+//        predmet.setIsprakjac(isprakjac);
+//        predmet.setArhiva(arhiva);
+//        predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());
+//        predmet.setTipPosta(request.getTipPosta());
+//        predmet.setPrioritet(request.getPrioritet());
+//        predmet.setBrAktNivni(request.getBrAktNivni());
+//        predmet.setDatumIsprakjanje(request.getDatumIsprakjanje());
+//        predmet.setBrAktArhivski(request.getBrAktArhivski());
+//        predmet.setSodrzina(request.getSodrzina());
+//        predmet.setOdgovornoLice(odgovornoLice);
+//        predmet.setInformativnaPosta(request.getInformativnaPosta());
+//        predmet.setRealizirano(request.getRealizirano());
+//        predmet.setZabeleska(request.getZabeleska());
+//        predmet.setStatusPredmet(request.getStatusPredmet());
+//
+//        Predmet saved = predmetRepository.save(predmet);
+//        Predmet refreshed = predmetRepository.findById(saved.getId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
+//        return DobienaPostaResponse.from(refreshed);
+//    }
+
+//    @Transactional
+//    public IspratenaPostaResponse createIspratenaPosta(IspratenaPostaRequest request,String email) {
+//        UserTable user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//        Isprakjac ispratenaDo = isprakjacRepository.findById(request.getIspratenoDoId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
+//        List<VidPredmetIspratena> vidPredmet = request.getVidPredmetIspratenaId().stream()
+//                .map(id->vidPredmetIspratenaRepository.findById(id)
+//                        .orElseThrow(()->new ResourceNotFoundException("Vid Predmet with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
+//                .map(id->userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        List<Arhiva> arhiva = request.getArhivaId().stream()
+//                .map(id->arhivaRepository.findById(id)
+//                        .orElseThrow(()->new  ResourceNotFoundException("Arhiva with ID: "+id+" not exists"))).collect(Collectors.toList());
+//        //Mislam nema potreba od pravenje na zadolzitelni polinja vo
+//        // backend pobrzo e za testiranje a na frontend posekako
+//        // ke stavime required na polinjata koi se zadolzitelni
+//        // ^ Naum
+//        String brAkt = user.getOrganizaciskaEdinica().getCode();
+//        Integer godina = LocalDate.now().getYear();
+//        Integer redenBroj = predmetRepository.findMaxRedenBroj(godina) + 1;
+//        Predmet predmet = new Predmet();
+//        predmet.setBrAkt(brAkt);
+//        predmet.setRedenBroj(redenBroj);
+//        predmet.setPodBroj(1);
+//        predmet.setGodina(godina);
+//        return getIspratenaPostaResponse(request, ispratenaDo, vidPredmet, odgovornoLice, arhiva, predmet);
+//    }
+//    private IspratenaPostaResponse getIspratenaPostaResponse(IspratenaPostaRequest request, Isprakjac ispratenoDo, List<VidPredmetIspratena> vidPredmet, List<UserTable> odgovornoLice, List<Arhiva> arhiva, Predmet predmet) {
+//        predmet.setVidPredmetIspratena(vidPredmet);
+//        predmet.setIsprakjac(ispratenoDo);
+//        predmet.setArhiva(arhiva);
+//        predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());
+//        predmet.setTipPosta(request.getTipPosta());
+//        predmet.setSodrzina(request.getSodrzina());
+//        predmet.setOdgovornoLice(odgovornoLice);
+//        predmet.setInformativnaPosta(request.getInformativnaPosta());
+//        predmet.setRealizirano(request.getRealizirano());
+//        predmet.setZabeleska(request.getZabeleska());
+//        predmet.setStatusPredmet(request.getStatusPredmet());
+//
+//        Predmet saved = predmetRepository.save(predmet);
+//        Predmet refreshed = predmetRepository.findById(saved.getId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
+//        return IspratenaPostaResponse.from(refreshed);
+//    }
 //
 //    @Transactional
 //    public Predmet updateStatusPredmet(Long id, StatusPredmetRequest request, String changedBy) {
@@ -308,6 +372,10 @@ public class PredmetService {
                 .and(PredmetSpecification.searchText(search));
 
         return predmetRepository.findAll(spec,pageable).map(PredmetListResponse::from);
+    }
+
+    public PostaResponse getPosta(Long id){
+        return PostaResponse.from(predmetRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Predmet not found")));
     }
 
 }
