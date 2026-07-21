@@ -6,6 +6,9 @@ const Dashboard = () =>{
     return (
         <div>
             <Header />
+            <br/>
+            <br/>
+            <br/>
             <button onClick={() => navigate("/createPosta/nova?tipDelovnik=Ispratena")}>
                 Ispratena
             </button>

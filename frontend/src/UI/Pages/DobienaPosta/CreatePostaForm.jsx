@@ -275,7 +275,7 @@ const PredmetForm = () => {
         if (isDobiena) {
             if (!currentForm.prioritet) errors.prioritet = "Задолжително поле";
             if (!currentForm.brAktNivni?.trim()) errors.brAktNivni = "Задолжително поле";
-            if (!currentForm.brAktArhivski?.trim()) errors.brAktArhivski = "Задолжително поле";
+            // if (!currentForm.brAktArhivski?.trim()) errors.brAktArhivski = "Задолжително поле";
             if (!currentForm.datumIsprakjanje) errors.datumIsprakjanje = "Задолжително поле";
             if (currentForm.vidPredmetDobienaId.length === 0) errors.vidPredmet = "Задолжително поле";
         } else {
@@ -412,7 +412,7 @@ const PredmetForm = () => {
                                     </Typography>
                                 </Box>
                                 <Typography sx={{fontWeight: 'bold'}}>-</Typography>
-                                <Box sx={{bgcolor: isDobiena ? '#C8E0FF' : '#C8F0C8',
+                                <Box sx={{cursor:'not-allowed', bgcolor: isDobiena ? '#C8E0FF' : '#C8F0C8',
                                     border: `1px solid ${COLORS.borderColor}`,
                                     borderRadius: '3px', px: 1.5, py: 0.3}}>
                                     <Typography sx={{fontWeight: 'bold',
@@ -421,7 +421,7 @@ const PredmetForm = () => {
                                     </Typography>
                                 </Box>
                                 <Typography sx={{fontWeight: 'bold'}}>/</Typography>
-                                <Box sx={{bgcolor: isDobiena ? '#C8E0FF' : '#C8F0C8',
+                                <Box sx={{cursor:'not-allowed', bgcolor: isDobiena ? '#C8E0FF' : '#C8F0C8',
                                     border: `1px solid ${COLORS.borderColor}`,
                                     borderRadius: '3px', px: 1.5, py: 0.3}}>
                                     <Typography sx={{fontWeight: 'bold',
@@ -563,7 +563,9 @@ const PredmetForm = () => {
                                         }}}/>
                             </Grid>
                             <Grid item xs={12} sm={4}>
-                                <Label required color={COLORS.labelColor} hasError={!!formErrors.brAktArhivski}>
+                                <Label color={COLORS.labelColor}
+                                       // hasError={!!formErrors.brAktArhivski}
+                                >
                                     Број на акт (архивски):
                                 </Label>
                                 <TextField fullWidth size="small"
