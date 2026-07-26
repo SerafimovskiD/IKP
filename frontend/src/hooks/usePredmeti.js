@@ -28,20 +28,21 @@ const usePredmeti = () => {
         }
     }, []);
 
-    const createPosta = async (data,tipDelovink) =>{
+    const createPosta = async (data, tipDelovnik, tipOdgovor = null, roditelRedenBroj = null, roditelGodina = null, oldPodbroj = null) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await predmetiApi.createPosta(data,tipDelovink);
-            setPredmeti(response);
-        }catch (err){
+            const response = await predmetiApi.createPosta(data, tipDelovnik, tipOdgovor, roditelRedenBroj, roditelGodina, oldPodbroj);
+            await fetchNextRedenBroj();
+            return response;
+        } catch (err) {
             const message = err.response?.data?.message || "Грешка при внесување на пошта";
             setError(message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }
+    };
     useEffect(() => {
         fetchPredmeti();
         fetchNextRedenBroj();

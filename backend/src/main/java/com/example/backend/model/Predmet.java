@@ -65,6 +65,8 @@ public class Predmet {
 
     @Enumerated(EnumType.STRING)
     private TipDelovnik tipDelovnik;
+    @Enumerated(EnumType.STRING)
+    private TipOdgovor tipOdgovor;
 
     //mozda visak <-Naum
     @ManyToOne(fetch = FetchType.LAZY)

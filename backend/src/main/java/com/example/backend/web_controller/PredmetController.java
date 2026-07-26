@@ -2,6 +2,7 @@ package com.example.backend.web_controller;
 
 import com.example.backend.dto.*;
 import com.example.backend.model.TipDelovnik;
+import com.example.backend.model.TipOdgovor;
 import com.example.backend.repository.PredmetRepository;
 import com.example.backend.service.nomenclature.SkeniraniDokumentiService;
 import org.springdoc.core.annotations.ParameterObject;
@@ -42,11 +43,39 @@ public class PredmetController {
     public ResponseEntity<PostaResponse> createPosta(
             @RequestBody PostaRequest request,
             @RequestParam TipDelovnik tipDelovnik,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestParam(required = false) TipOdgovor tipOdgovor,
+            @RequestParam(required = false) Integer roditelRedenBroj,
+            @RequestParam(required = false) Integer roditelGodina,
+            @RequestParam(required = false) Integer oldPodbroj,
+            @AuthenticationPrincipal UserDetails userDetails
+
+    ) {
         return ResponseEntity.ok(
-                predmetService.createPosta(request, userDetails.getUsername(), tipDelovnik)
+                predmetService.createPosta(request,
+                        userDetails.getUsername(),
+                        tipDelovnik,
+                        tipOdgovor,
+                        roditelRedenBroj,
+                        roditelGodina,
+                        oldPodbroj
+                        )
         );
     }
+
+//    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
+//    @PostMapping("/odgovor")
+//    public ResponseEntity<PostaResponse> odgovorPosta(
+//            @RequestBody PostaRequest request,
+//            @RequestParam Integer godina,
+//            @RequestParam Integer redenBroj,
+//            @RequestParam String brAkt,
+//            @RequestParam Integer podBroj,
+//            @RequestParam TipOdgovor tipOdgovor,
+//            @AuthenticationPrincipal UserDetails userDetails) {
+//        return ResponseEntity.ok(
+//                predmetService.odgovorPosta(request,redenBroj,godina,podBroj,brAkt,tipOdgovor)
+//        );
+//    }
 
 //    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
 //    @PutMapping("/odgovorDobienaPosta")

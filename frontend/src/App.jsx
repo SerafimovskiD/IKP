@@ -3,11 +3,10 @@ import { AuthProvider } from "./context/AuthContext";
 import LoginPage from "./UI/Pages/LoginPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Dashboard from "./UI/Pages/Dashboard.jsx";
-import DobienaPostaForm from "./UI/Pages/DobienaPosta/CreatePostaForm.jsx";
-import TESTFORMA from "./UI/Pages/TEST slicna forma.jsx";
 import PostaDetails from "./UI/Pages/DobienaPosta/PostaDetails.jsx";
-import CreatePostaForm from "./UI/Pages/DobienaPosta/CreatePostaForm.jsx";
 import PredmetForm from "./UI/Pages/DobienaPosta/CreatePostaForm.jsx";
+import Layout from "./components/Layout.jsx";
+import {Box, Typography} from "@mui/material";
 
 export default function App() {
     return (
@@ -15,52 +14,52 @@ export default function App() {
             <AuthProvider>
                 <Routes>
 
-                    {/* Јавни рути */}
+                    {/* Јавни — без layout */}
                     <Route path="/login" element={<LoginPage />} />
-                    <Route path="/TEST" element={<TESTFORMA/>}/>
-                    {/* Заштитени рути — сите логирани */}
+
+                    <Route path="/forbidden" element={
+                        <Box sx={{display:'flex', alignItems:'center',
+                            justifyContent:'center', minHeight:'100vh'}}>
+                            <Typography color="error" variant="h5">
+                                Немате пристап до оваа страница
+                            </Typography>
+                        </Box>
+                    } />
+
+                    {/* Заштитени — со Layout */}
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
-                            <Dashboard />
+                            <Layout>
+                                <Dashboard />
+                            </Layout>
                         </ProtectedRoute>
                     } />
 
-                    {/* Форма за добиена пошта */}
                     <Route path="/createPosta/nova" element={
                         <ProtectedRoute roles={["OSL", "POMOSNIK", "ADMIN"]}>
-                            <PredmetForm />
+                            <Layout>
+                                <PredmetForm />
+                            </Layout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/posta/:id" element={
-                        <ProtectedRoute roles={["OSL", "POMOSNIK", "ADMIN"]}>
-                            <PostaDetails />
-                        </ProtectedRoute>
-                    }
-                           />
 
-                    {/* Само за ADMIN */}
+                    <Route path="/posta/:id" element={
+                        <ProtectedRoute>
+                            <Layout>
+                                <PostaDetails />
+                            </Layout>
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/admin" element={
                         <ProtectedRoute roles={["ADMIN"]}>
-                            {/*<AdminPage />*/}
+                            <Layout>
+                                <div>Admin</div>
+                            </Layout>
                         </ProtectedRoute>
                     } />
 
-                    {/* Само за NACALNIK и ADMIN */}
-                    <Route path="/workflow" element={
-                        <ProtectedRoute roles={["NACALNIK_SEK", "NACALNIK_ODD", "ADMIN"]}>
-                            {/*<WorkflowPage />*/}
-                        </ProtectedRoute>
-                    } />
-
-                    {/* Default — пренасочи кон dashboard */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-                    {/* Forbidden страница */}
-                    <Route path="/forbidden" element={
-                        <div className="min-h-screen flex items-center justify-center">
-                            <p className="text-red-500 text-xl">Немате пристап до оваа страница</p>
-                        </div>
-                    } />
 
                 </Routes>
             </AuthProvider>

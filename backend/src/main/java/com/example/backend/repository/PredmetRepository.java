@@ -8,11 +8,19 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PredmetRepository extends JpaRepository<Predmet, Long>, JpaSpecificationExecutor<Predmet> {
     @Query("SELECT COALESCE(MAX(p.redenBroj),0) FROM Predmet p WHERE p.godina = :godina")
     Integer findMaxRedenBroj(@Param("godina")Integer godina);
 
-    List<Predmet> findPredmetByRedenBrojAndGodina(Integer redenBroj, Integer godina);
+    Optional<Predmet> findPredmetByRedenBrojAndGodinaAndPodBroj(Integer redenBroj, Integer godina,Integer podbroj);
+
+    @Query("SELECT COALESCE(MAX(p.podBroj), 0) FROM Predmet p " +
+            "WHERE p.redenBroj = :redenBroj AND p.godina = :godina")
+    Integer findMaxPodBrojByRedenBrojAndGodina(
+            @Param("redenBroj") Integer redenBroj,
+            @Param("godina") Integer godina
+    );
 }

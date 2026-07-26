@@ -3,12 +3,18 @@ import {
     Box, Container, Typography, Grid, TextField,
     FormControl, RadioGroup, FormControlLabel, Radio,
     Button, Chip, OutlinedInput, Select, MenuItem,
-    InputLabel, InputAdornment, ListSubheader, Divider, CircularProgress
+    InputLabel, InputAdornment, ListSubheader,
+    CircularProgress, Switch, IconButton, Tooltip
 } from '@mui/material';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import SearchIcon from '@mui/icons-material/Search';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SaveIcon from '@mui/icons-material/Save';
+import ReplyIcon from '@mui/icons-material/Reply';
 import dayjs from 'dayjs';
 import {useSearchParams} from "react-router-dom";
 import {useEnums} from "../../../hooks/useEnums.js";
@@ -20,188 +26,222 @@ import useUsersOdgovornoLice from "../../../hooks/useUsersOdgovornoLice.js";
 import {useAuth} from "../../../context/AuthContext.jsx";
 import useOrgEdinica from "../../../hooks/useOrgEdinica.js";
 import usePredmeti from "../../../hooks/usePredmeti.js";
+import usePredmetDetails from "../../../hooks/usePredmetiDetails.js";
 
-const DOBIENA_COLORS = {
-    headerBg: '#E8C97A',
-    sectionBg: '#FAE8B0',
-    labelColor: '#8B4513',
-    borderColor: '#C8A050',
-    buttonBg: '#D4A843',
-    chipBg: '#E8D8A0',
+const DOBIENA = {
+    gradient: 'linear-gradient(135deg, #6B4F0E 0%, #C8A84B 60%, #E8D48A 100%)',
+    gradientLight: 'linear-gradient(135deg, #FDF8EC 0%, #FDF3D8 100%)',
+    border: '#C8A84B',
+    borderLight: '#E8D48A',
+    chipBg: '#FDF3D8',
+    chipColor: '#7A5C00',
+    accent: '#C8A84B',
+    accentDark: '#7A5C00',
+    btnBg: '#8B6914',
+    btnHover: '#6B4F0E',
+    sectionBg: '#FFFDF5',
 };
 
-const ISPRATENA_COLORS = {
-    headerBg: '#B8D9B0',
-    sectionBg: '#E8F5E4',
-    labelColor: '#2E6B2E',
-    borderColor: '#7AB87A',
-    buttonBg: '#5A9E5A',
-    chipBg: '#C8E8C0',
+const ISPRATENA = {
+    gradient: 'linear-gradient(135deg, #1B5E20 0%, #388E3C 60%, #81C784 100%)',
+    gradientLight: 'linear-gradient(135deg, #F1F8E9 0%, #E8F5E9 100%)',
+    border: '#388E3C',
+    borderLight: '#81C784',
+    chipBg: '#E8F5E9',
+    chipColor: '#1B5E20',
+    accent: '#388E3C',
+    accentDark: '#1B5E20',
+    btnBg: '#2E7D32',
+    btnHover: '#1B5E20',
+    sectionBg: '#F9FDF9',
 };
 
-const MENU_PROPS = {
-    anchorOrigin: {vertical: 'bottom', horizontal: 'left'},
-    transformOrigin: {vertical: 'top', horizontal: 'left'},
-    slotProps: {paper: {sx: {maxHeight: 320}}}
-};
-
-const ErrorText = ({msg}) => msg ? (
-    <Typography sx={{color: '#d32f2f', fontSize: '0.72rem', mt: 0.4, ml: 0.5}}>
-        {msg}
-    </Typography>
-) : null;
-
-const RequiredLabel = ({children, color, hasError}) => (
-    <Typography component="span"
-                sx={{color: hasError ? '#d32f2f' : (color || '#8B4513'), fontWeight: 'bold', fontSize: '0.9rem'}}>
-        {children} <span style={{color: '#d32f2f'}}>*</span>
-    </Typography>
-);
-
-const Label = ({children, required, color, hasError}) => (
-    required
-        ? <RequiredLabel color={color} hasError={hasError}>{children}</RequiredLabel>
-        : <Typography component="span" sx={{color: color || '#8B4513', fontWeight: 'bold', fontSize: '0.9rem'}}>
+// ─── SECTION ─────────────────────────────────────────────────────────────────
+const Section = ({title, children, theme, noPad = false}) => (
+    <Box sx={{
+        border: `1px solid #E8E8E8`,
+        borderRadius: '8px',
+        overflow: 'hidden',
+        mb: 2,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    }}>
+        <Box sx={{background: theme.gradient, px: 2.5, py: 1}}>
+            <Typography sx={{
+                color: '#fff', fontSize: '0.7rem', fontWeight: 700,
+                letterSpacing: '0.12em', textTransform: 'uppercase'
+            }}>
+                {title}
+            </Typography>
+        </Box>
+        <Box sx={{p: noPad ? 0 : 2.5, bgcolor: theme.sectionBg}}>
             {children}
-        </Typography>
+        </Box>
+    </Box>
 );
 
-const FieldRow = ({label, children, labelColor, required, hasError}) => (
-    <Grid container spacing={1} alignItems="flex-start" sx={{mb: 1.5}}>
-        <Grid item xs={12} sm={3} sx={{pt: '10px !important'}}>
-            <Label color={labelColor} required={required} hasError={hasError}>{label}:</Label>
-        </Grid>
-        <Grid item xs={12} sm={9}>{children}</Grid>
-    </Grid>
+const Err = ({msg}) => (
+    <Typography sx={{
+        color: '#d32f2f',
+        fontSize: '0.68rem',
+        mt: 0.3,
+        minHeight: '1rem',  // ← фиксна висина секогаш
+        visibility: msg ? 'visible' : 'hidden'  // ← скриено но простор е резервиран
+    }}>
+        {msg || ' '}
+    </Typography>
 );
 
-const SearchableSingleSelect = ({label, value, onChange, options, getLabel, getId, minWidth = 350, colors, error}) => {
+// ─── SINGLE SELECT ────────────────────────────────────────────────────────────
+const SingleSelect = ({label, value, onChange, options, getLabel, getId, error, fullWidth, minWidth = 260, size = 'small'}) => {
     const [search, setSearch] = useState('');
-
     const filtered = useMemo(() => {
         if (!search) return options;
         return options.filter(o => getLabel(o).toLowerCase().includes(search.toLowerCase()));
     }, [search, options, getLabel]);
 
     return (
-        <FormControl size="small" sx={{minWidth, bgcolor: '#fff'}} error={!!error}>
-            <InputLabel sx={error ? {color: '#d32f2f'} : {}}>{label}</InputLabel>
+        <FormControl size={size} error={!!error}
+                     sx={{minWidth: '300px', maxWidth: '300px'}}>
+            <InputLabel>{label}</InputLabel>
             <Select
                 label={label} value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onClose={() => setSearch('')}
-                MenuProps={{...MENU_PROPS, autoFocus: false}}
-                sx={error ? {
-                    '& .MuiOutlinedInput-notchedOutline': {borderColor: '#d32f2f !important'}
-                } : {}}
+                // endAdornment={<InputAdornment position="end" sx={{mr: 2}}></InputAdornment>}
+
+                MenuProps={{
+                    anchorOrigin: {vertical: 'bottom', horizontal: 'left'},
+                    transformOrigin: {vertical: 'top', horizontal: 'left'},
+                    autoFocus: false,
+                    slotProps: {paper: {sx: {maxHeight: 320, boxShadow: '0 4px 20px rgba(0,0,0,0.12)'}}}
+                }}
             >
                 <ListSubheader sx={{p: 1, bgcolor: '#fff'}}>
-                    <TextField
-                        size="small" fullWidth placeholder="Пребарај..."
-                        autoFocus value={search}
-                        onChange={(e) => {e.stopPropagation(); setSearch(e.target.value);}}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        slotProps={{
-                            input: {
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon fontSize="small"/>
-                                    </InputAdornment>
-                                )
-                            }
-                        }}
+                    <TextField size="small" fullWidth placeholder="Пребарај..."
+                               autoFocus value={search}
+                               onChange={(e) => {e.stopPropagation(); setSearch(e.target.value);}}
+                               onKeyDown={(e) => e.stopPropagation()}
+                               InputProps={{startAdornment: <InputAdornment position="start"><SearchIcon sx={{fontSize: 14, color: '#999'}}/></InputAdornment>}}
                     />
                 </ListSubheader>
-                <ListSubheader sx={{py: 0.3, bgcolor: '#f9f9f9', lineHeight: '1.8'}}/>
-                {filtered.map(o => (
-                    <MenuItem key={getId(o)} value={getId(o)}>{getLabel(o)}</MenuItem>
-                ))}
+                {filtered.length === 0
+                    ? <MenuItem disabled><Typography variant="caption" color="text.secondary">Нема резултати</Typography></MenuItem>
+                    : filtered.map(o => (
+                        <MenuItem key={getId(o)} value={getId(o)} sx={{fontSize: '0.85rem', py: 0.8}}>
+                            {getLabel(o)}
+                        </MenuItem>
+                    ))
+                }
             </Select>
-            <ErrorText msg={error}/>
+            <Err msg={error}/>
         </FormControl>
     );
 };
 
-const SearchableMultiSelect = ({label, value, onChange, options, getLabel, getId, maxWidth, colors, error}) => {
+// ─── MULTI SELECT ─────────────────────────────────────────────────────────────
+const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, theme, fullWidth, minWidth = 260}) => {
     const [search, setSearch] = useState('');
-
     const filtered = useMemo(() => {
         if (!search) return options;
         return options.filter(o => getLabel(o).toLowerCase().includes(search.toLowerCase()));
     }, [search, options, getLabel]);
 
     return (
-        <FormControl fullWidth size="small" sx={maxWidth ? {maxWidth} : {}} error={!!error}>
-            <InputLabel sx={error ? {color: '#d32f2f'} : {}}>{label}</InputLabel>
+        <FormControl size="small" error={!!error}
+                     sx={{minWidth: '300px', maxWidth: '300px'}}>
+            <InputLabel>{label}</InputLabel>
             <Select
                 multiple label={label} value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onClose={() => setSearch('')}
                 input={<OutlinedInput label={label}/>}
+                // endAdornment={<InputAdornment position="end" sx={{mr: 2}}></InputAdornment>}
+
                 renderValue={(selected) => (
-                    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
+                    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.4, py: 0.2}}>
                         {selected.map(id => {
                             const item = options.find(o => getId(o) === id);
                             return (
-                                <Chip key={id} label={item ? getLabel(item) : id}
-                                      size="small"
-                                      sx={{bgcolor: colors?.chipBg || '#E8D8A0', fontSize: '0.75rem'}}/>
+                                <Chip key={id} label={item ? getLabel(item) : id} size="small"
+                                      sx={{bgcolor: theme?.chipBg || '#F5F5F5', color: theme?.chipColor || '#333',
+                                          fontSize: '0.68rem', height: 20, fontWeight: 500}}
+                                />
                             );
                         })}
                     </Box>
                 )}
-                MenuProps={{...MENU_PROPS, autoFocus: false}}
-                sx={error ? {
-                    '& .MuiOutlinedInput-notchedOutline': {borderColor: '#d32f2f !important'}
-                } : {}}
+                MenuProps={{
+                    anchorOrigin: {vertical: 'bottom', horizontal: 'left'},
+                    transformOrigin: {vertical: 'top', horizontal: 'left'},
+                    autoFocus: false,
+                    slotProps: {paper: {sx: {maxHeight: 320, boxShadow: '0 4px 20px rgba(0,0,0,0.12)'}}}
+                }}
             >
                 <ListSubheader sx={{p: 1, bgcolor: '#fff'}}>
-                    <TextField
-                        size="small" fullWidth placeholder="Пребарај..."
-                        autoFocus value={search}
-                        onChange={(e) => {e.stopPropagation(); setSearch(e.target.value);}}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        slotProps={{
-                            input: {
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon fontSize="small"/>
-                                    </InputAdornment>
-                                )
-                            }
-                        }}
+                    <TextField size="small" fullWidth placeholder="Пребарај..."
+                               autoFocus value={search}
+                               onChange={(e) => {e.stopPropagation(); setSearch(e.target.value);}}
+                               onKeyDown={(e) => e.stopPropagation()}
+                               InputProps={{startAdornment: <InputAdornment position="start"><SearchIcon sx={{fontSize: 14, color: '#999'}}/></InputAdornment>}}
                     />
                 </ListSubheader>
-                <ListSubheader sx={{py: 0.3, bgcolor: '#f9f9f9', lineHeight: '1.8'}}/>
+                <ListSubheader sx={{py: 0.5, lineHeight: '1.8', bgcolor: '#FAFAFA'}}>
+                    <Typography variant="caption" color="text.secondary">
+                        {filtered.length === 0 ? 'Нема резултати' : `${value.length} избрано · ${filtered.length} вкупно`}
+                    </Typography>
+                </ListSubheader>
                 {filtered.map(o => (
-                    <MenuItem key={getId(o)} value={getId(o)}>{getLabel(o)}</MenuItem>
+                    <MenuItem key={getId(o)} value={getId(o)} sx={{fontSize: '0.85rem', py: 0.8}}>
+                        {getLabel(o)}
+                    </MenuItem>
                 ))}
             </Select>
-            <ErrorText msg={error}/>
+            <Err msg={error}/>
         </FormControl>
     );
 };
 
-const ActionButton = ({children, onClick, disabled, loading, colors}) => (
-    <Button fullWidth variant="contained" onClick={onClick} disabled={disabled}
+// ─── SWITCH CARD ──────────────────────────────────────────────────────────────
+const SwitchCard = ({label, checked, onChange, theme}) => (
+    <Box sx={{
+        border: `1px solid ${checked ? theme.border : '#E8E8E8'}`,
+        borderRadius: '8px', px: 2, py: 1.2,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        bgcolor: checked ? theme.chipBg : '#fff',
+        transition: 'all 0.2s', cursor: 'pointer',
+        '&:hover': {borderColor: theme.border}
+    }} onClick={() => onChange(!checked)}>
+        <Box>
+            <Typography sx={{fontSize: '0.75rem', fontWeight: 600, color: checked ? theme.accentDark : '#666',
+                letterSpacing: '0.06em', textTransform: 'uppercase'}}>
+                {label}
+            </Typography>
+            <Typography sx={{fontSize: '0.68rem', color: checked ? theme.accent : '#999', mt: 0.2}}>
+                {checked ? 'Да' : 'Не'}
+            </Typography>
+        </Box>
+        <Switch
+            checked={checked}
+            onChange={(e) => {e.stopPropagation(); onChange(e.target.checked);}}
+            size="small"
             sx={{
-                bgcolor: colors?.buttonBg || '#D4A843', color: '#fff',
-                fontWeight: 'bold', fontSize: '0.8rem',
-                '&:hover': {filter: 'brightness(0.9)'},
-                textTransform: 'none', py: 1, lineHeight: 1.4
-            }}>
-        {loading ? 'Се зачувува...' : children}
-    </Button>
+                '& .MuiSwitch-switchBase.Mui-checked': {color: theme.accent},
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {bgcolor: theme.accent}
+            }}
+        />
+    </Box>
 );
 
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
 const PredmetForm = () => {
     const [searchParams] = useSearchParams();
     const tipDelovnik = searchParams.get("tipDelovnik") || "Dobiena";
     const isDobiena = tipDelovnik === "Dobiena";
-    const COLORS = isDobiena ? DOBIENA_COLORS : ISPRATENA_COLORS;
+    const T = isDobiena ? DOBIENA : ISPRATENA;
 
     const today = dayjs();
     const fileInputRef = useRef(null);
+    const dropRef = useRef(null);
 
     const [form, setForm] = useState({
         datumZaveduvanje: today,
@@ -223,81 +263,68 @@ const PredmetForm = () => {
     });
 
     const [formErrors, setFormErrors] = useState({});
-    const [attachedFiles, setAttachedFiles] = useState([]);
     const [submitted, setSubmitted] = useState(false);
+    const [attachedFiles, setAttachedFiles] = useState([]);
+    const [isDragging, setIsDragging] = useState(false);
 
-    const {prioritet, tipPosta, statusPredmet} = useEnums();
+    const {prioritet: prioritetEnum, tipPosta: tipPostaEnum, statusPredmet: statusEnum} = useEnums();
     const {createPosta, loading, error, nextRedenBroj} = usePredmeti();
-    const {isprakjaci, loading: loadingIsprakjaci} = useIsprakjac();
-    const {arhiva, loading: loadingArhiva} = useArhiva();
-    const {vidPredmetD, loading: loadingVidPredmetD} = useVidPredmetDobieno();
-    const {vidPredmetI, loading: loadingVidPredmetI} = useVidPredmetIspratena();
-    const {odgovornoLice, loading: loadingOdgovornoLice} = useUsersOdgovornoLice();
+    const {isprakjaci, loading: lI} = useIsprakjac();
+    const {arhiva, loading: lA} = useArhiva();
+    const {vidPredmetD, loading: lVD} = useVidPredmetDobieno();
+    const {vidPredmetI, loading: lVI} = useVidPredmetIspratena();
+    const {odgovornoLice, loading: lO} = useUsersOdgovornoLice();
     const {user} = useAuth();
     const {getOrgEdinicaById} = useOrgEdinica();
     const [orgEdinica, setOrgEdinica] = useState(null);
 
+    const roditelId = searchParams.get("roditelId") ? Number(searchParams.get("roditelId")) : null;
+    const tipOdgovor = searchParams.get("tipOdgovor") || null;
+    const isOdgovor = !!roditelId;
+
+    const { predmet: roditel } = usePredmetDetails(roditelId);
     useEffect(() => {
         if (user?.organizaciskaEdinicaId) {
-            getOrgEdinicaById(user.organizaciskaEdinicaId).then(res => setOrgEdinica(res));
+            getOrgEdinicaById(user.organizaciskaEdinicaId).then(setOrgEdinica);
         }
     }, [user?.organizaciskaEdinicaId]);
 
-    const isPageLoading = loadingIsprakjaci || loadingArhiva || loadingVidPredmetD || loadingVidPredmetI || loadingOdgovornoLice;
+    const isPageLoading = lI || lA || lVD || lVI || lO;
 
-    const handleChange = (field, value) => {
-        setForm(prev => ({...prev, [field]: value}));
-        // Исчисти грешка при промена
-        if (submitted) {
-            setFormErrors(prev => ({...prev, [field]: null}));
-        }
+    const hc = (field, value) => {
+        setForm(p => ({...p, [field]: value}));
+        if (submitted) setFormErrors(p => ({...p, [field]: null}));
     };
 
-    const handleFileAttach = (e) => {
-        const files = Array.from(e.target.files);
-        setAttachedFiles(prev => [...prev, ...files]);
-    };
-
-    const handleRemoveFile = (index) => {
-        setAttachedFiles(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const validate = (currentForm = form) => {
-        const errors = {};
-
-        if (!currentForm.statusPredmet) errors.statusPredmet = "Задолжително поле";
-        if (!currentForm.datumZaveduvanje) errors.datumZaveduvanje = "Задолжително поле";
-        if (!currentForm.tipPosta) errors.tipPosta = "Задолжително поле";
-        if (!currentForm.isprakjacId) errors.isprakjacId = "Задолжително поле";
-        if (!currentForm.sodrzina?.trim()) errors.sodrzina = "Задолжително поле";
-        if (currentForm.odgovornoLiceId.length === 0) errors.odgovornoLiceId = "Задолжително поле";
-
+    const validate = (f = form) => {
+        const e = {};
+        if (!f.statusPredmet) e.statusPredmet = "Задолжително";
+        if (!f.datumZaveduvanje) e.datumZaveduvanje = "Задолжително";
+        if (!f.tipPosta) e.tipPosta = "Задолжително";
+        if (!f.isprakjacId) e.isprakjacId = "Задолжително";
+        if (!f.sodrzina?.trim()) e.sodrzina = "Задолжително";
+        if (f.odgovornoLiceId.length === 0) e.odgovornoLiceId = "Задолжително";
         if (isDobiena) {
-            if (!currentForm.prioritet) errors.prioritet = "Задолжително поле";
-            if (!currentForm.brAktNivni?.trim()) errors.brAktNivni = "Задолжително поле";
-            // if (!currentForm.brAktArhivski?.trim()) errors.brAktArhivski = "Задолжително поле";
-            if (!currentForm.datumIsprakjanje) errors.datumIsprakjanje = "Задолжително поле";
-            if (currentForm.vidPredmetDobienaId.length === 0) errors.vidPredmet = "Задолжително поле";
+            if (!f.prioritet) e.prioritet = "Задолжително";
+            if (!f.brAktNivni?.trim()) e.brAktNivni = "Задолжително";
+            if (!f.brAktArhivski?.trim()) e.brAktArhivski = "Задолжително";
+            if (!f.datumIsprakjanje) e.datumIsprakjanje = "Задолжително";
+            if (f.vidPredmetDobienaId.length === 0) e.vidPredmet = "Задолжително";
         } else {
-            if (currentForm.vidPredmetIspratenaId.length === 0) errors.vidPredmet = "Задолжително поле";
+            if (f.vidPredmetIspratenaId.length === 0) e.vidPredmet = "Задолжително";
         }
-
-        return errors;
+        return e;
     };
 
-    // Live validation по submit
     useEffect(() => {
-        if (submitted) {
-            setFormErrors(validate());
-        }
+        if (submitted) setFormErrors(validate());
     }, [form, submitted]);
 
     const handleSubmit = async () => {
         setSubmitted(true);
-        const errors = validate();
-        setFormErrors(errors);
-        if (Object.keys(errors).length > 0) return;
-
+        const errs = validate();
+        setFormErrors(errs);
+        if (Object.keys(errs).length > 0) return;
         const payload = {
             datumZaveduvanje: form.datumZaveduvanje?.format('YYYY-MM-DD'),
             tipPosta: form.tipPosta,
@@ -316,466 +343,469 @@ const PredmetForm = () => {
                 brAktArhivski: form.brAktArhivski || null,
                 vidPredmetDobienaId: form.vidPredmetDobienaId,
             }),
-            ...(!isDobiena && {
-                vidPredmetIspratenaId: form.vidPredmetIspratenaId,
-            }),
+            ...(!isDobiena && {vidPredmetIspratenaId: form.vidPredmetIspratenaId}),
         };
-
         try {
-            await createPosta(payload, tipDelovnik);
+            await createPosta(
+                payload,
+                tipDelovnik,
+                tipOdgovor,
+                roditel?.redenBroj ?? null,
+                roditel?.godina ?? null,
+                roditel?.podBroj ?? null
+            );
             alert('Успешно зачувано!');
             setSubmitted(false);
             setFormErrors({});
         } catch (e) {
-            console.error("STATUS:", e.response?.status);
-            console.error("DATA:", JSON.stringify(e.response?.data));
+            console.error(e.response?.data);
         }
     };
 
-    const selectedIsprakjac = isprakjaci?.find(i => i.id === form.isprakjacId);
+    // const selectedIsprakjac = isprakjaci?.find(i => i.id === form.isprakjacId);
 
-    if (isPageLoading) {
-        return (
-            <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', minHeight: '60vh', gap: 2}}>
-                <CircularProgress sx={{color: COLORS.buttonBg}} size={48}/>
-                <Typography sx={{color: COLORS.labelColor, fontWeight: 'bold'}}>
-                    Ве молиме почекајте...
-                </Typography>
-            </Box>
-        );
-    }
+    if (isPageLoading) return (
+        <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', minHeight: '60vh', gap: 2}}>
+            <CircularProgress sx={{color: T.accent}} size={40}/>
+            <Typography sx={{color: '#888', fontSize: '0.85rem'}}>Се вчитуваат податоците...</Typography>
+        </Box>
+    );
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Container maxWidth="md" sx={{py: 2}}>
+            <Box sx={{bgcolor: '#F2F4F7', minHeight: '100vh', py: 2.5}}>
+                <Container maxWidth="xl">
 
-                {/* НАСЛОВ */}
-                <Box sx={{
-                    bgcolor: COLORS.headerBg,
-                    border: `2px solid ${COLORS.borderColor}`,
-                    borderRadius: '4px',
-                    textAlign: 'center',
-                    py: 0.8, mb: 2
-                }}>
-                    <Typography sx={{fontWeight: 'bold', fontSize: '1rem',
-                        color: isDobiena ? '#5A3000' : '#1A4A1A'}}>
-                        {isDobiena
-                            ? `Деловодник на добиена пошта за ${today.year()} година`
-                            : `Деловодник на испратена пошта за ${today.year()} година`
-                        }
-                    </Typography>
-                </Box>
+                    {/* ── HEADER CARD ── */}
+                    <Box sx={{
+                        background: T.gradient,
+                        borderRadius: '10px 10px 0 0',
+                        px: 3, py: 1.5,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                    }}>
+                        <Box>
+                            <Typography sx={{color: 'rgba(255,255,255,0.65)', fontSize: '0.62rem',
+                                fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', mb: 0.2}}>
+                                {isDobiena ? 'Добиена пошта' : 'Испратена пошта'}
+                            </Typography>
+                            <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '1rem', letterSpacing: '0.02em'}}>
+                                Нов предмет
+                            </Typography>
+                        </Box>
+                        <Box sx={{
+                            bgcolor: 'rgba(0,0,0,0.2)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: '8px', px: 2, py: 0.8,
+                            backdropFilter: 'blur(4px)'
+                        }}>
+                            <Typography sx={{color: 'rgba(255,255,255,0.6)', fontSize: '0.6rem',
+                                fontWeight: 600, letterSpacing: '0.1em', mb: 0.2}}>
+                                БРОЈ НА АКТ
+                            </Typography>
+                            <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '0.95rem'}}>
+                                {roditelId
+                                    ? `${roditel?.brAkt ?? '···'} / ${roditel?.redenBroj ?? '···'} / ${(roditel?.podBroj ?? 0) + 1} / ${roditel?.godina ?? today.year()}`
+                                    : `${orgEdinica?.code ?? '·····'} / ${nextRedenBroj ?? '···'} / 1 / ${today.year()}`
+                                }
+                            </Typography>
+                        </Box>
+                    </Box>
 
-                {/* СТАТУС */}
-                <Box sx={{mb: 1.5}}>
-                    <Label color={COLORS.labelColor}>Статус на предмет: <span style={{color:'red'}}>*</span></Label>
-                    <FormControl size="small"
-                                 sx={{mt: 0.5, minWidth: 350, bgcolor: '#fff'}}
-                                 error={!!formErrors.statusPredmet}>
-                        <InputLabel sx={formErrors.statusPredmet ? {color: '#d32f2f'} : {}}>
-                            Избери статус
-                        </InputLabel>
-                        <Select
-                            label="Избери статус"
-                            value={form.statusPredmet}
-                            onChange={(e) => handleChange('statusPredmet', e.target.value)}
-                            MenuProps={MENU_PROPS}
-                            sx={formErrors.statusPredmet ? {
-                                '& .MuiOutlinedInput-notchedOutline': {borderColor: '#d32f2f !important'}
-                            } : {}}
-                        >
-                            {statusPredmet.map(s => (
-                                <MenuItem key={s} value={s}>{s}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <ErrorText msg={formErrors.statusPredmet}/>
-                </Box>
+                    {/* ── CONTENT ── */}
+                    <Box sx={{
+                        border: '1px solid #E0E3E8',
+                        borderTop: 'none',
+                        borderRadius: '0 0 10px 10px',
+                        bgcolor: '#F8F9FB',
+                        p: 2.5
+                    }}>
 
+                        {/* ── РЕД 1: СТАТУС + ДАТУМ + ТИП ── */}
+                        <Section title="Регистрација" theme={T}>
+                            <Grid container spacing={2.5} alignItems="flex-start">
 
-                <Box sx={{
-                    bgcolor: COLORS.sectionBg,
-                    border: `1px solid ${COLORS.borderColor}`,
-                    borderRadius: '4px',
-                    p: 2.5
-                }}>
-                    {/* БР. НА АКТ + ДАТУМ */}
-                    <Grid container spacing={2} alignItems="center" sx={{mb: 2}}>
-                        <Grid item xs={12} sm={6}>
-                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap'}}>
-                                <Label color={COLORS.labelColor}>Број на актот:</Label>
-                                <Box sx={{bgcolor: isDobiena ? '#C8E0FF' : '#C8F0C8',cursor:'not-allowed', border: `1px solid ${COLORS.borderColor}`,
-                                    borderRadius: '3px', px: 1.5, py: 0.3}}>
-                                    <Typography sx={{fontWeight: 'bold', color: '#333', fontSize: '0.95rem'}}>
-                                        {orgEdinica?.code ?? '...'}
+                                {/* Статус — поголем */}
+                                <Grid item xs={12} md={5}>
+                                    <Typography sx={{fontSize: '0.68rem', color: formErrors.statusPredmet ? '#d32f2f' : '#888',
+                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
+                                        Статус на предмет *
                                     </Typography>
-                                </Box>
-                                <Typography sx={{fontWeight: 'bold'}}>-</Typography>
-                                <Box sx={{cursor:'not-allowed', bgcolor: isDobiena ? '#C8E0FF' : '#C8F0C8',
-                                    border: `1px solid ${COLORS.borderColor}`,
-                                    borderRadius: '3px', px: 1.5, py: 0.3}}>
-                                    <Typography sx={{fontWeight: 'bold',
-                                        color: isDobiena ? '#003080' : '#003800'}}>
-                                        {nextRedenBroj ?? '...'}
+                                    <SingleSelect
+                                        label="Избери статус"
+                                        value={form.statusPredmet}
+                                        onChange={(v) => hc('statusPredmet', v)}
+                                        options={statusEnum.map(s => ({id: s, naziv: s}))}
+                                        getLabel={(o) => o.naziv}
+                                        getId={(o) => o.id}
+                                        error={formErrors.statusPredmet}
+                                        fullWidth
+                                        size="medium"
+                                    />
+                                </Grid>
+
+                                {/* Датум */}
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <Typography sx={{fontSize: '0.68rem', color: formErrors.datumZaveduvanje ? '#d32f2f' : '#888',
+                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
+                                        Датум на заведување *
                                     </Typography>
-                                </Box>
-                                <Typography sx={{fontWeight: 'bold'}}>/</Typography>
-                                <Box sx={{cursor:'not-allowed', bgcolor: isDobiena ? '#C8E0FF' : '#C8F0C8',
-                                    border: `1px solid ${COLORS.borderColor}`,
-                                    borderRadius: '3px', px: 1.5, py: 0.3}}>
-                                    <Typography sx={{fontWeight: 'bold',
-                                        color: isDobiena ? '#003080' : '#003800'}}>1</Typography>
-                                </Box>
-                                <Typography sx={{fontWeight: 'bold', color: '#333'}}>{today.year()} год.</Typography>
-                            </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                <Label required color={COLORS.labelColor} hasError={!!formErrors.datumZaveduvanje}>
-                                    Датум на заведување:
-                                </Label>
-                                <Box>
                                     <DatePicker
                                         value={form.datumZaveduvanje}
-                                        onChange={(val) => handleChange('datumZaveduvanje', val)}
+                                        onChange={(v) => hc('datumZaveduvanje', v)}
                                         slotProps={{textField: {
-                                                size: 'small',
+                                                fullWidth: true,
                                                 error: !!formErrors.datumZaveduvanje,
-                                                sx: {bgcolor: '#fff', width: 160}
+                                                helperText: formErrors.datumZaveduvanje,
                                             }}}
                                     />
-                                    <ErrorText msg={formErrors.datumZaveduvanje}/>
-                                </Box>
-                            </Box>
-                        </Grid>
-                    </Grid>
+                                </Grid>
 
-                    <Divider sx={{borderColor: COLORS.borderColor, mb: 2}}/>
-
-                    {/* ТИП + ПРИОРИТЕТ */}
-                    <Grid container spacing={2} sx={{mb: 2}}>
-                        <Grid item xs={12} sm={isDobiena ? 6 : 12}>
-                            <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                                <Label required color={COLORS.labelColor} hasError={!!formErrors.tipPosta}>
-                                    Тип на {isDobiena ? 'добиена' : 'испратена'} пошта:
-                                </Label>
-                                <Box sx={{
-                                    border: `1px solid ${formErrors.tipPosta ? '#d32f2f' : COLORS.borderColor}`,
-                                    borderRadius: '3px', bgcolor: '#fff', px: 1.5, py: 0.5
-                                }}>
-                                    <RadioGroup value={form.tipPosta}
-                                                onChange={(e) => handleChange('tipPosta', e.target.value)}>
-                                        {(tipPosta.length > 0 ? tipPosta : ['писмо', 'телеграма']).map(t => (
-                                            <FormControlLabel key={t} value={t}
-                                                              control={<Radio size="small" sx={{py: 0.2,
-                                                                  '&.Mui-checked': {color: COLORS.buttonBg}}}/>}
-                                                              label={<Typography sx={{fontSize: '0.85rem'}}>{t}</Typography>}
-                                                              sx={{m: 0}}/>
-                                        ))}
-                                    </RadioGroup>
-                                </Box>
-                            </Box>
-                            <ErrorText msg={formErrors.tipPosta}/>
-                        </Grid>
-
-                        {isDobiena && (
-                            <Grid item xs={12} sm={6}>
-                                <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                                    <Label required color={COLORS.labelColor} hasError={!!formErrors.prioritet}>
-                                        Приоритет:
-                                    </Label>
+                                {/* Тип */}
+                                <Grid item xs={12} sm={6} md={2}>
+                                    <Typography sx={{fontSize: '0.68rem', color: formErrors.tipPosta ? '#d32f2f' : '#888',
+                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
+                                        Тип *
+                                    </Typography>
                                     <Box sx={{
-                                        border: `1px solid ${formErrors.prioritet ? '#d32f2f' : COLORS.borderColor}`,
-                                        borderRadius: '3px', bgcolor: '#fff', px: 1.5, py: 0.5
+                                        border: `1px solid ${formErrors.tipPosta ? '#d32f2f' : '#D8D8D8'}`,
+                                        borderRadius: '8px', px: 1.5, py: 1, bgcolor: '#fff'
                                     }}>
-                                        <RadioGroup value={form.prioritet}
-                                                    onChange={(e) => handleChange('prioritet', e.target.value)}>
-                                            {(prioritet.length > 0 ? prioritet : ['Висок', 'Нормален']).map(p => (
-                                                <FormControlLabel key={p} value={p}
-                                                                  control={<Radio size="small" sx={{py: 0.2,
-                                                                      '&.Mui-checked': {color: COLORS.buttonBg}}}/>}
-                                                                  label={<Typography sx={{fontSize: '0.85rem'}}>{p}</Typography>}
-                                                                  sx={{m: 0}}/>
+                                        <RadioGroup value={form.tipPosta}
+                                                    onChange={(e) => hc('tipPosta', e.target.value)}>
+                                            {(tipPostaEnum.length > 0 ? tipPostaEnum : ['писмо', 'телеграма']).map(t => (
+                                                <FormControlLabel key={t} value={t}
+                                                                  control={<Radio size="small" sx={{'&.Mui-checked': {color: T.accent}}}/>}
+                                                                  label={<Typography sx={{fontSize: '0.82rem'}}>{t}</Typography>}
+                                                                  sx={{m: 0, mb: 0.3}}/>
                                             ))}
                                         </RadioGroup>
                                     </Box>
-                                </Box>
-                                <ErrorText msg={formErrors.prioritet}/>
+                                    <Err msg={formErrors.tipPosta}/>
+                                </Grid>
+
+                                {/* Приоритет — само добиена */}
+                                {isDobiena && (
+                                    <Grid item xs={12} sm={6} md={2}>
+                                        <Typography sx={{fontSize: '0.68rem', color: formErrors.prioritet ? '#d32f2f' : '#888',
+                                            fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
+                                            Приоритет *
+                                        </Typography>
+                                        <Box sx={{
+                                            border: `1px solid ${formErrors.prioritet ? '#d32f2f' : '#D8D8D8'}`,
+                                            borderRadius: '8px', px: 1.5, py: 1, bgcolor: '#fff'
+                                        }}>
+                                            <RadioGroup value={form.prioritet}
+                                                        onChange={(e) => hc('prioritet', e.target.value)}>
+                                                {(prioritetEnum.length > 0 ? prioritetEnum : ['Висок', 'Нормален']).map(p => (
+                                                    <FormControlLabel key={p} value={p}
+                                                                      control={<Radio size="small" sx={{'&.Mui-checked': {color: T.accent}}}/>}
+                                                                      label={<Typography sx={{fontSize: '0.82rem'}}>{p}</Typography>}
+                                                                      sx={{m: 0, mb: 0.3}}/>
+                                                ))}
+                                            </RadioGroup>
+                                        </Box>
+                                        <Err msg={formErrors.prioritet}/>
+                                    </Grid>
+                                )}
                             </Grid>
-                        )}
-                    </Grid>
+                        </Section>
 
-                    <Divider sx={{borderColor: COLORS.borderColor, mb: 2}}/>
+                        {/* ── ИСПРАЌАЧ ── */}
+                        <Section title={isDobiena ? "Испраќач" : "Испратено до"} theme={T}>
+                            <Grid container spacing={2.5}>
 
-                    {/* ИСПРАЌАЧ */}
-                    <Box sx={{mb: 2}}>
-                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 1}}>
-                            <Label required color={COLORS.labelColor} hasError={!!formErrors.isprakjacId}>
-                                {isDobiena ? 'Испраќач' : 'Испратено до'}:
-                            </Label>
-                            {selectedIsprakjac && (
-                                <Typography sx={{fontWeight: 'bold', color: '#333'}}>
-                                    {selectedIsprakjac.naziv}
-                                </Typography>
-                            )}
-                        </Box>
-                        <SearchableSingleSelect
-                            label={isDobiena ? "Избери испраќач" : "Избери примач"}
-                            value={form.isprakjacId}
-                            onChange={(val) => handleChange('isprakjacId', val)}
-                            options={isprakjaci || []}
-                            getLabel={(o) => o.naziv}
-                            getId={(o) => o.id}
-                            minWidth={400}
-                            colors={COLORS}
-                            error={formErrors.isprakjacId}
-                        />
-                    </Box>
+                                {/* Испраќач dropdown — поголем */}
+                                <Grid item xs={12} md={isDobiena ? 5 : 12}>
+                                    {/*{selectedIsprakjac && (*/}
+                                    {/*    <Box sx={{display: 'flex', alignItems: 'center', gap: 0.6, mb: 1}}>*/}
+                                    {/*        <CheckCircleIcon sx={{fontSize: 13, color: T.accent}}/>*/}
+                                    {/*        <Typography sx={{fontSize: '0.75rem', color: T.accentDark, fontWeight: 600}}>*/}
+                                    {/*            {selectedIsprakjac.naziv}*/}
+                                    {/*        </Typography>*/}
+                                    {/*    </Box>*/}
+                                    {/*)}*/}
+                                    <SingleSelect
+                                        label={isDobiena ? "Избери испраќач *" : "Избери примач *"}
+                                        value={form.isprakjacId}
+                                        onChange={(v) => hc('isprakjacId', v)}
+                                        options={isprakjaci || []}
+                                        getLabel={(o) => o.naziv}
+                                        getId={(o) => o.id}
+                                        error={formErrors.isprakjacId}
+                                        fullWidth
+                                        size="medium"
+                                    />
+                                </Grid>
 
-                    {/* БР. АКТ — само добиена */}
-                    {isDobiena && (
+                                {/* Бројки — само добиена */}
+                                {isDobiena && (
+                                    <>
+                                        <Grid item xs={12} sm={6} md={3.5}>
+                                            <TextField fullWidth
+                                                       label="Број на акт (нивни) *"
+                                                       placeholder="пр. 12.1.1-924/2-25"
+                                                       value={form.brAktNivni}
+                                                       error={!!formErrors.brAktNivni}
+                                                       helperText={formErrors.brAktNivni || " "}
+                                                       onChange={(e) => hc('brAktNivni', e.target.value)}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6} md={3.5}>
+                                            <TextField fullWidth
+                                                       label="Број на акт (архивски) *"
+                                                       value={form.brAktArhivski}
+                                                       error={!!formErrors.brAktArhivski}
+                                                       helperText={formErrors.brAktArhivski}
+                                                       onChange={(e) => hc('brAktArhivski', e.target.value)}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} sm={6} md={4}>
+                                            <DatePicker
+                                                label="Датум на испраќање *"
+                                                value={form.datumIsprakjanje}
+                                                onChange={(v) => hc('datumIsprakjanje', v)}
+                                                slotProps={{textField: {
+                                                        fullWidth: true,
+                                                        error: !!formErrors.datumIsprakjanje,
+                                                        helperText: formErrors.datumIsprakjanje || " ",
+                                                    }}}
+                                            />
+                                        </Grid>
+                                    </>
+                                )}
+                            </Grid>
+                        </Section>
+
+                        {/* ── ПРЕДМЕТ ── */}
+                        <Section title="Предмет" theme={T}>
+                            <Grid container spacing={2.5}>
+                                <Grid item xs={12} md={4}>
+                                    <Typography sx={{fontSize: '0.68rem', color: formErrors.vidPredmet ? '#d32f2f' : '#888',
+                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
+                                        Вид на предмет *
+                                    </Typography>
+                                    {isDobiena ? (
+                                        <MultiSelect
+                                            label="Вид на предмет"
+                                            value={form.vidPredmetDobienaId}
+                                            onChange={(v) => hc('vidPredmetDobienaId', v)}
+                                            options={vidPredmetD || []}
+                                            getLabel={(o) => o.naziv}
+                                            getId={(o) => o.id}
+                                            error={formErrors.vidPredmet}
+                                            theme={T} fullWidth
+                                        />
+                                    ) : (
+                                        <MultiSelect
+                                            label="Вид на предмет"
+                                            value={form.vidPredmetIspratenaId}
+                                            onChange={(v) => hc('vidPredmetIspratenaId', v)}
+                                            options={vidPredmetI || []}
+                                            getLabel={(o) => o.naziv}
+                                            getId={(o) => o.id}
+                                            error={formErrors.vidPredmet}
+                                            theme={T} fullWidth
+                                        />
+                                    )}
+                                </Grid>
+                                <Grid item xs={12} md={8}>
+                                    <Typography sx={{fontSize: '0.68rem', color: formErrors.sodrzina ? '#d32f2f' : '#888',
+                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
+                                        Содржина *
+                                    </Typography>
+                                    <TextField fullWidth multiline rows={5}
+                                               label=""
+                                               placeholder="Внесете кратка содржина на предметот..."
+                                               value={form.sodrzina}
+                                               error={!!formErrors.sodrzina}
+                                               helperText={formErrors.sodrzina}
+                                               onChange={(e) => hc('sodrzina', e.target.value)}
+                                               sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'},minWidth:800}}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </Section>
+
+                        {/* ── ДОДЕЛУВАЊЕ + ДОПОЛНИТЕЛНИ (ред) ── */}
                         <Grid container spacing={2} sx={{mb: 2}}>
-                            <Grid item xs={12} sm={4}>
-                                <Label required color={COLORS.labelColor} hasError={!!formErrors.brAktNivni}>
-                                    Број на акт (нивни):
-                                </Label>
-                                <TextField fullWidth size="small"
-                                           placeholder="пр. 12.1.1-924/2-25"
-                                           value={form.brAktNivni}
-                                           error={!!formErrors.brAktNivni}
-                                           helperText={formErrors.brAktNivni}
-                                           onChange={(e) => handleChange('brAktNivni', e.target.value)}
-                                           sx={{mt: 0.5, bgcolor: '#fff'}}/>
+
+                            {/* Доделување */}
+                            <Grid item xs={12} md={7}>
+                                <Section title="Доделување" theme={T}>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12}>
+                                            <MultiSelect
+                                                label="Одговорно лице *"
+                                                value={form.odgovornoLiceId}
+                                                onChange={(v) => hc('odgovornoLiceId', v)}
+                                                options={odgovornoLice || []}
+                                                getLabel={(o) => `${o.ime} ${o.prezime}`}
+                                                getId={(o) => o.id}
+                                                error={formErrors.odgovornoLiceId}
+                                                theme={T} fullWidth
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <MultiSelect
+                                                label="Архива"
+                                                value={form.arhivaId}
+                                                onChange={(v) => hc('arhivaId', v)}
+                                                options={arhiva || []}
+                                                getLabel={(o) => o.naziv}
+                                                getId={(o) => o.id}
+                                                theme={T} fullWidth
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Section>
                             </Grid>
-                            <Grid item xs={12} sm={4}>
-                                <Label required color={COLORS.labelColor} hasError={!!formErrors.datumIsprakjanje}>
-                                    Датум на испраќање:
-                                </Label>
-                                <DatePicker
-                                    value={form.datumIsprakjanje}
-                                    onChange={(val) => handleChange('datumIsprakjanje', val)}
-                                    slotProps={{textField: {
-                                            size: 'small', fullWidth: true,
-                                            error: !!formErrors.datumIsprakjanje,
-                                            helperText: formErrors.datumIsprakjanje,
-                                            sx: {mt: 0.5, bgcolor: '#fff'}
-                                        }}}/>
-                            </Grid>
-                            <Grid item xs={12} sm={4}>
-                                <Label color={COLORS.labelColor}
-                                       // hasError={!!formErrors.brAktArhivski}
-                                >
-                                    Број на акт (архивски):
-                                </Label>
-                                <TextField fullWidth size="small"
-                                           value={form.brAktArhivski}
-                                           error={!!formErrors.brAktArhivski}
-                                           helperText={formErrors.brAktArhivski}
-                                           onChange={(e) => handleChange('brAktArhivski', e.target.value)}
-                                           sx={{mt: 0.5, bgcolor: '#fff'}}/>
+
+                            {/* Дополнителни */}
+                            <Grid item xs={12} md={5}>
+                                <Section title="Дополнителни" theme={T}>
+                                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
+                                        <SwitchCard
+                                            label="Информативна пошта"
+                                            checked={form.informativnaPosta}
+                                            onChange={(v) => hc('informativnaPosta', v)}
+                                            theme={T}
+                                        />
+                                        <SwitchCard
+                                            label="Реализирано"
+                                            checked={form.realizirano}
+                                            onChange={(v) => hc('realizirano', v)}
+                                            theme={T}
+                                        />
+                                    </Box>
+                                </Section>
                             </Grid>
                         </Grid>
-                    )}
 
-                    <Divider sx={{borderColor: COLORS.borderColor, mb: 2}}/>
-
-                    {/* ВИД НА ПРЕДМЕТ */}
-                    <Box sx={{mb: 1.5}}>
-                        <Label required color={COLORS.labelColor} hasError={!!formErrors.vidPredmet}>
-                            Вид на предмет:
-                        </Label>
-                        <Box sx={{mt: 0.5}}>
-                            {isDobiena ? (
-                                <SearchableMultiSelect
-                                    label="Избери вид"
-                                    value={form.vidPredmetDobienaId}
-                                    onChange={(val) => handleChange('vidPredmetDobienaId', val)}
-                                    options={vidPredmetD || []}
-                                    getLabel={(o) => o.naziv}
-                                    getId={(o) => o.id}
-                                    maxWidth={450}
-                                    colors={COLORS}
-                                    error={formErrors.vidPredmet}
-                                />
-                            ) : (
-                                <SearchableMultiSelect
-                                    label="Избери вид"
-                                    value={form.vidPredmetIspratenaId}
-                                    onChange={(val) => handleChange('vidPredmetIspratenaId', val)}
-                                    options={vidPredmetI || []}
-                                    getLabel={(o) => o.naziv}
-                                    getId={(o) => o.id}
-                                    maxWidth={450}
-                                    colors={COLORS}
-                                    error={formErrors.vidPredmet}
-                                />
-                            )}
-                        </Box>
-                    </Box>
-
-                    {/* СОДРЖИНА */}
-                    <Box sx={{mb: 2}}>
-                        <Label required color={COLORS.labelColor} hasError={!!formErrors.sodrzina}>
-                            Содржина:
-                        </Label>
-                        <TextField fullWidth multiline rows={4}
-                                   placeholder="Кратка содржина на предметот..."
-                                   value={form.sodrzina}
-                                   error={!!formErrors.sodrzina}
-                                   helperText={formErrors.sodrzina}
-                                   onChange={(e) => handleChange('sodrzina', e.target.value)}
-                                   sx={{mt: 0.5, bgcolor: '#fff'}}/>
-                    </Box>
-
-                    <Divider sx={{borderColor: COLORS.borderColor, mb: 2}}/>
-
-                    {/* ОДГОВОРНО ЛИЦЕ */}
-                    <Box sx={{mb: 1.5}}>
-                        <Label required color={COLORS.labelColor} hasError={!!formErrors.odgovornoLiceId}>
-                            Одговорно лице:
-                        </Label>
-                        <Box sx={{mt: 0.5}}>
-                            <SearchableMultiSelect
-                                label="Избери одговорно лице"
-                                value={form.odgovornoLiceId}
-                                onChange={(val) => handleChange('odgovornoLiceId', val)}
-                                options={odgovornoLice || []}
-                                getLabel={(o) => `${o.ime} ${o.prezime} — ${o.uloga}`}
-                                getId={(o) => o.id}
-                                maxWidth={550}
-                                colors={COLORS}
-                                error={formErrors.odgovornoLiceId}
+                        {/* ── ЗАБЕЛЕШКА ── */}
+                        <Section title="Забелешка" theme={T}>
+                            <TextField fullWidth multiline rows={2}
+                                       label=""
+                                       placeholder="Опционална забелешка..."
+                                       value={form.zabeleska}
+                                       onChange={(e) => hc('zabeleska', e.target.value)}
+                                       sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}}}
                             />
-                        </Box>
-                    </Box>
+                        </Section>
 
-                    {/* ИНФОРМАТИВНА ПОШТА */}
-                    <FieldRow label="Информативна пошта" labelColor={COLORS.labelColor}>
-                        <RadioGroup row
-                                    value={form.informativnaPosta ? "da" : "ne"}
-                                    onChange={(e) => handleChange('informativnaPosta', e.target.value === 'da')}>
-                            <FormControlLabel value="da"
-                                              control={<Radio size="small" sx={{'&.Mui-checked': {color: COLORS.buttonBg}}}/>}
-                                              label={<Typography sx={{fontSize: '0.85rem'}}>Да</Typography>}/>
-                            <FormControlLabel value="ne"
-                                              control={<Radio size="small" sx={{'&.Mui-checked': {color: COLORS.buttonBg}}}/>}
-                                              label={<Typography sx={{fontSize: '0.85rem'}}>Не</Typography>}/>
-                        </RadioGroup>
-                    </FieldRow>
-
-                    {/* РЕАЛИЗИРАНО */}
-                    <FieldRow label="Реализирано" labelColor={COLORS.labelColor}>
-                        <RadioGroup row
-                                    value={form.realizirano ? "da" : "ne"}
-                                    onChange={(e) => handleChange('realizirano', e.target.value === 'da')}>
-                            <FormControlLabel value="da"
-                                              control={<Radio size="small" sx={{'&.Mui-checked': {color: COLORS.buttonBg}}}/>}
-                                              label={<Typography sx={{fontSize: '0.85rem'}}>Да</Typography>}/>
-                            <FormControlLabel value="ne"
-                                              control={<Radio size="small" sx={{'&.Mui-checked': {color: COLORS.buttonBg}}}/>}
-                                              label={<Typography sx={{fontSize: '0.85rem'}}>Не</Typography>}/>
-                        </RadioGroup>
-                    </FieldRow>
-
-                    {/* АРХИВА */}
-                    <Box sx={{mb: 1.5}}>
-                        <Label color={COLORS.labelColor}>Архива:</Label>
-                        <Box sx={{mt: 0.5}}>
-                            <SearchableMultiSelect
-                                label="Избери архива"
-                                value={form.arhivaId}
-                                onChange={(val) => handleChange('arhivaId', val)}
-                                options={arhiva || []}
-                                getLabel={(o) => o.naziv}
-                                getId={(o) => o.id}
-                                maxWidth={400}
-                                colors={COLORS}
-                            />
-                        </Box>
-                    </Box>
-
-                    {/* ЗАБЕЛЕШКА */}
-                    <Box sx={{mb: 2}}>
-                        <Label color={COLORS.labelColor}>Забелешка:</Label>
-                        <TextField fullWidth multiline rows={3}
-                                   value={form.zabeleska}
-                                   onChange={(e) => handleChange('zabeleska', e.target.value)}
-                                   sx={{mt: 0.5, bgcolor: '#fff'}}/>
-                    </Box>
-
-                    <Divider sx={{borderColor: COLORS.borderColor, mb: 2}}/>
-
-                    {/* СКЕНИРАНИ ДОКУМЕНТИ */}
-                    <Box sx={{mb: 2}}>
-                        <Typography sx={{
-                            color: COLORS.labelColor, fontWeight: 'bold',
-                            fontSize: '0.9rem', textDecoration: 'underline',
-                            fontStyle: 'italic', display: 'block', mb: 1
-                        }}>
-                            Скенирани документи:
-                        </Typography>
-                        {attachedFiles.length > 0 && (
-                            <Box sx={{mb: 1}}>
-                                {attachedFiles.map((file, idx) => (
-                                    <Box key={idx} sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 0.5}}>
-                                        <AttachFileIcon fontSize="small" sx={{color: COLORS.labelColor}}/>
-                                        <Typography sx={{fontSize: '0.85rem'}}>{file.name}</Typography>
-                                        <Button size="small" onClick={() => handleRemoveFile(idx)}
-                                                sx={{minWidth: 'auto', color: 'error.main', p: 0, ml: 1}}>✕</Button>
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
-                        <input type="file" ref={fileInputRef} style={{display: 'none'}}
-                               multiple onChange={handleFileAttach}/>
-                        <Button variant="outlined" size="small" startIcon={<AttachFileIcon/>}
+                        {/* ── ДОКУМЕНТИ ── */}
+                        <Section title="Скенирани документи" theme={T}>
+                            <Box
+                                ref={dropRef}
+                                onDragOver={(e) => {e.preventDefault(); setIsDragging(true);}}
+                                onDragLeave={() => setIsDragging(false)}
+                                onDrop={(e) => {
+                                    e.preventDefault(); setIsDragging(false);
+                                    setAttachedFiles(p => [...p, ...Array.from(e.dataTransfer.files)]);
+                                }}
                                 onClick={() => fileInputRef.current?.click()}
                                 sx={{
-                                    borderColor: COLORS.borderColor, color: '#333',
-                                    bgcolor: isDobiena ? '#E8D8A0' : '#C8E8C0',
-                                    '&:hover': {bgcolor: isDobiena ? '#D4C080' : '#A8D8A0'},
-                                    textTransform: 'none', fontWeight: 'bold', fontSize: '0.8rem'
-                                }}>
-                            Прикачи документ
-                        </Button>
-                    </Box>
+                                    border: `2px dashed ${isDragging ? T.accent : '#D4D4D4'}`,
+                                    borderRadius: '10px', p: 3, textAlign: 'center',
+                                    cursor: 'pointer', bgcolor: isDragging ? T.chipBg : '#fff',
+                                    transition: 'all 0.15s',
+                                    mb: attachedFiles.length > 0 ? 1.5 : 0,
+                                    '&:hover': {borderColor: T.accent, bgcolor: T.chipBg}
+                                }}
+                            >
+                                <CloudUploadIcon sx={{fontSize: 32, color: isDragging ? T.accent : '#C8C8C8', mb: 0.5}}/>
+                                <Typography sx={{fontSize: '0.82rem', color: '#777'}}>
+                                    Повлечи тука или{' '}
+                                    <span style={{color: T.accent, fontWeight: 600}}>избери датотека</span>
+                                </Typography>
+                                <Typography sx={{fontSize: '0.68rem', color: '#AAA', mt: 0.3}}>
+                                    PDF · DOC · DOCX · JPG · PNG
+                                </Typography>
+                            </Box>
 
-                    {error && (
-                        <Box sx={{mb: 2, p: 1.5, bgcolor: '#fdecea',
-                            border: '1px solid #f44336', borderRadius: '4px'}}>
-                            <Typography color="error" variant="body2">{error}</Typography>
+                            <input type="file" ref={fileInputRef} style={{display: 'none'}}
+                                   multiple onChange={(e) => setAttachedFiles(p => [...p, ...Array.from(e.target.files)])}
+                            />
+
+                            {attachedFiles.length > 0 && (
+                                <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.6}}>
+                                    {attachedFiles.map((file, idx) => (
+                                        <Box key={idx} sx={{
+                                            display: 'flex', alignItems: 'center', gap: 1,
+                                            px: 1.5, py: 0.8, bgcolor: '#fff',
+                                            border: '1px solid #EAEAEA', borderRadius: '6px'
+                                        }}>
+                                            <AttachFileIcon sx={{fontSize: 15, color: T.accent}}/>
+                                            <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>{file.name}</Typography>
+                                            <Typography sx={{fontSize: '0.68rem', color: '#AAA', mr: 0.5}}>
+                                                {(file.size / 1024).toFixed(0)} KB
+                                            </Typography>
+                                            <IconButton size="small"
+                                                        onClick={(e) => {e.stopPropagation(); setAttachedFiles(p => p.filter((_, i) => i !== idx));}}
+                                                        sx={{color: '#CCC', '&:hover': {color: '#d32f2f'}}}>
+                                                <DeleteOutlineIcon sx={{fontSize: 15}}/>
+                                            </IconButton>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+                        </Section>
+
+                        {/* ── ERROR ── */}
+                        {error && (
+                            <Box sx={{mb: 2, p: 1.5, bgcolor: '#FFF3F3', border: '1px solid #FFCDD2', borderRadius: '6px'}}>
+                                <Typography sx={{color: '#C62828', fontSize: '0.8rem'}}>{error}</Typography>
+                            </Box>
+                        )}
+
+                        {/* ── КОПЧИЊА ── */}
+                        <Box sx={{
+                            display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center',
+                            pt: 2, borderTop: '1px solid #E8E8E8', mt: 1
+                        }}>
+                            <Button
+                                variant="contained"
+                                startIcon={loading ? <CircularProgress size={14} sx={{color: '#fff'}}/> : <SaveIcon sx={{fontSize: 16}}/>}
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                sx={{
+                                    bgcolor: T.btnBg, color: '#fff', fontWeight: 600,
+                                    fontSize: '0.82rem', textTransform: 'none', px: 3, py: 0.9,
+                                    borderRadius: '8px',
+                                    boxShadow: `0 2px 8px ${T.accent}44`,
+                                    '&:hover': {bgcolor: T.btnHover, boxShadow: `0 4px 12px ${T.accent}66`},
+                                    minWidth: 130
+                                }}
+                            >
+                                {loading ? 'Зачувување...' : 'Зачувај'}
+                            </Button>
+
+                            {/*<Box sx={{width: '1px', height: 28, bgcolor: '#E0E0E0', mx: 0.5}}/>*/}
+
+                            {/*{[*/}
+                            {/*    {label: 'Одговор испратена', icon: <ReplyIcon sx={{fontSize: 15}}/>},*/}
+                            {/*    {label: 'СД одговор', icon: <ReplyIcon sx={{fontSize: 15}}/>},*/}
+                            {/*    {label: 'Одговор добиена', icon: <ReplyIcon sx={{fontSize: 15}}/>},*/}
+                            {/*].map(({label, icon}) => (*/}
+                            {/*    <Button key={label}*/}
+                            {/*            variant="outlined"*/}
+                            {/*            startIcon={icon}*/}
+                            {/*            sx={{*/}
+                            {/*                borderColor: '#D8D8D8', color: '#666',*/}
+                            {/*                fontWeight: 500, fontSize: '0.78rem',*/}
+                            {/*                textTransform: 'none', px: 2, py: 0.9,*/}
+                            {/*                borderRadius: '8px',*/}
+                            {/*                '&:hover': {borderColor: T.border, color: T.accentDark, bgcolor: T.chipBg}*/}
+                            {/*            }}*/}
+                            {/*    >*/}
+                            {/*        {label}*/}
+                            {/*    </Button>*/}
+                            {/*))}*/}
                         </Box>
-                    )}
 
-                    <Divider sx={{borderColor: COLORS.borderColor, mb: 2}}/>
-
-                    {/* КОПЧИЊА */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} sm={3}>
-                            <ActionButton onClick={handleSubmit} disabled={loading}
-                                          loading={loading} colors={COLORS}>
-                                Зачувај
-                            </ActionButton>
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                            <ActionButton colors={COLORS}>
-                                Одговор{<br/>}испратена пошта
-                            </ActionButton>
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                            <ActionButton colors={COLORS}>
-                                СД одговор{<br/>}испратена пошта
-                            </ActionButton>
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                            <ActionButton colors={COLORS}>
-                                Одговор{<br/>}добиена пошта
-                            </ActionButton>
-                        </Grid>
-                    </Grid>
-                </Box>
-            </Container>
+                    </Box>
+                </Container>
+            </Box>
         </LocalizationProvider>
     );
 };

@@ -68,6 +68,8 @@ public class PostaResponse {
     private StatusPredmet statusPredmet;
     private TipDelovnik tipDelovnik;
 
+    private TipOdgovor tipOdgovor;
+
     public static PostaResponse from(Predmet predmet) {
         PostaResponse dto = new PostaResponse();
 
@@ -110,6 +112,7 @@ public class PostaResponse {
 //                ? predmet.getOrganizaciskaedinica().getId() : null);
         dto.setStatusPredmet(predmet.getStatusPredmet());
         dto.setTipDelovnik(predmet.getTipDelovnik());
+        dto.setTipOdgovor(predmet.getTipOdgovor());
         return dto;
     }
 }
