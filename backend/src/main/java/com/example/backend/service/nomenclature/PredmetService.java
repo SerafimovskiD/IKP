@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -102,8 +103,8 @@ public class PredmetService {
                 .collect(Collectors.toList());
         Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
                 .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
-        predmet.setOdgovornoLice(odgovornoLice);
-        predmet.setArhiva(arhiva);
+        predmet.setOdgovornoLice(new HashSet<>(odgovornoLice));
+        predmet.setArhiva(new HashSet<>(arhiva));
         predmet.setIsprakjac(isprakjac);
 
         if (tipDelovnik == TipDelovnik.Dobiena) {
@@ -116,8 +117,8 @@ public class PredmetService {
                     .map(id -> vidPredmetDobienaRepository.findById(id)
                             .orElseThrow(() -> new ResourceNotFoundException("VidPredmetDobiena with ID: " + id)))
                     .collect(Collectors.toList());
-            predmet.setVidPredmetDobiena(vidPredmet);
-            predmet.setVidPredmetIspratena(new ArrayList<>());
+            predmet.setVidPredmetDobiena(new HashSet<>(vidPredmet));
+            predmet.setVidPredmetIspratena(new HashSet<>());
 
         } else {
 
@@ -125,8 +126,8 @@ public class PredmetService {
                     .map(id -> vidPredmetIspratenaRepository.findById(id)
                             .orElseThrow(() -> new ResourceNotFoundException("VidPredmetIspratena with ID: " + id)))
                     .collect(Collectors.toList());
-            predmet.setVidPredmetIspratena(vidPredmet);
-            predmet.setVidPredmetDobiena(new ArrayList<>());
+            predmet.setVidPredmetIspratena(new HashSet<>(vidPredmet));
+            predmet.setVidPredmetDobiena(new HashSet<>());
         }
 
         Predmet saved = predmetRepository.save(predmet);
@@ -136,26 +137,32 @@ public class PredmetService {
     }
 
     public Page<PredmetListResponse> getAllPredmeti(
-            Pageable pageable,
-            Integer godina,
-            Integer redenBroj,
-            Long isprakjacId,
-            Long odgovornoLiceId,
-            Long vidPredmetDobienaId,
-            Long vidPredmetIspratenaId,
-            Boolean realizirano,
-            String search
-    ) {
+            Pageable pageable, Integer godina,String redenBroj,
+            Long isprakjacId, Long odgovornoLiceId,
+            Long vidPredmetDobienaId, Long vidPredmetIspratenaId,
+            Boolean realizirano, String search,
+            TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,Long arhivaId,
+        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska) {
+
+        System.out.println("RedneBroj:"+datumZaveduvanje+1);
 
         Specification<Predmet> spec = Specification
                 .where(PredmetSpecification.hasGodina(godina))
-                .and(PredmetSpecification.hasRedenBroj(redenBroj))
                 .and(PredmetSpecification.hasIsprakjac(isprakjacId))
+                .and(PredmetSpecification.hasRedenBrojLike(redenBroj))
                 .and(PredmetSpecification.hasOdgovornoLice(odgovornoLiceId))
                 .and(PredmetSpecification.hasVidPredmetDobiena(vidPredmetDobienaId))
                 .and(PredmetSpecification.hasVidPredmetIspratena(vidPredmetIspratenaId))
                 .and(PredmetSpecification.isRealizirano(realizirano))
-                .and(PredmetSpecification.searchText(search));
+                .and(PredmetSpecification.searchText(search))
+                .and(PredmetSpecification.hasTipDelovnik(tipDelovnik))
+                .and(PredmetSpecification.hasTipPosta(tipPosta))
+                .and(PredmetSpecification.hasStatusPredmet(statusPredmet))
+                .and(PredmetSpecification.hasArhiva(arhivaId))
+                .and(PredmetSpecification.hasDatumZaveduvanjeLike(datumZaveduvanje))
+                .and(PredmetSpecification.hasBrAktNivniLike(brAktNivni))
+                .and(PredmetSpecification.hasSodrzina(sodrzina))
+                .and(PredmetSpecification.hasZabeleska(zabeleska));
 
         return predmetRepository.findAll(spec, pageable).map(PredmetListResponse::from);
     }

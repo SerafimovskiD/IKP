@@ -1,8 +1,7 @@
 package com.example.backend.web_controller;
 
 import com.example.backend.dto.*;
-import com.example.backend.model.TipDelovnik;
-import com.example.backend.model.TipOdgovor;
+import com.example.backend.model.*;
 import com.example.backend.repository.PredmetRepository;
 import com.example.backend.service.nomenclature.SkeniraniDokumentiService;
 import org.springdoc.core.annotations.ParameterObject;
@@ -111,17 +110,27 @@ public class PredmetController {
     @GetMapping
     public ResponseEntity<Page<PredmetListResponse>> getAllPredmeti(
             @ParameterObject
-            @PageableDefault(size = 20,sort = "datumZaveduvanje",direction = Sort.Direction.DESC)Pageable pageable,
+            @PageableDefault(size = 50,sort = "datumZaveduvanje",direction = Sort.Direction.DESC)Pageable pageable,
             @RequestParam(required = false) Integer godina,
-            @RequestParam(required = false) Integer redenBroj,
+            @RequestParam(required = false) String redenBroj,
             @RequestParam(required = false) Long isprakjacId,
             @RequestParam(required = false) Long odgovornoLiceId,
             @RequestParam(required = false) Long vidPredmetDobienaId,
             @RequestParam(required = false) Long vidPredmetIspratenaId,
             @RequestParam(required = false) Boolean realizirano,
-            @RequestParam(required = false) String search
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) TipDelovnik tipDelovnik,
+            @RequestParam(required = false) TipPosta tipPosta,
+            @RequestParam(required = false) StatusPredmet statusPredmet,
+            @RequestParam(required = false) Long arhivaId,
+            @RequestParam(required = false) String datumZaveduvanje,
+            @RequestParam(required = false) String brAktNivni,
+            @RequestParam(required = false) String sodrzina,
+            @RequestParam(required = false) String zabeleska
     ){
-        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable,godina,redenBroj,isprakjacId,odgovornoLiceId,vidPredmetDobienaId,vidPredmetIspratenaId,realizirano,search));
+        return ResponseEntity.ok(predmetService.getAllPredmeti( pageable, godina, redenBroj, isprakjacId, odgovornoLiceId,
+                vidPredmetDobienaId, vidPredmetIspratenaId, realizirano, search,
+                tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska));
     }
     @GetMapping("/next-reden-broj")
     public ResponseEntity<Integer> getNextRedenBroj() {

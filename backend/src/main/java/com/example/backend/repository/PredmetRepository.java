@@ -1,6 +1,10 @@
 package com.example.backend.repository;
 
 import com.example.backend.model.Predmet;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +27,13 @@ public interface PredmetRepository extends JpaRepository<Predmet, Long>, JpaSpec
             @Param("redenBroj") Integer redenBroj,
             @Param("godina") Integer godina
     );
+
+    @Override
+    @EntityGraph(attributePaths = {"isprakjac",
+            "isprakjac.organizaciskaEdinica",
+            "odgovornoLice",
+            "vidPredmetDobiena",
+            "vidPredmetIspratena",
+            "arhiva"})
+    Page<Predmet> findAll(Specification<Predmet> spec, Pageable pageable);
 }

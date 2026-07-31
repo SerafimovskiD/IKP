@@ -6,7 +6,7 @@ import {
     InputLabel, InputAdornment, ListSubheader,
     CircularProgress, Switch, IconButton, Tooltip
 } from '@mui/material';
-import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
+import {LocalizationProvider, DatePicker, ClearIcon} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import SearchIcon from '@mui/icons-material/Search';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -16,7 +16,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import ReplyIcon from '@mui/icons-material/Reply';
 import dayjs from 'dayjs';
-import {useSearchParams} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import {useEnums} from "../../../hooks/useEnums.js";
 import useIsprakjac from "../../../hooks/useIsprakjac.js";
 import useArhiva from "../../../hooks/useArhiva.js";
@@ -238,7 +238,6 @@ const PredmetForm = () => {
     const tipDelovnik = searchParams.get("tipDelovnik") || "Dobiena";
     const isDobiena = tipDelovnik === "Dobiena";
     const T = isDobiena ? DOBIENA : ISPRATENA;
-
     const today = dayjs();
     const fileInputRef = useRef(null);
     const dropRef = useRef(null);
@@ -261,7 +260,24 @@ const PredmetForm = () => {
         zabeleska: "",
         statusPredmet: ""
     });
-
+    const clear =()=>setForm({
+        datumZaveduvanje: today,
+        tipPosta: "",
+        prioritet: "",
+        isprakjacId: "",
+        brAktNivni: "",
+        datumIsprakjanje: null,
+        brAktArhivski: "",
+        vidPredmetDobienaId: [],
+        vidPredmetIspratenaId: [],
+        sodrzina: "",
+        odgovornoLiceId: [],
+        informativnaPosta: false,
+        realizirano: false,
+        arhivaId: [],
+        zabeleska: "",
+        statusPredmet: ""
+    })
     const [formErrors, setFormErrors] = useState({});
     const [submitted, setSubmitted] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
@@ -307,7 +323,6 @@ const PredmetForm = () => {
         if (isDobiena) {
             if (!f.prioritet) e.prioritet = "Задолжително";
             if (!f.brAktNivni?.trim()) e.brAktNivni = "Задолжително";
-            if (!f.brAktArhivski?.trim()) e.brAktArhivski = "Задолжително";
             if (!f.datumIsprakjanje) e.datumIsprakjanje = "Задолжително";
             if (f.vidPredmetDobienaId.length === 0) e.vidPredmet = "Задолжително";
         } else {
@@ -319,7 +334,7 @@ const PredmetForm = () => {
     useEffect(() => {
         if (submitted) setFormErrors(validate());
     }, [form, submitted]);
-
+    const navigate = useNavigate()
     const handleSubmit = async () => {
         setSubmitted(true);
         const errs = validate();
@@ -357,6 +372,7 @@ const PredmetForm = () => {
             alert('Успешно зачувано!');
             setSubmitted(false);
             setFormErrors({});
+            navigate("/predmeti")
         } catch (e) {
             console.error(e.response?.data);
         }
@@ -399,6 +415,7 @@ const PredmetForm = () => {
                             borderRadius: '8px', px: 2, py: 0.8,
                             backdropFilter: 'blur(4px)'
                         }}>
+
                             <Typography sx={{color: 'rgba(255,255,255,0.6)', fontSize: '0.6rem',
                                 fontWeight: 600, letterSpacing: '0.1em', mb: 0.2}}>
                                 БРОЈ НА АКТ
@@ -420,6 +437,7 @@ const PredmetForm = () => {
                         bgcolor: '#F8F9FB',
                         p: 2.5
                     }}>
+
 
                         {/* ── РЕД 1: СТАТУС + ДАТУМ + ТИП ── */}
                         <Section title="Регистрација" theme={T}>
@@ -484,6 +502,7 @@ const PredmetForm = () => {
                                     <Err msg={formErrors.tipPosta}/>
                                 </Grid>
 
+
                                 {/* Приоритет — само добиена */}
                                 {isDobiena && (
                                     <Grid item xs={12} sm={6} md={2}>
@@ -509,6 +528,7 @@ const PredmetForm = () => {
                                     </Grid>
                                 )}
                             </Grid>
+
                         </Section>
 
                         {/* ── ИСПРАЌАЧ ── */}
@@ -553,7 +573,7 @@ const PredmetForm = () => {
                                         </Grid>
                                         <Grid item xs={12} sm={6} md={3.5}>
                                             <TextField fullWidth
-                                                       label="Број на акт (архивски) *"
+                                                       label="Број на акт (архивски) "
                                                        value={form.brAktArhivski}
                                                        error={!!formErrors.brAktArhivski}
                                                        helperText={formErrors.brAktArhivski}
@@ -779,6 +799,7 @@ const PredmetForm = () => {
                             >
                                 {loading ? 'Зачувување...' : 'Зачувај'}
                             </Button>
+
 
                             {/*<Box sx={{width: '1px', height: 28, bgcolor: '#E0E0E0', mx: 0.5}}/>*/}
 

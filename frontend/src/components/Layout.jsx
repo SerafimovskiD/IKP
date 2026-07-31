@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Box, Drawer, List, ListItemButton, ListItemIcon,
-    ListItemText, Typography, Divider, Collapse } from '@mui/material';
+    ListItemText, Typography, Collapse } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header.jsx';
 
-// Icons
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import InboxIcon from '@mui/icons-material/Inbox';
 import OutboxIcon from '@mui/icons-material/Outbox';
@@ -20,6 +19,7 @@ const TITLES = {
     '/dashboard': 'Почетна',
     '/createPosta/nova': 'Нов предмет',
     '/posta': 'Детали на предмет',
+    '/predmeti': 'Листа на предмети',
     '/search': 'Пребарување',
 };
 
@@ -30,25 +30,23 @@ const NAV = [
             {
                 label: 'Добиена пошта',
                 icon: <InboxIcon sx={{fontSize: 18}}/>,
-                children: [
-                    {label: 'Нов предмет', path: '/createPosta/nova?tipDelovnik=Dobiena', icon: <AddCircleOutlineIcon sx={{fontSize: 16}}/>},
-                    {label: 'Преглед', path: '/predmeti?tipDelovnik=Dobiena', icon: <ListAltIcon sx={{fontSize: 16}}/>},
-                ]
+                path: '/createPosta/nova?tipDelovnik=Dobiena',
             },
             {
                 label: 'Испратена пошта',
                 icon: <OutboxIcon sx={{fontSize: 18}}/>,
-                children: [
-                    {label: 'Нов предмет', path: '/createPosta/nova?tipDelovnik=Ispratena', icon: <AddCircleOutlineIcon sx={{fontSize: 16}}/>},
-                    {label: 'Преглед', path: '/predmeti?tipDelovnik=Ispratena', icon: <ListAltIcon sx={{fontSize: 16}}/>},
-                ]
+                path: '/createPosta/nova?tipDelovnik=Ispratena',
             },
         ]
     },
     {
-        label: 'ПРЕБАРУВАЊЕ',
+        label: 'ПРЕГЛЕД',
         items: [
-            {label: 'Пребарување', icon: <SearchIcon sx={{fontSize: 18}}/>, path: '/search'},
+            {
+                label: 'Пребарување',
+                icon: <SearchIcon sx={{fontSize: 18}}/>,
+                path: '/predmeti',
+            },
         ]
     }
 ];
@@ -59,8 +57,6 @@ const SidebarItem = ({item, depth = 0}) => {
     const [open, setOpen] = useState(false);
 
     const hasChildren = item.children && item.children.length > 0;
-    const isActive = item.path && location.pathname + location.search === item.path
-        || item.path && location.pathname === item.path.split('?')[0];
 
     return (
         <>
@@ -68,29 +64,32 @@ const SidebarItem = ({item, depth = 0}) => {
                 onClick={() => hasChildren ? setOpen(!open) : navigate(item.path)}
                 sx={{
                     pl: depth === 0 ? 2 : 3.5,
-                    py: 0.7,
-                    borderRadius: '4px',
-                    mx: 0.5,
-                    mb: 0.2,
-                    bgcolor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+                    py: 0.8,
+                    borderRadius: '6px',
+                    mx: 0.8,
+                    mb: 0.3,
                     '&:hover': {bgcolor: 'rgba(255,255,255,0.1)'},
+                    transition: 'all 0.15s',
                 }}
             >
-                <ListItemIcon sx={{minWidth: 28, color: isActive ? '#fff' : 'rgba(255,255,255,0.7)'}}>
+                <ListItemIcon sx={{
+                    minWidth: 30,
+                    color:'#fff'
+                }}>
                     {item.icon}
                 </ListItemIcon>
                 <ListItemText
                     primary={item.label}
                     primaryTypographyProps={{
                         fontSize: depth === 0 ? '0.82rem' : '0.78rem',
-                        fontWeight: isActive ? 600 : 400,
-                        color: isActive ? '#fff' : 'rgba(255,255,255,0.8)',
+                        fontWeight: 600,
+                        color: '#fff',
                     }}
                 />
                 {hasChildren && (
                     open
-                        ? <ExpandLess sx={{fontSize: 16, color: 'rgba(255,255,255,0.6)'}}/>
-                        : <ExpandMore sx={{fontSize: 16, color: 'rgba(255,255,255,0.6)'}}/>
+                        ? <ExpandLess sx={{fontSize: 16, color: 'rgba(255,255,255,0.5)'}}/>
+                        : <ExpandMore sx={{fontSize: 16, color: 'rgba(255,255,255,0.5)'}}/>
                 )}
             </ListItemButton>
 
@@ -122,31 +121,42 @@ const Layout = ({children}) => {
             display: 'flex',
             flexDirection: 'column',
         }}>
-            {/* Logo area */}
+            {/* Logo */}
             <Box sx={{
                 px: 2, py: 1.5,
                 borderBottom: '1px solid rgba(255,255,255,0.1)',
                 display: 'flex', alignItems: 'center', gap: 1,
                 minHeight: 52
             }}>
-                <Typography sx={{
-                    color: '#fff', fontWeight: 700,
-                    fontSize: '0.75rem', letterSpacing: '0.05em'
+                <Box sx={{
+                    width: 28, height: 28, borderRadius: '6px',
+                    bgcolor: 'rgba(255,255,255,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                    ИКП — МВР
-                </Typography>
+                    <Typography sx={{color: '#fff', fontWeight: 800, fontSize: '0.7rem'}}>
+                        МВР
+                    </Typography>
+                </Box>
+                <Box>
+                    <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '0.78rem'}}>
+                        ИКП
+                    </Typography>
+                    <Typography sx={{color: 'rgba(255,255,255,0.4)', fontSize: '0.6rem'}}>
+                        Интерна книга на пошта
+                    </Typography>
+                </Box>
             </Box>
 
             {/* Nav */}
-            <Box sx={{flex: 1, overflowY: 'auto', py: 1}}>
+            <Box sx={{flex: 1, overflowY: 'auto', py: 1.5}}>
                 {NAV.map((group) => (
-                    <Box key={group.label} sx={{mb: 1}}>
+                    <Box key={group.label} sx={{mb: 2}}>
                         <Typography sx={{
-                            px: 2, py: 0.5,
-                            fontSize: '0.62rem',
+                            px: 2.5, py: 0.5, mb: 0.5,
+                            fontSize: '0.58rem',
                             fontWeight: 700,
-                            color: 'rgba(255,255,255,0.4)',
-                            letterSpacing: '0.1em',
+                            color: 'rgba(255,255,255,0.35)',
+                            letterSpacing: '0.12em',
                             textTransform: 'uppercase'
                         }}>
                             {group.label}
@@ -162,10 +172,10 @@ const Layout = ({children}) => {
 
             {/* Bottom */}
             <Box sx={{
-                px: 2, py: 1.5,
-                borderTop: '1px solid rgba(255,255,255,0.1)'
+                px: 2, py: 1.2,
+                borderTop: '1px solid rgba(255,255,255,0.08)'
             }}>
-                <Typography sx={{fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)'}}>
+                <Typography sx={{fontSize: '0.62rem', color: 'rgba(255,255,255,0.25)'}}>
                     v1.0.0
                 </Typography>
             </Box>
@@ -206,26 +216,19 @@ const Layout = ({children}) => {
                 {sidebar}
             </Drawer>
 
-            {/* Main content */}
+            {/* Main */}
             <Box sx={{
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
                 minWidth: 0,
-                bgcolor: '#F5F5F5'
+                bgcolor: '#F2F4F7'
             }}>
-                {/* Header */}
                 <Header
                     title={title}
                     onMenuToggle={() => setMobileOpen(!mobileOpen)}
                 />
-
-                {/* Page content */}
-                <Box sx={{
-                    flex: 1,
-                    mt: '52px',
-                    overflow: 'auto'
-                }}>
+                <Box sx={{flex: 1, mt: '52px', overflow: 'auto'}}>
                     {children}
                 </Box>
             </Box>

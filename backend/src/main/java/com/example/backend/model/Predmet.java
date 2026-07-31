@@ -2,13 +2,26 @@ package com.example.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.BatchSize;
 
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
+@Table(name = "predmet", indexes = {
+        @Index(name = "idx_predmet_datum_zaveduvanje", columnList = "datum_zaveduvanje"),
+        @Index(name = "idx_predmet_godina", columnList = "godina"),
+        @Index(name = "idx_predmet_isprakjac", columnList = "isprakjac_id"),
+        @Index(name = "idx_predmet_status", columnList = "status_predmet"),
+        @Index(name = "idx_predmet_realizirano", columnList = "realizirano"),
+        @Index(name = "idx_predmet_tip_delovnik", columnList = "tip_delovnik"),
+        @Index(name = "idx_predmet_godina_reden_pod", columnList = "godina, reden_broj, pod_broj"),
+})
+@BatchSize(size = 20)
 public class Predmet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,22 +52,22 @@ public class Predmet {
 //            inverseJoinColumns = @JoinColumn(name = "vid_predmet_id")
 //    )
 //    @JoinColumn(name = "vid_predmet_id")
-    private List<VidPredmetDobiena> vidPredmetDobiena;
+    private Set<VidPredmetDobiena> vidPredmetDobiena = new HashSet<>();
 
     @ManyToMany
-    private List<VidPredmetIspratena> vidPredmetIspratena;
+    private Set<VidPredmetIspratena> vidPredmetIspratena = new HashSet<>();
     @Column(length = 2000)
     private String sodrzina;
     @ManyToMany
 //    @JoinColumn(name = "odgovorno_lice_id")
-    private List<UserTable> odgovornoLice;
+    private Set<UserTable> odgovornoLice = new HashSet<>();
 
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
     @ManyToMany
 //    @JoinColumn(name = "arhiva_id")
-    private List<Arhiva> arhiva;
+    private Set<Arhiva> arhiva = new HashSet<>();
 
     @Column(length = 2000)
     private String zabeleska;

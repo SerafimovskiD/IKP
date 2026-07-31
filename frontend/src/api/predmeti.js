@@ -17,8 +17,8 @@ export const predmetiApi = {
         const res = await api.post(`/predmet/create?${params.toString()}`, data);
         return res.data;
     },
-    getAllPredmeti: async () => {
-        const res = await api.get("/predmet");
+    getAll: async (params = {}) => {
+        const res = await api.get('/predmet', { params });
         return res.data;
     },
     getNextRedenBroj: async () => {

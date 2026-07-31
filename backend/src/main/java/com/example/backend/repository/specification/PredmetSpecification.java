@@ -1,4 +1,7 @@
 package com.example.backend.repository.specification;
+import com.example.backend.model.StatusPredmet;
+import com.example.backend.model.TipDelovnik;
+import com.example.backend.model.TipPosta;
 import jakarta.persistence.criteria.JoinType;
 
 import com.example.backend.model.Predmet;
@@ -11,9 +14,11 @@ public class PredmetSpecification {
         return (root,query,cb)->
                 godina==null ? null :cb.equal(root.get("godina"),godina);
     }
-    public static Specification<Predmet> hasRedenBroj(Integer redenBroj) {
-        return (root, query, cb)->
-                redenBroj==null ? null :cb.equal(root.get("redenBroj"),redenBroj);
+    public static Specification<Predmet> hasRedenBrojLike(String redenBroj) {
+        return (root, query, cb) -> {
+            if (redenBroj == null || redenBroj.isEmpty()) return null;
+            return cb.like(cb.function("text",String.class, root.get("redenBroj")), redenBroj.toLowerCase() + "%");
+        };
     }
     public static Specification<Predmet> hasIsprakjac(Long isprakjacId) {
         return (root, query, cb)->
@@ -31,6 +36,13 @@ public class PredmetSpecification {
             if(vidPredmetDobienaId==null) return null;
             query.distinct(true);
             return cb.equal(root.join("vidPredmetDobiena").get("id"),vidPredmetDobienaId);
+        };
+    }
+    public static Specification<Predmet> hasArhiva (Long arhivaId) {
+        return (root, query, cb) -> {
+            if(arhivaId==null) return null;
+            query.distinct(true);
+            return cb.equal(root.join("arhiva").get("id"),arhivaId);
         };
     }
     public static Specification<Predmet> hasVidPredmetIspratena(Long vidPredmetIspratenaId) {
@@ -71,7 +83,53 @@ public class PredmetSpecification {
                     cb.like(cb.lower(vidIspratena.get("naziv")), pattern),
                     cb.like(cb.lower(arhiva.get("naziv")), pattern)
             );
+        };
+    }
+    public static Specification<Predmet> hasTipDelovnik(TipDelovnik tipDelovnik) {
+        return (root, query, cb) ->
+                tipDelovnik == null ? null : cb.equal(root.get("tipDelovnik"), tipDelovnik);
+    }
 
+    public static Specification<Predmet> hasTipPosta(TipPosta tipPosta) {
+        return (root, query, cb) ->
+                tipPosta == null ? null : cb.equal(root.get("tipPosta"), tipPosta);
+    }
+
+    public static Specification<Predmet> hasStatusPredmet(StatusPredmet statusPredmet) {
+        return (root, query, cb) ->
+                statusPredmet == null ? null : cb.equal(root.get("statusPredmet"), statusPredmet);
+    }
+
+    public static Specification<Predmet> hasDatumZaveduvanjeLike(String datum) {
+        return (root, query, cb) -> {
+            if (datum == null || datum.isEmpty()) return null;
+            return cb.like(
+                    cb.function("to_char", String.class,
+                            root.get("datumZaveduvanje"),
+                            cb.literal("YYYY-MM-DD")),
+                    "%" + datum + "%"
+            );
+        };
+    }
+
+    public static Specification<Predmet> hasBrAktNivniLike(String brAktNivni) {
+        return (root, query, cb) -> {
+            if (brAktNivni == null || brAktNivni.isEmpty()) return null;
+            return cb.like(cb.lower(root.get("brAktNivni")), "%" + brAktNivni.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<Predmet> hasSodrzina(String sodrzina) {
+        return (root, query, cb) -> {
+            if (sodrzina == null || sodrzina.isEmpty()) return null;
+            return cb.like(cb.lower(root.get("sodrzina")), "%" + sodrzina.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<Predmet> hasZabeleska(String zabeleska) {
+        return (root, query, cb) -> {
+            if (zabeleska == null || zabeleska.isEmpty()) return null;
+            return cb.like(cb.lower(root.get("zabeleska")), "%" + zabeleska.toLowerCase() + "%");
         };
     }
 }
