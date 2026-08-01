@@ -27,7 +27,10 @@ export const predmetiApi = {
     },
     findById: async (id) => {
         const res = await api.get(`/predmet/getPostaByID?id=${id}`);
-        console.log(res.data);
         return res.data;
-    }
+    },
+    getPrethodniPredmeti: async (redenBroj, godina) => {
+        const res = await api.get(`/predmet/prethodni?redenBroj=${redenBroj}&godina=${godina}`);
+        return res.data;
+    },
 };

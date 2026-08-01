@@ -77,6 +77,10 @@ public class PredmetService {
 //            podBroj = oldPodbroj+1;
         }
         Predmet predmet = new Predmet();
+        if (tipOdgovor != null){
+            predmetRepository.deactivateByRedenBrojAndGodina(redenBroj,godina);
+        }
+        predmet.setActive(true);
         predmet.setBrAkt(brAkt);
         predmet.setRedenBroj(redenBroj);
         predmet.setPodBroj(podBroj);
@@ -142,32 +146,40 @@ public class PredmetService {
             Long vidPredmetDobienaId, Long vidPredmetIspratenaId,
             Boolean realizirano, String search,
             TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,Long arhivaId,
-        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska) {
-
-        System.out.println("RedneBroj:"+datumZaveduvanje+1);
+        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska,Boolean isActive) {
 
         Specification<Predmet> spec = Specification
-                .where(PredmetSpecification.hasGodina(godina))
-                .and(PredmetSpecification.hasIsprakjac(isprakjacId))
+                .where(PredmetSpecification.isActive(isActive))
+                .and(PredmetSpecification.hasTipDelovnik(tipDelovnik))
+                .and(PredmetSpecification.hasGodina(godina))
                 .and(PredmetSpecification.hasRedenBrojLike(redenBroj))
+                .and(PredmetSpecification.hasTipPosta(tipPosta))
+                .and(PredmetSpecification.isRealizirano(realizirano))
+                .and(PredmetSpecification.hasStatusPredmet(statusPredmet))
+
+                .and(PredmetSpecification.hasIsprakjac(isprakjacId))
+                .and(PredmetSpecification.hasArhiva(arhivaId))
                 .and(PredmetSpecification.hasOdgovornoLice(odgovornoLiceId))
                 .and(PredmetSpecification.hasVidPredmetDobiena(vidPredmetDobienaId))
                 .and(PredmetSpecification.hasVidPredmetIspratena(vidPredmetIspratenaId))
-                .and(PredmetSpecification.isRealizirano(realizirano))
-                .and(PredmetSpecification.searchText(search))
-                .and(PredmetSpecification.hasTipDelovnik(tipDelovnik))
-                .and(PredmetSpecification.hasTipPosta(tipPosta))
-                .and(PredmetSpecification.hasStatusPredmet(statusPredmet))
-                .and(PredmetSpecification.hasArhiva(arhivaId))
+
                 .and(PredmetSpecification.hasDatumZaveduvanjeLike(datumZaveduvanje))
                 .and(PredmetSpecification.hasBrAktNivniLike(brAktNivni))
                 .and(PredmetSpecification.hasSodrzina(sodrzina))
-                .and(PredmetSpecification.hasZabeleska(zabeleska));
+                .and(PredmetSpecification.hasZabeleska(zabeleska))
+
+                .and(PredmetSpecification.searchText(search));
 
         return predmetRepository.findAll(spec, pageable).map(PredmetListResponse::from);
     }
 
     public PostaResponse getPosta(Long id) {
         return PostaResponse.from(predmetRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Predmet not found")));
+    }
+    public List<PredmetListResponse> getPrethodniPredmeti(Integer redenBroj, Integer godina) {
+        return predmetRepository.findAllByRedenBrojAndGodina(redenBroj, godina)
+                .stream()
+                .map(PredmetListResponse::from)
+                .collect(Collectors.toList());
     }
 }

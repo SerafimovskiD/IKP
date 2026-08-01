@@ -24,6 +24,7 @@ import useVidPredmetDobieno from '../../hooks/useVidPredmetDobieno.js';
 import useVidPredmetIspratena from '../../hooks/useVidPredmetIspratena.js';
 import {useEnums} from "../../hooks/useEnums.js";
 import useArhiva from "../../hooks/useArhiva.js";
+import {formatStatus} from "../../utils/formatters.js";
 
 const THEME = {
     gradient: 'linear-gradient(135deg, #6B0D1E 0%, #9B1D2E 60%, #C8404A 100%)',
@@ -165,11 +166,11 @@ const ColDropdown = ({value, onChange, options, getLabel, getId, placeholder}) =
                         InputProps={{startAdornment: <InputAdornment position="start"><SearchIcon sx={{fontSize: 13}}/></InputAdornment>}}
                     />
                 </ListSubheader>
-                <MenuItem value="" sx={{fontSize: '0.78rem', color: '#999'}}>
+                <MenuItem value="" disableRipple sx={{fontSize: '0.78rem', color: '#999'}}>
                     <em>Сите</em>
                 </MenuItem>
                 {filtered.map(o => (
-                    <MenuItem key={getId(o)} value={getId(o)} sx={{fontSize: '0.78rem'}}>
+                    <MenuItem key={getId(o)} disableRipple value={getId(o)} sx={{fontSize: '0.78rem'}}>
                         {getLabel(o)}
                     </MenuItem>
                 ))}
@@ -590,7 +591,7 @@ const PredmetiList = () => {
                                             <ColDropdown
                                                 value={filters.statusPredmet}
                                                 onChange={(v) => hf('statusPredmet', v)}
-                                                options={statusPredmet?.map(s => ({id: s, naziv: s})) || []}
+                                                options={statusPredmet?.map(s => ({id: s, naziv: s.replace(/_/g, ' ')})) || []}
                                                 getLabel={(o) => o.naziv}
                                                 getId={(o) => o.id}
                                                 placeholder="Статус..."
@@ -685,7 +686,7 @@ const PredmetiList = () => {
                                                 </Typography>
                                             </TableCell>
                                             <TableCell sx={{py: 1}}>
-                                                <StatusChip status={predmet.statusPredmet}/>
+                                                <StatusChip status={formatStatus(predmet.statusPredmet)}/>
                                             </TableCell>
                                         </TableRow>
                                     ))}

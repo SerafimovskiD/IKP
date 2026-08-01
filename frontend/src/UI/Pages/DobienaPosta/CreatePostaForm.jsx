@@ -5,16 +5,17 @@ import {
     Button, Chip, OutlinedInput, Select, MenuItem,
     InputLabel, InputAdornment, ListSubheader,
     CircularProgress, Switch, IconButton, Tooltip
+
 } from '@mui/material';
 import {LocalizationProvider, DatePicker, ClearIcon} from '@mui/x-date-pickers';
+import { formatStatus } from '../../../utils/formatters.js';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import SearchIcon from '@mui/icons-material/Search';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
-import ReplyIcon from '@mui/icons-material/Reply';
+import { useSnackbar } from '../../../context/SnackbarContext.jsx';
 import dayjs from 'dayjs';
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {useEnums} from "../../../hooks/useEnums.js";
@@ -62,18 +63,18 @@ const Section = ({title, children, theme, noPad = false}) => (
         border: `1px solid #E8E8E8`,
         borderRadius: '8px',
         overflow: 'hidden',
-        mb: 2,
+        mb: 1.5,
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
     }}>
-        <Box sx={{background: theme.gradient, px: 2.5, py: 1}}>
+        <Box sx={{background: theme.gradient, px: 2.5, py: 0.6}}>
             <Typography sx={{
-                color: '#fff', fontSize: '0.7rem', fontWeight: 700,
-                letterSpacing: '0.12em', textTransform: 'uppercase'
+                color: '#fff', fontSize: '0.68rem', fontWeight: 700,
+                letterSpacing: '0.1em', textTransform: 'uppercase'
             }}>
                 {title}
             </Typography>
         </Box>
-        <Box sx={{p: noPad ? 0 : 2.5, bgcolor: theme.sectionBg}}>
+        <Box sx={{p: noPad ? 0 : 1.5, bgcolor: theme.sectionBg}}>
             {children}
         </Box>
     </Box>
@@ -105,10 +106,15 @@ const SingleSelect = ({label, value, onChange, options, getLabel, getId, error, 
             <InputLabel>{label}</InputLabel>
             <Select
                 label={label} value={value}
+
                 onChange={(e) => onChange(e.target.value)}
                 onClose={() => setSearch('')}
-                // endAdornment={<InputAdornment position="end" sx={{mr: 2}}></InputAdornment>}
-
+                sx={{
+                    '& .MuiSelect-select': {
+                        py: 0.8,
+                        fontSize: '0.85rem'
+                    }
+                }}
                 MenuProps={{
                     anchorOrigin: {vertical: 'bottom', horizontal: 'left'},
                     transformOrigin: {vertical: 'top', horizontal: 'left'},
@@ -121,13 +127,13 @@ const SingleSelect = ({label, value, onChange, options, getLabel, getId, error, 
                                autoFocus value={search}
                                onChange={(e) => {e.stopPropagation(); setSearch(e.target.value);}}
                                onKeyDown={(e) => e.stopPropagation()}
-                               InputProps={{startAdornment: <InputAdornment position="start"><SearchIcon sx={{fontSize: 14, color: '#999'}}/></InputAdornment>}}
+                               InputProps={{startAdornment: <InputAdornment  position="start"><SearchIcon sx={{fontSize: 14, color: '#999'}}/></InputAdornment>}}
                     />
                 </ListSubheader>
                 {filtered.length === 0
                     ? <MenuItem disabled><Typography variant="caption" color="text.secondary">Нема резултати</Typography></MenuItem>
                     : filtered.map(o => (
-                        <MenuItem key={getId(o)} value={getId(o)} sx={{fontSize: '0.85rem', py: 0.8}}>
+                        <MenuItem key={getId(o)} value={getId(o)} disableRipple sx={{fontSize: '0.85rem',maxWidth:280,py: 0.8}}>
                             {getLabel(o)}
                         </MenuItem>
                     ))
@@ -191,7 +197,7 @@ const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, t
                     </Typography>
                 </ListSubheader>
                 {filtered.map(o => (
-                    <MenuItem key={getId(o)} value={getId(o)} sx={{fontSize: '0.85rem', py: 0.8}}>
+                    <MenuItem key={getId(o)} disableRipple value={getId(o)} sx={{fontSize: '0.85rem', py: 0.8}}>
                         {getLabel(o)}
                     </MenuItem>
                 ))}
@@ -291,6 +297,7 @@ const PredmetForm = () => {
     const {vidPredmetI, loading: lVI} = useVidPredmetIspratena();
     const {odgovornoLice, loading: lO} = useUsersOdgovornoLice();
     const {user} = useAuth();
+    const { showSnackbar } = useSnackbar();
     const {getOrgEdinicaById} = useOrgEdinica();
     const [orgEdinica, setOrgEdinica] = useState(null);
 
@@ -369,16 +376,15 @@ const PredmetForm = () => {
                 roditel?.godina ?? null,
                 roditel?.podBroj ?? null
             );
-            alert('Успешно зачувано!');
+            showSnackbar('Успешно зачувано!', 'success');
             setSubmitted(false);
             setFormErrors({});
             navigate("/predmeti")
         } catch (e) {
             console.error(e.response?.data);
+            showSnackbar('Грешка при зачувување!', 'error');
         }
     };
-
-    // const selectedIsprakjac = isprakjaci?.find(i => i.id === form.isprakjacId);
 
     if (isPageLoading) return (
         <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -390,14 +396,15 @@ const PredmetForm = () => {
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{bgcolor: '#F2F4F7', minHeight: '100vh', py: 2.5}}>
+
+            <Box sx={{bgcolor: '#F2F4F7', minHeight: '100vh', py: 1.5}}>
                 <Container maxWidth="xl">
 
                     {/* ── HEADER CARD ── */}
                     <Box sx={{
                         background: T.gradient,
                         borderRadius: '10px 10px 0 0',
-                        px: 3, py: 1.5,
+                        px: 3, py: 1,
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                     }}>
                         <Box>
@@ -435,32 +442,15 @@ const PredmetForm = () => {
                         borderTop: 'none',
                         borderRadius: '0 0 10px 10px',
                         bgcolor: '#F8F9FB',
-                        p: 2.5
+                        p: 1.5
                     }}>
 
 
                         {/* ── РЕД 1: СТАТУС + ДАТУМ + ТИП ── */}
                         <Section title="Регистрација" theme={T}>
-                            <Grid container spacing={2.5} alignItems="flex-start">
+                            <Grid container spacing={1.5} alignItems="flex-start">
 
-                                {/* Статус — поголем */}
-                                <Grid item xs={12} md={5}>
-                                    <Typography sx={{fontSize: '0.68rem', color: formErrors.statusPredmet ? '#d32f2f' : '#888',
-                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
-                                        Статус на предмет *
-                                    </Typography>
-                                    <SingleSelect
-                                        label="Избери статус"
-                                        value={form.statusPredmet}
-                                        onChange={(v) => hc('statusPredmet', v)}
-                                        options={statusEnum.map(s => ({id: s, naziv: s}))}
-                                        getLabel={(o) => o.naziv}
-                                        getId={(o) => o.id}
-                                        error={formErrors.statusPredmet}
-                                        fullWidth
-                                        size="medium"
-                                    />
-                                </Grid>
+
 
                                 {/* Датум */}
                                 <Grid item xs={12} sm={6} md={3}>
@@ -472,10 +462,12 @@ const PredmetForm = () => {
                                         value={form.datumZaveduvanje}
                                         onChange={(v) => hc('datumZaveduvanje', v)}
                                         slotProps={{textField: {
+                                            size: 'small',
                                                 fullWidth: true,
                                                 error: !!formErrors.datumZaveduvanje,
                                                 helperText: formErrors.datumZaveduvanje,
                                             }}}
+
                                     />
                                 </Grid>
 
@@ -487,15 +479,15 @@ const PredmetForm = () => {
                                     </Typography>
                                     <Box sx={{
                                         border: `1px solid ${formErrors.tipPosta ? '#d32f2f' : '#D8D8D8'}`,
-                                        borderRadius: '8px', px: 1.5, py: 1, bgcolor: '#fff'
+                                        borderRadius: '8px', px: 1, py: 0.3, bgcolor: '#fff'  // ← py: 1 → 0.3
                                     }}>
                                         <RadioGroup value={form.tipPosta}
                                                     onChange={(e) => hc('tipPosta', e.target.value)}>
                                             {(tipPostaEnum.length > 0 ? tipPostaEnum : ['писмо', 'телеграма']).map(t => (
                                                 <FormControlLabel key={t} value={t}
-                                                                  control={<Radio size="small" sx={{'&.Mui-checked': {color: T.accent}}}/>}
-                                                                  label={<Typography sx={{fontSize: '0.82rem'}}>{t}</Typography>}
-                                                                  sx={{m: 0, mb: 0.3}}/>
+                                                                  control={<Radio size="small" sx={{'&.Mui-checked': {color: T.accent}, p: 0.3}}/>}
+                                                                  label={<Typography sx={{fontSize: '0.78rem'}}>{t}</Typography>}
+                                                                  sx={{m: 0, mb: 0}}/>
                                             ))}
                                         </RadioGroup>
                                     </Box>
@@ -512,15 +504,15 @@ const PredmetForm = () => {
                                         </Typography>
                                         <Box sx={{
                                             border: `1px solid ${formErrors.prioritet ? '#d32f2f' : '#D8D8D8'}`,
-                                            borderRadius: '8px', px: 1.5, py: 1, bgcolor: '#fff'
+                                            borderRadius: '8px', px: 1.5, py: 0.3, bgcolor: '#fff'
                                         }}>
                                             <RadioGroup value={form.prioritet}
                                                         onChange={(e) => hc('prioritet', e.target.value)}>
                                                 {(prioritetEnum.length > 0 ? prioritetEnum : ['Висок', 'Нормален']).map(p => (
                                                     <FormControlLabel key={p} value={p}
-                                                                      control={<Radio size="small" sx={{'&.Mui-checked': {color: T.accent}}}/>}
-                                                                      label={<Typography sx={{fontSize: '0.82rem'}}>{p}</Typography>}
-                                                                      sx={{m: 0, mb: 0.3}}/>
+                                                                      control={<Radio size="small" sx={{'&.Mui-checked': {color: T.accent}, p: 0.3}}/>}
+                                                                      label={<Typography sx={{fontSize: '0.78rem'}}>{p}</Typography>}
+                                                                      sx={{m: 0, mb: 0}}/>
                                                 ))}
                                             </RadioGroup>
                                         </Box>
@@ -554,7 +546,7 @@ const PredmetForm = () => {
                                         getId={(o) => o.id}
                                         error={formErrors.isprakjacId}
                                         fullWidth
-                                        size="medium"
+                                        size="small"
                                     />
                                 </Grid>
 
@@ -562,7 +554,7 @@ const PredmetForm = () => {
                                 {isDobiena && (
                                     <>
                                         <Grid item xs={12} sm={6} md={3.5}>
-                                            <TextField fullWidth
+                                            <TextField fullWidth size="small"
                                                        label="Број на акт (нивни) *"
                                                        placeholder="пр. 12.1.1-924/2-25"
                                                        value={form.brAktNivni}
@@ -572,7 +564,7 @@ const PredmetForm = () => {
                                             />
                                         </Grid>
                                         <Grid item xs={12} sm={6} md={3.5}>
-                                            <TextField fullWidth
+                                            <TextField fullWidth size="small"
                                                        label="Број на акт (архивски) "
                                                        value={form.brAktArhivski}
                                                        error={!!formErrors.brAktArhivski}
@@ -586,6 +578,7 @@ const PredmetForm = () => {
                                                 value={form.datumIsprakjanje}
                                                 onChange={(v) => hc('datumIsprakjanje', v)}
                                                 slotProps={{textField: {
+                                                    size: 'small',
                                                         fullWidth: true,
                                                         error: !!formErrors.datumIsprakjanje,
                                                         helperText: formErrors.datumIsprakjanje || " ",
@@ -599,7 +592,7 @@ const PredmetForm = () => {
 
                         {/* ── ПРЕДМЕТ ── */}
                         <Section title="Предмет" theme={T}>
-                            <Grid container spacing={2.5}>
+                            <Grid container spacing={1.5}>
                                 <Grid item xs={12} md={4}>
                                     <Typography sx={{fontSize: '0.68rem', color: formErrors.vidPredmet ? '#d32f2f' : '#888',
                                         fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
@@ -648,7 +641,7 @@ const PredmetForm = () => {
                         </Section>
 
                         {/* ── ДОДЕЛУВАЊЕ + ДОПОЛНИТЕЛНИ (ред) ── */}
-                        <Grid container spacing={2} sx={{mb: 2}}>
+                        <Grid container spacing={1.5} sx={{mb: 1.5}}>
 
                             {/* Доделување */}
                             <Grid item xs={12} md={7}>
@@ -678,7 +671,26 @@ const PredmetForm = () => {
                                             />
                                         </Grid>
                                     </Grid>
+                                    {/* Статус — поголем */}
+                                    <Grid item xs={12} md={5}>
+                                        <Typography sx={{fontSize: '0.68rem', color: formErrors.statusPredmet ? '#d32f2f' : '#888',
+                                            fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
+                                            Статус на предмет *
+                                        </Typography>
+                                        <SingleSelect
+                                            label="Избери статус"
+                                            value={form.statusPredmet}
+                                            onChange={(v) => hc('statusPredmet', v)}
+                                            options={statusEnum?.map(s => ({id: s, naziv: s.replace(/_/g, ' ')})) || []}
+                                            getLabel={(o) => o.naziv}
+                                            getId={(o) => o.id}
+                                            error={formErrors.statusPredmet}
+                                            fullWidth
+                                            size="small"
+                                        />
+                                    </Grid>
                                 </Section>
+
                             </Grid>
 
                             {/* Дополнителни */}
@@ -781,7 +793,7 @@ const PredmetForm = () => {
                         {/* ── КОПЧИЊА ── */}
                         <Box sx={{
                             display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center',
-                            pt: 2, borderTop: '1px solid #E8E8E8', mt: 1
+                            pt: 1.5, borderTop: '1px solid #E8E8E8', mt: 0.5
                         }}>
                             <Button
                                 variant="contained"
@@ -799,29 +811,6 @@ const PredmetForm = () => {
                             >
                                 {loading ? 'Зачувување...' : 'Зачувај'}
                             </Button>
-
-
-                            {/*<Box sx={{width: '1px', height: 28, bgcolor: '#E0E0E0', mx: 0.5}}/>*/}
-
-                            {/*{[*/}
-                            {/*    {label: 'Одговор испратена', icon: <ReplyIcon sx={{fontSize: 15}}/>},*/}
-                            {/*    {label: 'СД одговор', icon: <ReplyIcon sx={{fontSize: 15}}/>},*/}
-                            {/*    {label: 'Одговор добиена', icon: <ReplyIcon sx={{fontSize: 15}}/>},*/}
-                            {/*].map(({label, icon}) => (*/}
-                            {/*    <Button key={label}*/}
-                            {/*            variant="outlined"*/}
-                            {/*            startIcon={icon}*/}
-                            {/*            sx={{*/}
-                            {/*                borderColor: '#D8D8D8', color: '#666',*/}
-                            {/*                fontWeight: 500, fontSize: '0.78rem',*/}
-                            {/*                textTransform: 'none', px: 2, py: 0.9,*/}
-                            {/*                borderRadius: '8px',*/}
-                            {/*                '&:hover': {borderColor: T.border, color: T.accentDark, bgcolor: T.chipBg}*/}
-                            {/*            }}*/}
-                            {/*    >*/}
-                            {/*        {label}*/}
-                            {/*    </Button>*/}
-                            {/*))}*/}
                         </Box>
 
                     </Box>

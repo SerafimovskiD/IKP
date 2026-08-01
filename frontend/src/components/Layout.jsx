@@ -67,7 +67,8 @@ const SidebarItem = ({item, depth = 0}) => {
                     py: 0.8,
                     borderRadius: '6px',
                     mx: 0.8,
-                    mb: 0.3,
+                    mb: .3,
+                    color: '#fff',
                     '&:hover': {bgcolor: 'rgba(255,255,255,0.1)'},
                     transition: 'all 0.15s',
                 }}

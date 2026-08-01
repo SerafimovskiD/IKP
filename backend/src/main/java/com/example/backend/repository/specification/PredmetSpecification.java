@@ -132,4 +132,9 @@ public class PredmetSpecification {
             return cb.like(cb.lower(root.get("zabeleska")), "%" + zabeleska.toLowerCase() + "%");
         };
     }
+    public static Specification<Predmet> isActive(Boolean isActive) {
+        return (root, query, cb) ->
+                isActive == null ? null : cb.equal(root.get("isActive"), isActive);
+    }
+
 }

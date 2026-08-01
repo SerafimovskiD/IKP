@@ -10,7 +10,7 @@ const usePredmeti = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await predmetiApi.getAllPredmeti();
+            const response = await predmetiApi.getAll();
             setPredmeti(response);
         } catch (err) {
             const message = err.response?.data?.message || "Грешка при вчитување на предмети";
@@ -43,12 +43,25 @@ const usePredmeti = () => {
             setLoading(false);
         }
     };
+    const getPrethodniPredmeti = async (redenBroj, godina) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await predmetiApi.getPrethodniPredmeti(redenBroj, godina);
+            return response;
+        } catch (err) {
+            const message = err.response?.data?.message || "Грешка при вчитување на претходни предмети";
+            setError(message);
+        } finally {
+            setLoading(false);
+        }
+    };
     useEffect(() => {
         fetchPredmeti();
         fetchNextRedenBroj();
     }, [fetchPredmeti,fetchNextRedenBroj]);
 
-    return { predmeti,createPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj };
+    return { predmeti,createPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj,getPrethodniPredmeti };
 };
 
 export default usePredmeti;

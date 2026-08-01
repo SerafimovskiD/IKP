@@ -1,5 +1,6 @@
 package com.example.backend.model;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.BatchSize;
@@ -89,4 +90,6 @@ public class Predmet {
     @Enumerated(EnumType.STRING)
     private StatusPredmet statusPredmet;
 
+    @Column(nullable = false)
+    private boolean isActive;
 }

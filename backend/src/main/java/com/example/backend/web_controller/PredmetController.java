@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/predmet")
@@ -126,11 +127,12 @@ public class PredmetController {
             @RequestParam(required = false) String datumZaveduvanje,
             @RequestParam(required = false) String brAktNivni,
             @RequestParam(required = false) String sodrzina,
-            @RequestParam(required = false) String zabeleska
+            @RequestParam(required = false) String zabeleska,
+            @RequestParam(required = false,defaultValue = "true") Boolean isActive
     ){
         return ResponseEntity.ok(predmetService.getAllPredmeti( pageable, godina, redenBroj, isprakjacId, odgovornoLiceId,
                 vidPredmetDobienaId, vidPredmetIspratenaId, realizirano, search,
-                tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska));
+                tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska,isActive));
     }
     @GetMapping("/next-reden-broj")
     public ResponseEntity<Integer> getNextRedenBroj() {
@@ -141,5 +143,10 @@ public class PredmetController {
     @GetMapping("/getPostaByID")
     public ResponseEntity<PostaResponse> findById(@RequestParam Long id){
         return ResponseEntity.ok(predmetService.getPosta(id));
+    }
+
+    @GetMapping("/prethodni")
+    public ResponseEntity<List<PredmetListResponse>> getAllPredmeti(@RequestParam Integer redenBroj, @RequestParam Integer godina){
+        return ResponseEntity.ok(predmetService.getPrethodniPredmeti(redenBroj,godina));
     }
 }

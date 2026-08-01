@@ -29,7 +29,8 @@ public record PredmetListResponse(
         Long isprakjacId,
         List<Long> odgovornoLiceId,
         List<Long> vidPredmetId,
-        List<Long> arhivaId
+        List<Long> arhivaId,
+        Boolean isActive
 
 ) {
     public static PredmetListResponse from(Predmet p) {
@@ -77,7 +78,9 @@ public record PredmetListResponse(
                         : p.getVidPredmetIspratena().stream()
                         .map(VidPredmetIspratena::getId)
                         .collect(Collectors.toList()),
-                p.getArhiva().stream().map(Arhiva::getId).collect(Collectors.toList())
-                );
+                p.getArhiva().stream().map(Arhiva::getId).collect(Collectors.toList()),
+                p.isActive()
+        );
+
     }
 }

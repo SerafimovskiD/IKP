@@ -21,6 +21,7 @@ public class PostaRequest {
     private String zabeleska;
     private StatusPredmet statusPredmet;
     private Long isprakjacId;
+    private Boolean isActive;
     // Samo dobiena
     private Prioritet prioritet;
     private String brAktNivni;

@@ -4,10 +4,7 @@ import com.example.backend.model.Predmet;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -36,4 +33,13 @@ public interface PredmetRepository extends JpaRepository<Predmet, Long>, JpaSpec
             "vidPredmetIspratena",
             "arhiva"})
     Page<Predmet> findAll(Specification<Predmet> spec, Pageable pageable);
+    @Modifying
+    @Query("UPDATE Predmet p SET p.isActive = false " +
+            "WHERE p.redenBroj = :redenBroj AND p.godina = :godina AND p.isActive = true")
+    void deactivateByRedenBrojAndGodina(
+            @Param("redenBroj") Integer redenBroj,
+            @Param("godina") Integer godina
+    );
+
+    List<Predmet> findAllByRedenBrojAndGodina(Integer redenBroj,Integer godina);
 }

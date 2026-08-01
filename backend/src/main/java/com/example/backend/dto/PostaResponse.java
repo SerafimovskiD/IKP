@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
         "datumIsprakjanje", "brAktArhivski", "vidPredmetId",
         "sodrzina", "odgovornoLiceId", "informativnaPosta",
         "realizirano", "arhivaId", "zabeleska",
-        "statusPredmet", "tipDelovnik"
+        "statusPredmet", "tipDelovnik","isActive"
 })
 public class PostaResponse {
     private Long id;
@@ -69,6 +69,7 @@ public class PostaResponse {
     private TipDelovnik tipDelovnik;
 
     private TipOdgovor tipOdgovor;
+    private Boolean isActive;
 
     public static PostaResponse from(Predmet predmet) {
         PostaResponse dto = new PostaResponse();
@@ -113,6 +114,7 @@ public class PostaResponse {
         dto.setStatusPredmet(predmet.getStatusPredmet());
         dto.setTipDelovnik(predmet.getTipDelovnik());
         dto.setTipOdgovor(predmet.getTipOdgovor());
+        dto.setIsActive(predmet.isActive());
         return dto;
     }
 }
