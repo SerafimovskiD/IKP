@@ -33,4 +33,31 @@ export const predmetiApi = {
         const res = await api.get(`/predmet/prethodni?redenBroj=${redenBroj}&godina=${godina}`);
         return res.data;
     },
+
+    uploadDok: async (predmetId, file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await api.post(`/predmet/${predmetId}/dokumenti`, formData, {
+            headers: {'Content-Type': 'multipart/form-data'}
+        });
+        return res.data;
+    },
+
+    getAllDok: async (predmetId) => {
+        const res = await api.get(`/predmet/${predmetId}/dokumenti`);
+        return res.data;
+    },
+
+    downloadDok: async (dokId, ime) => {
+        const res = await api.get(`/predmet/dokumenti/${dokId}`, {
+            responseType: 'blob'  // ← blob response
+        });
+        // Направи download линк
+        const url = URL.createObjectURL(res.data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = ime;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 };

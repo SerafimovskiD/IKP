@@ -30,47 +30,47 @@ public class SkeniraniDokumentiService {
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
     }
-
-    @Transactional
-    public SkeniraniDokumentiResponse uploadDokument(Long predmetId, MultipartFile file, String username){
-        Predmet predmet = this.predmetRepository.findById(predmetId)
-                .orElseThrow(() -> new ResourceNotFoundException("Предмет",predmetId));
-        UserTable user = this.userRepository.findByEmail(username)
-                .orElseThrow(() -> new BadRequestException("Најавениот корисник не е пронајден"));
-        String pateka = this.fileStorageService.upload(file,predmetId);
-        SkeniraniDokumenti dokument = new SkeniraniDokumenti();
-        dokument.setPredmet(predmet);
-        dokument.setImeFile(file.getOriginalFilename());
-        dokument.setPateka(pateka);
-        dokument.setDatumUpload(LocalDateTime.now());
-        dokument.setUser(user);
-
-        SkeniraniDokumenti savedDokument = this.skeniraniDokumentiRepository.save(dokument);
-        SkeniraniDokumentiResponse response = new SkeniraniDokumentiResponse();
-        response.setId(savedDokument.getId());
-        response.setPredmetId(savedDokument.getPredmet().getId());
-        response.setImeFile(savedDokument.getImeFile());
-        response.setPateka(savedDokument.getPateka());
-        response.setDatumUpload(savedDokument.getDatumUpload());
-        response.setUserId(savedDokument.getUser().getId());
-        response.setUploadedBy(savedDokument.getUser().getEmail());
-        return response;
-    }
-
-    @Transactional(readOnly = true)
-    public Resource loadDokument(Long dokumentId){
-        SkeniraniDokumenti dokument = this.skeniraniDokumentiRepository.findById(dokumentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Скениран документ",dokumentId));
-
-        return this.fileStorageService.loadAsResource(dokument.getPateka());
-    }
-
-    @Transactional(readOnly = true)
-    public SkeniraniDokumenti getDokument(Long dokumentId){
-        return this.skeniraniDokumentiRepository.findById(dokumentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Скениран документ",dokumentId));
-    }
-    public String getContentType(String pateka){
-        return this.fileStorageService.getContentType(pateka);
-    }
 }
+//    @Transactional
+//    public SkeniraniDokumentiResponse uploadDokument(Long predmetId, MultipartFile file, String username){
+//        Predmet predmet = this.predmetRepository.findById(predmetId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Предмет",predmetId));
+//        UserTable user = this.userRepository.findByEmail(username)
+//                .orElseThrow(() -> new BadRequestException("Најавениот корисник не е пронајден"));
+//        String pateka = this.fileStorageService.upload(file,predmetId);
+//        SkeniraniDokumenti dokument = new SkeniraniDokumenti();
+//        dokument.setPredmet(predmet);
+//        dokument.setImeFile(file.getOriginalFilename());
+//        dokument.setPateka(pateka);
+//        dokument.setDatumUpload(LocalDateTime.now());
+//        dokument.setUser(user);
+//
+//        SkeniraniDokumenti savedDokument = this.skeniraniDokumentiRepository.save(dokument);
+//        SkeniraniDokumentiResponse response = new SkeniraniDokumentiResponse();
+//        response.setId(savedDokument.getId());
+//        response.setPredmetId(savedDokument.getPredmet().getId());
+//        response.setImeFile(savedDokument.getImeFile());
+//        response.setPateka(savedDokument.getPateka());
+//        response.setDatumUpload(savedDokument.getDatumUpload());
+//        response.setUserId(savedDokument.getUser().getId());
+//        response.setUploadedBy(savedDokument.getUser().getEmail());
+//        return response;
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public Resource loadDokument(Long dokumentId){
+//        SkeniraniDokumenti dokument = this.skeniraniDokumentiRepository.findById(dokumentId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Скениран документ",dokumentId));
+//
+//        return this.fileStorageService.loadAsResource(dokument.getPateka());
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public SkeniraniDokumenti getDokument(Long dokumentId){
+//        return this.skeniraniDokumentiRepository.findById(dokumentId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Скениран документ",dokumentId));
+//    }
+//    public String getContentType(String pateka){
+//        return this.fileStorageService.getContentType(pateka);
+//    }
+//}

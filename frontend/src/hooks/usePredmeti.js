@@ -56,12 +56,25 @@ const usePredmeti = () => {
             setLoading(false);
         }
     };
+    const getDoc = async (id) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await predmetiApi.getAllDok(id);
+            return response;
+        } catch (err) {
+            const message = err.response?.data?.message || "Грешка при вчитување на документи";
+            setError(message);
+        } finally {
+            setLoading(false);
+        }
+    };
     useEffect(() => {
         fetchPredmeti();
         fetchNextRedenBroj();
     }, [fetchPredmeti,fetchNextRedenBroj]);
 
-    return { predmeti,createPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj,getPrethodniPredmeti };
+    return { predmeti,createPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj,getPrethodniPredmeti,getDoc };
 };
 
 export default usePredmeti;

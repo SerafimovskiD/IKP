@@ -28,6 +28,7 @@ import {useAuth} from "../../../context/AuthContext.jsx";
 import useOrgEdinica from "../../../hooks/useOrgEdinica.js";
 import usePredmeti from "../../../hooks/usePredmeti.js";
 import usePredmetDetails from "../../../hooks/usePredmetiDetails.js";
+import {predmetiApi} from "../../../api/predmeti.js";
 
 const DOBIENA = {
     gradient: 'linear-gradient(135deg, #6B4F0E 0%, #C8A84B 60%, #E8D48A 100%)',
@@ -368,14 +369,18 @@ const PredmetForm = () => {
             ...(!isDobiena && {vidPredmetIspratenaId: form.vidPredmetIspratenaId}),
         };
         try {
-            await createPosta(
-                payload,
-                tipDelovnik,
-                tipOdgovor,
+
+            const savedPredmet = await createPosta(
+                payload, tipDelovnik, tipOdgovor,
                 roditel?.redenBroj ?? null,
                 roditel?.godina ?? null,
                 roditel?.podBroj ?? null
             );
+            if (attachedFiles.length > 0) {
+                for (const file of attachedFiles) {
+                    await predmetiApi.uploadDok(savedPredmet.id, file);
+                }
+            }
             showSnackbar('Успешно зачувано!', 'success');
             setSubmitted(false);
             setFormErrors({});
@@ -385,7 +390,6 @@ const PredmetForm = () => {
             showSnackbar('Грешка при зачувување!', 'error');
         }
     };
-
     if (isPageLoading) return (
         <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', minHeight: '60vh', gap: 2}}>
@@ -732,8 +736,11 @@ const PredmetForm = () => {
                                 onDragOver={(e) => {e.preventDefault(); setIsDragging(true);}}
                                 onDragLeave={() => setIsDragging(false)}
                                 onDrop={(e) => {
-                                    e.preventDefault(); setIsDragging(false);
-                                    setAttachedFiles(p => [...p, ...Array.from(e.dataTransfer.files)]);
+                                    e.preventDefault();
+                                    setIsDragging(false);
+                                    const files = Array.from(e.dataTransfer.files);
+                                    setAttachedFiles(p => [...p, ...files]);
+                                    showSnackbar(`${files.length} документ(и) прикачени`, 'info');
                                 }}
                                 onClick={() => fileInputRef.current?.click()}
                                 sx={{
@@ -756,7 +763,12 @@ const PredmetForm = () => {
                             </Box>
 
                             <input type="file" ref={fileInputRef} style={{display: 'none'}}
-                                   multiple onChange={(e) => setAttachedFiles(p => [...p, ...Array.from(e.target.files)])}
+                                   multiple onChange={(e) => {
+                                const files = Array.from(e.target.files);
+                                setAttachedFiles(p => [...p, ...files]);
+                                showSnackbar(`${files.length} документ(и) прикачени`, 'info');
+                                e.target.value = '';
+                            }}
                             />
 
                             {attachedFiles.length > 0 && (
@@ -768,12 +780,18 @@ const PredmetForm = () => {
                                             border: '1px solid #EAEAEA', borderRadius: '6px'
                                         }}>
                                             <AttachFileIcon sx={{fontSize: 15, color: T.accent}}/>
-                                            <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>{file.name}</Typography>
+                                            <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
+                                                {file.name}
+                                            </Typography>
                                             <Typography sx={{fontSize: '0.68rem', color: '#AAA', mr: 0.5}}>
                                                 {(file.size / 1024).toFixed(0)} KB
                                             </Typography>
                                             <IconButton size="small"
-                                                        onClick={(e) => {e.stopPropagation(); setAttachedFiles(p => p.filter((_, i) => i !== idx));}}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setAttachedFiles(p => p.filter((_, i) => i !== idx));
+                                                            showSnackbar('Документот е отстранет', 'warning');
+                                                        }}
                                                         sx={{color: '#CCC', '&:hover': {color: '#d32f2f'}}}>
                                                 <DeleteOutlineIcon sx={{fontSize: 15}}/>
                                             </IconButton>

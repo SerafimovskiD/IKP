@@ -1,14 +1,19 @@
 package com.example.backend.web_controller;
 
 import com.example.backend.dto.*;
+import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
 import com.example.backend.repository.PredmetRepository;
+import com.example.backend.repository.SkeniraniDokumentiRepository;
+import com.example.backend.repository.UserRepository;
 import com.example.backend.service.nomenclature.SkeniraniDokumentiService;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 import com.example.backend.service.nomenclature.PredmetService;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +23,24 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/predmet")
 public class PredmetController {
     private final PredmetService predmetService;
-    private final SkeniraniDokumentiService skeniraniDokumentiService;
     private final PredmetRepository predmetRepository;
-    public PredmetController(PredmetService predmetService, SkeniraniDokumentiService skeniraniDokumentiService, PredmetRepository predmetRepository) {
-        this.skeniraniDokumentiService = skeniraniDokumentiService;
+    private final SkeniraniDokumentiRepository skeniraniDokumentiRepository;
+    private final UserRepository userRepository;
+    public PredmetController(PredmetService predmetService, SkeniraniDokumentiService skeniraniDokumentiService, PredmetRepository predmetRepository, SkeniraniDokumentiRepository skeniraniDokumentiRepository, UserRepository userRepository) {
         this.predmetService = predmetService;
         this.predmetRepository = predmetRepository;
+        this.skeniraniDokumentiRepository = skeniraniDokumentiRepository;
+        this.userRepository = userRepository;
     }
 
 //    @PostMapping
@@ -97,16 +107,16 @@ public class PredmetController {
 //        String email =userDetails.getUsername();
 //        return ResponseEntity.ok(predmetService.createIspratenaPosta(request,email));
 //    }
-    @PostMapping("/{predmetId}/skenirani-dokumenti/upload")
-    public SkeniraniDokumentiResponse uploadSkeniraniDokumenti(@PathVariable Long predmetId,
-                                                       @RequestParam("file") MultipartFile file,
-                                                       Authentication authentication) {
-        return this.skeniraniDokumentiService.uploadDokument(
-                predmetId,
-                file,
-                authentication.getName()
-        );
-    }
+//    @PostMapping("/{predmetId}/skenirani-dokumenti/upload")
+//    public SkeniraniDokumentiResponse uploadSkeniraniDokumenti(@PathVariable Long predmetId,
+//                                                       @RequestParam("file") MultipartFile file,
+//                                                       Authentication authentication) {
+//        return this.skeniraniDokumentiService.uploadDokument(
+//                predmetId,
+//                file,
+//                authentication.getName()
+//        );
+//    }
     @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping
     public ResponseEntity<Page<PredmetListResponse>> getAllPredmeti(
@@ -148,5 +158,50 @@ public class PredmetController {
     @GetMapping("/prethodni")
     public ResponseEntity<List<PredmetListResponse>> getAllPredmeti(@RequestParam Integer redenBroj, @RequestParam Integer godina){
         return ResponseEntity.ok(predmetService.getPrethodniPredmeti(redenBroj,godina));
+    }
+
+
+    @PostMapping("/{id}/dokumenti")
+    public ResponseEntity<Void> uploadDokument(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+
+        Predmet predmet = predmetRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Predmet", id));
+
+        UserTable user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        SkeniraniDokumenti dok = new SkeniraniDokumenti();
+        dok.setPredmet(predmet);
+        dok.setImeFile(file.getOriginalFilename());
+        dok.setTipFile(file.getContentType());
+        dok.setGolemina(file.getSize());
+        dok.setContent(file.getBytes());
+        dok.setDatumUpload(LocalDateTime.now());
+        dok.setUser(user);
+
+        skeniraniDokumentiRepository.save(dok);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/dokumenti/{dokId}")
+    public ResponseEntity<byte[]> downloadDokument(@PathVariable Long dokId) {
+        SkeniraniDokumenti dok = skeniraniDokumentiRepository.findById(dokId).orElseThrow();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + dok.getImeFile() + "\"")
+                .contentType(MediaType.parseMediaType(dok.getTipFile()))
+                .body(dok.getContent());
+    }
+
+    @GetMapping("/{id}/dokumenti")
+    public ResponseEntity<List<SkeniraniDokumentiResponse>> getDokumenti(@PathVariable Long id) {
+        return ResponseEntity.ok(skeniraniDokumentiRepository.findAllByPredmetId(id)
+                .stream()
+                .map(SkeniraniDokumentiResponse::from)
+                .collect(Collectors.toList()));
     }
 }

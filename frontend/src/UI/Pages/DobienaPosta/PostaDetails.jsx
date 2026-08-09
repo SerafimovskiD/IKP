@@ -21,6 +21,7 @@ import {useAuth} from "../../../context/AuthContext.jsx";
 import useOrgEdinica from "../../../hooks/useOrgEdinica.js";
 import usePredmeti from "../../../hooks/usePredmeti.js";
 import {formatStatus} from "../../../utils/formatters.js";
+import {predmetiApi as dokumentiApi} from "../../../api/predmeti.js";
 
 const DOBIENA = {
     gradient: 'linear-gradient(135deg, #6B4F0E 0%, #C8A84B 60%, #E8D48A 100%)',
@@ -160,12 +161,21 @@ const PostaDetails = () => {
     const {odgovornoLice} = useUsersOdgovornoLice();
     const {user} = useAuth();
     const {getOrgEdinicaById} = useOrgEdinica();
-    const {getPrethodniPredmeti} = usePredmeti();
+    const {getPrethodniPredmeti,getDoc} = usePredmeti();
 
     const [orgEdinica, setOrgEdinica] = useState(null);
     const [prethodni, setPrethodni] = useState([]);
     const [loadingPrethodni, setLoadingPrethodni] = useState(false);
+    const [loadingDok, setLoadingDok] = useState(false);
 
+    const [dokumenti, setDokumenti] = useState([]);
+
+
+    useEffect(() => {
+        if (predmet?.id) {
+            dokumentiApi.getAll(predmet.id).then(setDokumenti);
+        }
+    }, [predmet?.id]);
     const handleOdgovor = (tipOdgovor, tipDelovnik) => {
         const params = new URLSearchParams({
             tipDelovnik,
@@ -189,7 +199,12 @@ const PostaDetails = () => {
                 .finally(() => setLoadingPrethodni(false));
         }
     }, [predmet?.redenBroj, predmet?.godina]);
-
+    useEffect(() => {
+        setLoadingDok(true);
+            getDoc(id)
+                .then(res=>setDokumenti(res||[]))
+                .finally(() => setLoadingDok(false));
+    }, [id]);
     // ── УСЛОВНИ RETURNS ПОСЛЕ HOOKS ──
     if (loading) return (
         <Box sx={{
@@ -217,12 +232,13 @@ const PostaDetails = () => {
     const arhivaList = (arhiva || []).filter(a => predmet.arhivaId?.includes(a.id));
     const vidPredmetList = isDobiena
         ? (vidPredmetD || []).filter(v => predmet.vidPredmetDobienaId?.includes(v.id))
-        : (vidPredmetI || []).filter(v => predmet.vidPredmetIspratenaId?.includes(v.id));
-
+        : (vidPredmetI || []).filter(v => predmet.vidPredmetIspratenaId?.includes(v.id))
+    console.log(dokumenti)
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Box sx={{bgcolor: '#F2F4F7', minHeight: '100vh', py: 1.5}}>
                 <Container maxWidth="xl">
+
 
                     {/* HEADER */}
                     <Box sx={{
@@ -467,7 +483,31 @@ const PostaDetails = () => {
                                 </Typography>
                             </Box>
                         </Section>
-
+                        {dokumenti.length > 0 && (
+                            <Section title="Скенирани документи" theme={T}>
+                                <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.8}}>
+                                    {dokumenti.map(dok => (
+                                        <Box key={dok.id} sx={{
+                                            display: 'flex', alignItems: 'center', gap: 1,
+                                            px: 1.5, py: 0.8, bgcolor: '#fff',
+                                            border: '1px solid #EAEAEA', borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            '&:hover': {bgcolor: T.chipBg}
+                                        }}
+                                             onClick={() => dokumentiApi.downloadDok(dok.id, dok.imeFile)}
+                                        >
+                                            {/*<AttachFileIcon sx={{fontSize: 15, color: T.accent}}/>*/}
+                                            <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
+                                                {dok.imeFile}
+                                            </Typography>
+                                            <Typography sx={{fontSize: '0.68rem', color: '#999'}}>
+                                                {dok.tipFile}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </Section>
+                        )}
                         {/* ИСТОРИЈА */}
                         {(loadingPrethodni || prethodni.length > 0) && (
                             <Section title="Историја на предмет" theme={T}>
