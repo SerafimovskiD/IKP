@@ -22,7 +22,7 @@ import java.util.Set;
         @Index(name = "idx_predmet_tip_delovnik", columnList = "tip_delovnik"),
         @Index(name = "idx_predmet_godina_reden_pod", columnList = "godina, reden_broj, pod_broj"),
 })
-@BatchSize(size = 20)
+@BatchSize(size = 50)
 public class Predmet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

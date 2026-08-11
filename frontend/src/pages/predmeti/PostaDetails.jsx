@@ -1,7 +1,8 @@
 import {useState, useEffect} from 'react';
 import {
-    Box, Container, Typography,
-    Button, Chip, CircularProgress
+    Box, Typography,
+    Button, Chip, CircularProgress,
+    Divider
 } from '@mui/material';
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
@@ -11,17 +12,18 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import InboxIcon from '@mui/icons-material/Inbox';
 import OutboxIcon from '@mui/icons-material/Outbox';
 import {useNavigate, useParams} from "react-router-dom";
-import usePredmetDetails from "../../../hooks/usePredmetiDetails.js";
-import useIsprakjac from "../../../hooks/useIsprakjac.js";
-import useArhiva from "../../../hooks/useArhiva.js";
-import useVidPredmetDobieno from "../../../hooks/useVidPredmetDobieno.js";
-import useVidPredmetIspratena from "../../../hooks/useVidPredmetIspratena.js";
-import useUsersOdgovornoLice from "../../../hooks/useUsersOdgovornoLice.js";
-import {useAuth} from "../../../context/AuthContext.jsx";
-import useOrgEdinica from "../../../hooks/useOrgEdinica.js";
-import usePredmeti from "../../../hooks/usePredmeti.js";
-import {formatStatus} from "../../../utils/formatters.js";
-import {predmetiApi as dokumentiApi} from "../../../api/predmeti.js";
+import usePredmetDetails from "../../hooks/usePredmetiDetails.js";
+import useIsprakjac from "../../hooks/useIsprakjac.js";
+import useArhiva from "../../hooks/useArhiva.js";
+import useVidPredmetDobieno from "../../hooks/useVidPredmetDobieno.js";
+import useVidPredmetIspratena from "../../hooks/useVidPredmetIspratena.js";
+import useUsersOdgovornoLice from "../../hooks/useUsersOdgovornoLice.js";
+import {useAuth} from "../../context/AuthContext.jsx";
+import useOrgEdinica from "../../hooks/useOrgEdinica.js";
+import usePredmeti from "../../hooks/usePredmeti.js";
+import {formatStatus} from "../../utils/formatters.js";
+import {predmetiApi as dokumentiApi} from "../../api/predmeti.js";
+import SectionCard from "../../components/common/SectionCard.jsx";
 
 const DOBIENA = {
     gradient: 'linear-gradient(135deg, #6B4F0E 0%, #C8A84B 60%, #E8D48A 100%)',
@@ -50,28 +52,6 @@ const ISPRATENA = {
     labelColor: '#1B5E20',
     valueBg: '#fff',
 };
-
-const Section = ({title, children, theme}) => (
-    <Box sx={{
-        border: '1px solid #E8E8E8',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        mb: 1.5,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-    }}>
-        <Box sx={{background: theme.gradient, px: 2, py: 0.6}}>
-            <Typography sx={{
-                color: '#fff', fontSize: '0.68rem', fontWeight: 700,
-                letterSpacing: '0.1em', textTransform: 'uppercase'
-            }}>
-                {title}
-            </Typography>
-        </Box>
-        <Box sx={{p: 1.5, bgcolor: theme.sectionBg}}>
-            {children}
-        </Box>
-    </Box>
-);
 
 const Field = ({label, value, theme, children}) => (
     <Box>
@@ -236,57 +216,27 @@ const PostaDetails = () => {
     console.log(dokumenti)
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{bgcolor: '#F2F4F7', minHeight: '100vh', py: 1.5}}>
-                <Container maxWidth="xl">
+            <Box sx={{p: 3}}>
 
-
-                    {/* HEADER */}
+                    {/* ── НАСЛОВ (изглед идентичен на DemoApp SectionTitle) ── */}
                     <Box sx={{
-                        background: T.gradient,
-                        borderRadius: '10px 10px 0 0',
-                        px: 3, py: 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                        background: 'linear-gradient(240deg, #b6a268 0%, #dbbd5e 70%, #826f35 100%)',
+                        borderRadius: '0% 100% 100% 0% / 50% 50% 50% 50%',
+                        mb: '5px', px: 2,
                     }}>
-                        <Box>
-                            <Typography sx={{
-                                color: 'rgba(255,255,255,0.65)', fontSize: '0.62rem',
-                                fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', mb: 0.2
-                            }}>
-                                {isDobiena ? 'Добиена пошта' : 'Испратена пошта'}
-                            </Typography>
-                            <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '1rem'}}>
-                                Детали на предмет
-                            </Typography>
-                        </Box>
-                        <Box sx={{
-                            bgcolor: 'rgba(0,0,0,0.2)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: '8px', px: 2, py: 0.6,
-                        }}>
-                            <Typography sx={{
-                                color: 'rgba(255,255,255,0.6)', fontSize: '0.58rem',
-                                fontWeight: 600, letterSpacing: '0.1em', mb: 0.1
-                            }}>
-                                БРОЈ НА АКТ
-                            </Typography>
-                            <Typography
-                                sx={{color: '#fff', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.06em'}}>
-                                {predmet.brAkt} / {predmet.redenBroj} / {predmet.podBroj} / {predmet.godina}
-                            </Typography>
-                        </Box>
+                        <Typography variant="h6" sx={{color: '#000'}}>
+                            {isDobiena ? 'Добиена пошта' : 'Испратена пошта'} — Детали на предмет
+                        </Typography>
                     </Box>
+                    <Divider/>
+                    <Typography sx={{color: '#888', fontSize: '1.2rem', mt: 0.5, mb: 2}}>
+                        Број на акт: {predmet.brAkt} / {predmet.redenBroj} / {predmet.podBroj} / {predmet.godina}
+                    </Typography>
 
-                    {/* CONTENT */}
-                    <Box sx={{
-                        border: '1px solid #E0E3E8',
-                        borderTop: 'none',
-                        borderRadius: '0 0 10px 10px',
-                        bgcolor: '#F8F9FB',
-                        p: 1.5
-                    }}>
+                    <Box>
 
                         {/* РЕГИСТРАЦИЈА */}
-                        <Section title="Регистрација" theme={T}>
+                        <SectionCard title="Регистрација" theme={T}>
                             <Row>
                                 <Col flex={2} minWidth={220}>
                                     <Field label="Статус на предмет" theme={T}>
@@ -329,10 +279,10 @@ const PostaDetails = () => {
                                     </Col>
                                 )}
                             </Row>
-                        </Section>
+                        </SectionCard>
 
                         {/* ИСПРАЌАЧ */}
-                        <Section title={isDobiena ? "Испраќач" : "Испратено до"} theme={T}>
+                        <SectionCard title={isDobiena ? "Испраќач" : "Испратено до"} theme={T}>
                             <Row>
                                 <Col flex={isDobiena ? 2 : 4} minWidth={220}>
                                     <Field label={isDobiena ? "Испраќач" : "Примач"} theme={T}>
@@ -371,10 +321,10 @@ const PostaDetails = () => {
                                     </>
                                 )}
                             </Row>
-                        </Section>
+                        </SectionCard>
 
                         {/* ПРЕДМЕТ */}
-                        <Section title="Предмет" theme={T}>
+                        <SectionCard title="Предмет" theme={T}>
                             <Row>
                                 <Col flex={1} minWidth={180}>
                                     <Field label="Вид на предмет" theme={T}>
@@ -403,12 +353,12 @@ const PostaDetails = () => {
                                     </Field>
                                 </Col>
                             </Row>
-                        </Section>
+                        </SectionCard>
 
                         {/* ДОДЕЛУВАЊЕ + ДОПОЛНИТЕЛНИ */}
                         <Row gap={1.5}>
                             <Col flex={7} minWidth={280}>
-                                <Section title="Доделување" theme={T}>
+                                <SectionCard title="Доделување" theme={T}>
                                     <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
                                         <Field label="Одговорно лице" theme={T}>
                                             <Box sx={{
@@ -428,11 +378,11 @@ const PostaDetails = () => {
                                             </Box>
                                         </Field>
                                     </Box>
-                                </Section>
+                                </SectionCard>
                             </Col>
 
                             <Col flex={5} minWidth={220}>
-                                <Section title="Дополнителни" theme={T}>
+                                <SectionCard title="Дополнителни" theme={T}>
                                     <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
                                         {[
                                             {label: 'Информативна пошта', value: predmet.informativnaPosta},
@@ -464,12 +414,12 @@ const PostaDetails = () => {
                                             </Box>
                                         ))}
                                     </Box>
-                                </Section>
+                                </SectionCard>
                             </Col>
                         </Row>
 
                         {/* ЗАБЕЛЕШКА */}
-                        <Section title="Забелешка" theme={T}>
+                        <SectionCard title="Забелешка" theme={T}>
                             <Box sx={{
                                 bgcolor: T.valueBg, border: '1px solid #E8E8E8',
                                 borderRadius: '6px', px: 1.2, py: 1, minHeight: 50
@@ -482,9 +432,9 @@ const PostaDetails = () => {
                                     {predmet.zabeleska || '—'}
                                 </Typography>
                             </Box>
-                        </Section>
+                        </SectionCard>
                         {dokumenti.length > 0 && (
-                            <Section title="Скенирани документи" theme={T}>
+                            <SectionCard title="Скенирани документи" theme={T}>
                                 <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.8}}>
                                     {dokumenti.map(dok => (
                                         <Box key={dok.id} sx={{
@@ -506,11 +456,11 @@ const PostaDetails = () => {
                                         </Box>
                                     ))}
                                 </Box>
-                            </Section>
+                            </SectionCard>
                         )}
                         {/* ИСТОРИЈА */}
                         {(loadingPrethodni || prethodni.length > 0) && (
-                            <Section title="Историја на предмет" theme={T}>
+                            <SectionCard title="Историја на предмет" theme={T}>
                                 {loadingPrethodni ? (
                                     <Box sx={{display: 'flex', justifyContent: 'center', py: 2}}>
                                         <CircularProgress size={24} sx={{color: T.accent}}/>
@@ -687,7 +637,7 @@ const PostaDetails = () => {
                                         </table>
                                     </Box>
                                 )}
-                            </Section>
+                            </SectionCard>
                         )}
 
                         {/* КОПЧИЊА */}
@@ -723,7 +673,6 @@ const PostaDetails = () => {
                             </Box>
                         )}
                     </Box>
-                </Container>
             </Box>
         </LocalizationProvider>
     );

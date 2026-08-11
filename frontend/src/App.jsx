@@ -1,13 +1,13 @@
 import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
 import {AuthProvider} from "./context/AuthContext";
-import LoginPage from "./UI/Pages/LoginPage.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Dashboard from "./UI/Pages/Dashboard.jsx";
-import PostaDetails from "./UI/Pages/DobienaPosta/PostaDetails.jsx";
-import PredmetForm from "./UI/Pages/DobienaPosta/CreatePostaForm.jsx";
-import Layout from "./components/Layout.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import ProtectedRoute from "./components/common/ProtectedRoute.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import PostaDetails from "./pages/predmeti/PostaDetails.jsx";
+import PredmetForm from "./pages/predmeti/CreatePostaForm.jsx";
+import Layout from "./components/layout/Layout.jsx";
 import {Box, Typography} from "@mui/material";
-import PredmetiList from "./UI/Pages/PredmetList.jsx";
+import PredmetiList from "./pages/predmeti/PredmetList.jsx";
 import {SnackbarProvider} from "./context/SnackbarContext.jsx";
 
 export default function App() {

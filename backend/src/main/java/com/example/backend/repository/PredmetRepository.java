@@ -27,11 +27,7 @@ public interface PredmetRepository extends JpaRepository<Predmet, Long>, JpaSpec
 
     @Override
     @EntityGraph(attributePaths = {"isprakjac",
-            "isprakjac.organizaciskaEdinica",
-            "odgovornoLice",
-            "vidPredmetDobiena",
-            "vidPredmetIspratena",
-            "arhiva"})
+            "isprakjac.organizaciskaEdinica"})
     Page<Predmet> findAll(Specification<Predmet> spec, Pageable pageable);
     @Modifying
     @Query("UPDATE Predmet p SET p.isActive = false " +

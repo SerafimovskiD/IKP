@@ -1,211 +1,48 @@
-import {useState, useMemo, useRef, useEffect} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import {
-    Box, Container, Typography, Grid, TextField,
-    FormControl, RadioGroup, FormControlLabel, Radio,
-    Button, Chip, OutlinedInput, Select, MenuItem,
-    InputLabel, InputAdornment, ListSubheader,
-    CircularProgress, Switch, IconButton, Tooltip
+    Box, Typography, Grid, TextField, RadioGroup, FormControlLabel, Radio,
+    Button, Divider,
+    CircularProgress, Switch, IconButton,
+    Backdrop
 
 } from '@mui/material';
-import {LocalizationProvider, DatePicker, ClearIcon} from '@mui/x-date-pickers';
-import { formatStatus } from '../../../utils/formatters.js';
+import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
-import SearchIcon from '@mui/icons-material/Search';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
-import { useSnackbar } from '../../../context/SnackbarContext.jsx';
+import { useSnackbar } from '../../context/SnackbarContext.jsx';
 import dayjs from 'dayjs';
 import {useNavigate, useSearchParams} from "react-router-dom";
-import {useEnums} from "../../../hooks/useEnums.js";
-import useIsprakjac from "../../../hooks/useIsprakjac.js";
-import useArhiva from "../../../hooks/useArhiva.js";
-import useVidPredmetDobieno from "../../../hooks/useVidPredmetDobieno.js";
-import useVidPredmetIspratena from "../../../hooks/useVidPredmetIspratena.js";
-import useUsersOdgovornoLice from "../../../hooks/useUsersOdgovornoLice.js";
-import {useAuth} from "../../../context/AuthContext.jsx";
-import useOrgEdinica from "../../../hooks/useOrgEdinica.js";
-import usePredmeti from "../../../hooks/usePredmeti.js";
-import usePredmetDetails from "../../../hooks/usePredmetiDetails.js";
-import {predmetiApi} from "../../../api/predmeti.js";
+import {useEnums} from "../../hooks/useEnums.js";
+import useIsprakjac from "../../hooks/useIsprakjac.js";
+import useArhiva from "../../hooks/useArhiva.js";
+import useVidPredmetDobieno from "../../hooks/useVidPredmetDobieno.js";
+import useVidPredmetIspratena from "../../hooks/useVidPredmetIspratena.js";
+import useUsersOdgovornoLice from "../../hooks/useUsersOdgovornoLice.js";
+import {useAuth} from "../../context/AuthContext.jsx";
+import useOrgEdinica from "../../hooks/useOrgEdinica.js";
+import usePredmeti from "../../hooks/usePredmeti.js";
+import usePredmetDetails from "../../hooks/usePredmetiDetails.js";
+import {predmetiApi} from "../../api/predmeti.js";
+import SectionCard from "../../components/common/SectionCard.jsx";
+import SingleSelect from "../../components/common/forms/SingleSelect.jsx";
+import MultiSelect from "../../components/common/forms/MultiSelect.jsx";
+import Err from "../../components/common/forms/ErrorText.jsx";
 
-const DOBIENA = {
-    gradient: 'linear-gradient(135deg, #6B4F0E 0%, #C8A84B 60%, #E8D48A 100%)',
-    gradientLight: 'linear-gradient(135deg, #FDF8EC 0%, #FDF3D8 100%)',
-    border: '#C8A84B',
-    borderLight: '#E8D48A',
-    chipBg: '#FDF3D8',
-    chipColor: '#7A5C00',
-    accent: '#C8A84B',
-    accentDark: '#7A5C00',
-    btnBg: '#8B6914',
-    btnHover: '#6B4F0E',
-    sectionBg: '#FFFDF5',
-};
-
-const ISPRATENA = {
-    gradient: 'linear-gradient(135deg, #1B5E20 0%, #388E3C 60%, #81C784 100%)',
-    gradientLight: 'linear-gradient(135deg, #F1F8E9 0%, #E8F5E9 100%)',
-    border: '#388E3C',
-    borderLight: '#81C784',
-    chipBg: '#E8F5E9',
-    chipColor: '#1B5E20',
-    accent: '#388E3C',
-    accentDark: '#1B5E20',
-    btnBg: '#2E7D32',
-    btnHover: '#1B5E20',
-    sectionBg: '#F9FDF9',
-};
-
-// ─── SECTION ─────────────────────────────────────────────────────────────────
-const Section = ({title, children, theme, noPad = false}) => (
-    <Box sx={{
-        border: `1px solid #E8E8E8`,
-        borderRadius: '8px',
-        overflow: 'hidden',
-        mb: 1.5,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-    }}>
-        <Box sx={{background: theme.gradient, px: 2.5, py: 0.6}}>
-            <Typography sx={{
-                color: '#fff', fontSize: '0.68rem', fontWeight: 700,
-                letterSpacing: '0.1em', textTransform: 'uppercase'
-            }}>
-                {title}
-            </Typography>
-        </Box>
-        <Box sx={{p: noPad ? 0 : 1.5, bgcolor: theme.sectionBg}}>
-            {children}
-        </Box>
-    </Box>
-);
-
-const Err = ({msg}) => (
-    <Typography sx={{
-        color: '#d32f2f',
-        fontSize: '0.68rem',
-        mt: 0.3,
-        minHeight: '1rem',  // ← фиксна висина секогаш
-        visibility: msg ? 'visible' : 'hidden'  // ← скриено но простор е резервиран
-    }}>
-        {msg || ' '}
-    </Typography>
-);
-
-// ─── SINGLE SELECT ────────────────────────────────────────────────────────────
-const SingleSelect = ({label, value, onChange, options, getLabel, getId, error, fullWidth, minWidth = 260, size = 'small'}) => {
-    const [search, setSearch] = useState('');
-    const filtered = useMemo(() => {
-        if (!search) return options;
-        return options.filter(o => getLabel(o).toLowerCase().includes(search.toLowerCase()));
-    }, [search, options, getLabel]);
-
-    return (
-        <FormControl size={size} error={!!error}
-                     sx={{minWidth: '300px', maxWidth: '300px'}}>
-            <InputLabel>{label}</InputLabel>
-            <Select
-                label={label} value={value}
-
-                onChange={(e) => onChange(e.target.value)}
-                onClose={() => setSearch('')}
-                sx={{
-                    '& .MuiSelect-select': {
-                        py: 0.8,
-                        fontSize: '0.85rem'
-                    }
-                }}
-                MenuProps={{
-                    anchorOrigin: {vertical: 'bottom', horizontal: 'left'},
-                    transformOrigin: {vertical: 'top', horizontal: 'left'},
-                    autoFocus: false,
-                    slotProps: {paper: {sx: {maxHeight: 320, boxShadow: '0 4px 20px rgba(0,0,0,0.12)'}}}
-                }}
-            >
-                <ListSubheader sx={{p: 1, bgcolor: '#fff'}}>
-                    <TextField size="small" fullWidth placeholder="Пребарај..."
-                               autoFocus value={search}
-                               onChange={(e) => {e.stopPropagation(); setSearch(e.target.value);}}
-                               onKeyDown={(e) => e.stopPropagation()}
-                               InputProps={{startAdornment: <InputAdornment  position="start"><SearchIcon sx={{fontSize: 14, color: '#999'}}/></InputAdornment>}}
-                    />
-                </ListSubheader>
-                {filtered.length === 0
-                    ? <MenuItem disabled><Typography variant="caption" color="text.secondary">Нема резултати</Typography></MenuItem>
-                    : filtered.map(o => (
-                        <MenuItem key={getId(o)} value={getId(o)} disableRipple sx={{fontSize: '0.85rem',maxWidth:280,py: 0.8}}>
-                            {getLabel(o)}
-                        </MenuItem>
-                    ))
-                }
-            </Select>
-            <Err msg={error}/>
-        </FormControl>
-    );
-};
-
-// ─── MULTI SELECT ─────────────────────────────────────────────────────────────
-const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, theme, fullWidth, minWidth = 260}) => {
-    const [search, setSearch] = useState('');
-    const filtered = useMemo(() => {
-        if (!search) return options;
-        return options.filter(o => getLabel(o).toLowerCase().includes(search.toLowerCase()));
-    }, [search, options, getLabel]);
-
-    return (
-        <FormControl size="small" error={!!error}
-                     sx={{minWidth: '300px', maxWidth: '300px'}}>
-            <InputLabel>{label}</InputLabel>
-            <Select
-                multiple label={label} value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onClose={() => setSearch('')}
-                input={<OutlinedInput label={label}/>}
-                // endAdornment={<InputAdornment position="end" sx={{mr: 2}}></InputAdornment>}
-
-                renderValue={(selected) => (
-                    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.4, py: 0.2}}>
-                        {selected.map(id => {
-                            const item = options.find(o => getId(o) === id);
-                            return (
-                                <Chip key={id} label={item ? getLabel(item) : id} size="small"
-                                      sx={{bgcolor: theme?.chipBg || '#F5F5F5', color: theme?.chipColor || '#333',
-                                          fontSize: '0.68rem', height: 20, fontWeight: 500}}
-                                />
-                            );
-                        })}
-                    </Box>
-                )}
-                MenuProps={{
-                    anchorOrigin: {vertical: 'bottom', horizontal: 'left'},
-                    transformOrigin: {vertical: 'top', horizontal: 'left'},
-                    autoFocus: false,
-                    slotProps: {paper: {sx: {maxHeight: 320, boxShadow: '0 4px 20px rgba(0,0,0,0.12)'}}}
-                }}
-            >
-                <ListSubheader sx={{p: 1, bgcolor: '#fff'}}>
-                    <TextField size="small" fullWidth placeholder="Пребарај..."
-                               autoFocus value={search}
-                               onChange={(e) => {e.stopPropagation(); setSearch(e.target.value);}}
-                               onKeyDown={(e) => e.stopPropagation()}
-                               InputProps={{startAdornment: <InputAdornment position="start"><SearchIcon sx={{fontSize: 14, color: '#999'}}/></InputAdornment>}}
-                    />
-                </ListSubheader>
-                <ListSubheader sx={{py: 0.5, lineHeight: '1.8', bgcolor: '#FAFAFA'}}>
-                    <Typography variant="caption" color="text.secondary">
-                        {filtered.length === 0 ? 'Нема резултати' : `${value.length} избрано · ${filtered.length} вкупно`}
-                    </Typography>
-                </ListSubheader>
-                {filtered.map(o => (
-                    <MenuItem key={getId(o)} disableRipple value={getId(o)} sx={{fontSize: '0.85rem', py: 0.8}}>
-                        {getLabel(o)}
-                    </MenuItem>
-                ))}
-            </Select>
-            <Err msg={error}/>
-        </FormControl>
-    );
+const THEME = {
+    gradient: 'linear-gradient(135deg, #6B0D1E 0%, #9B1D2E 60%, #C8404A 100%)',
+    gradientLight: 'linear-gradient(135deg, #FBEEF0 0%, #F6DDE1 100%)',
+    border: '#C8A0A6',
+    borderLight: '#E3C3C8',
+    chipBg: '#f1e9d4',
+    chipColor: '#826f35',
+    accent: '#826f35',
+    accentDark: '#826f35',
+    btnBg: '#826f35',
+    btnHover: '#5a4d26',
+    sectionBg: '#FFF9F9',
 };
 
 // ─── SWITCH CARD ──────────────────────────────────────────────────────────────
@@ -233,18 +70,30 @@ const SwitchCard = ({label, checked, onChange, theme}) => (
             size="small"
             sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {color: theme.accent},
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {bgcolor: theme.accent}
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {bgcolor: theme.accent},
             }}
         />
     </Box>
 );
+const Row = ({children, gap = 1.5}) => (
+    <Box sx={{display: 'flex', gap, flexWrap: 'wrap', alignItems: 'flex-start'}}>
+        {children}
+    </Box>
+);
+
+const Col = ({children, flex = 1, minWidth = 180}) => (
+    <Box sx={{flex, minWidth}}>
+        {children}
+    </Box>
+);
+
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 const PredmetForm = () => {
     const [searchParams] = useSearchParams();
     const tipDelovnik = searchParams.get("tipDelovnik") || "Dobiena";
     const isDobiena = tipDelovnik === "Dobiena";
-    const T = isDobiena ? DOBIENA : ISPRATENA;
+    const T = THEME;
     const today = dayjs();
     const fileInputRef = useRef(null);
     const dropRef = useRef(null);
@@ -343,11 +192,13 @@ const PredmetForm = () => {
         if (submitted) setFormErrors(validate());
     }, [form, submitted]);
     const navigate = useNavigate()
+    const [saving, setSaving] = useState(false);
     const handleSubmit = async () => {
         setSubmitted(true);
         const errs = validate();
         setFormErrors(errs);
         if (Object.keys(errs).length > 0) return;
+        setSaving(true);
         const payload = {
             datumZaveduvanje: form.datumZaveduvanje?.format('YYYY-MM-DD'),
             tipPosta: form.tipPosta,
@@ -388,6 +239,7 @@ const PredmetForm = () => {
         } catch (e) {
             console.error(e.response?.data);
             showSnackbar('Грешка при зачувување!', 'error');
+            setSaving(false);
         }
     };
     if (isPageLoading) return (
@@ -401,57 +253,30 @@ const PredmetForm = () => {
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
 
-            <Box sx={{bgcolor: '#F2F4F7', minHeight: '100vh', py: 1.5}}>
-                <Container maxWidth="xl">
+            <Box sx={{p: 3}}>
 
-                    {/* ── HEADER CARD ── */}
+                    {/* ── НАСЛОВ (изглед идентичен на DemoApp SectionTitle) ── */}
                     <Box sx={{
-                        background: T.gradient,
-                        borderRadius: '10px 10px 0 0',
-                        px: 3, py: 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                        background: 'linear-gradient(240deg, #b6a268 0%, #dbbd5e 70%, #826f35 100%)',
+                        borderRadius: '0% 100% 100% 0% / 50% 50% 50% 50%',
+                        mb: '5px', px: 2,
                     }}>
-                        <Box>
-                            <Typography sx={{color: 'rgba(255,255,255,0.65)', fontSize: '0.62rem',
-                                fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', mb: 0.2}}>
-                                {isDobiena ? 'Добиена пошта' : 'Испратена пошта'}
-                            </Typography>
-                            <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '1rem', letterSpacing: '0.02em'}}>
-                                Нов предмет
-                            </Typography>
-                        </Box>
-                        <Box sx={{
-                            bgcolor: 'rgba(0,0,0,0.2)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: '8px', px: 2, py: 0.8,
-                            backdropFilter: 'blur(4px)'
-                        }}>
-
-                            <Typography sx={{color: 'rgba(255,255,255,0.6)', fontSize: '0.6rem',
-                                fontWeight: 600, letterSpacing: '0.1em', mb: 0.2}}>
-                                БРОЈ НА АКТ
-                            </Typography>
-                            <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '0.95rem'}}>
-                                {roditelId
-                                    ? `${roditel?.brAkt ?? '···'} / ${roditel?.redenBroj ?? '···'} / ${(roditel?.podBroj ?? 0) + 1} / ${roditel?.godina ?? today.year()}`
-                                    : `${orgEdinica?.code ?? '·····'} / ${nextRedenBroj ?? '···'} / 1 / ${today.year()}`
-                                }
-                            </Typography>
-                        </Box>
+                        <Typography variant="h6" sx={{color: '#000'}}>
+                            {isDobiena ? 'Добиена пошта' : 'Испратена пошта'} — Нов предмет
+                        </Typography>
                     </Box>
+                    <Divider/>
+                    <Typography sx={{color: '#888', fontSize: '1.2rem', mt: 0.5, mb: 2}}>
+                        Број на акт: {roditelId
+                            ? `${roditel?.brAkt ?? '···'} / ${roditel?.redenBroj ?? '···'} / ${(roditel?.podBroj ?? 0) + 1} / ${roditel?.godina ?? today.year()}`
+                            : `${orgEdinica?.code ?? '·····'} / ${nextRedenBroj ?? '···'} / 1 / ${today.year()}`
+                        }
+                    </Typography>
 
-                    {/* ── CONTENT ── */}
-                    <Box sx={{
-                        border: '1px solid #E0E3E8',
-                        borderTop: 'none',
-                        borderRadius: '0 0 10px 10px',
-                        bgcolor: '#F8F9FB',
-                        p: 1.5
-                    }}>
-
+                    <Box>
 
                         {/* ── РЕД 1: СТАТУС + ДАТУМ + ТИП ── */}
-                        <Section title="Регистрација" theme={T}>
+                        <SectionCard title="Регистрација" theme={T}>
                             <Grid container spacing={1.5} alignItems="flex-start">
 
 
@@ -465,7 +290,9 @@ const PredmetForm = () => {
                                     <DatePicker
                                         value={form.datumZaveduvanje}
                                         onChange={(v) => hc('datumZaveduvanje', v)}
+                                        format="DD.MM.YYYY"
                                         slotProps={{textField: {
+                                            variant: 'standard',
                                             size: 'small',
                                                 fullWidth: true,
                                                 error: !!formErrors.datumZaveduvanje,
@@ -525,14 +352,14 @@ const PredmetForm = () => {
                                 )}
                             </Grid>
 
-                        </Section>
+                        </SectionCard>
 
                         {/* ── ИСПРАЌАЧ ── */}
-                        <Section title={isDobiena ? "Испраќач" : "Испратено до"} theme={T}>
+                        <SectionCard title={isDobiena ? "Испраќач" : "Испратено до"} theme={T}>
                             <Grid container spacing={2.5}>
 
                                 {/* Испраќач dropdown — поголем */}
-                                <Grid item xs={12} md={isDobiena ? 5 : 12}>
+                                <Grid item xs={12} md={isDobiena ? 3 : 12}>
                                     {/*{selectedIsprakjac && (*/}
                                     {/*    <Box sx={{display: 'flex', alignItems: 'center', gap: 0.6, mb: 1}}>*/}
                                     {/*        <CheckCircleIcon sx={{fontSize: 13, color: T.accent}}/>*/}
@@ -557,7 +384,7 @@ const PredmetForm = () => {
                                 {/* Бројки — само добиена */}
                                 {isDobiena && (
                                     <>
-                                        <Grid item xs={12} sm={6} md={3.5}>
+                                        <Grid item xs={12} sm={6} md={3}>
                                             <TextField fullWidth size="small"
                                                        label="Број на акт (нивни) *"
                                                        placeholder="пр. 12.1.1-924/2-25"
@@ -567,7 +394,7 @@ const PredmetForm = () => {
                                                        onChange={(e) => hc('brAktNivni', e.target.value)}
                                             />
                                         </Grid>
-                                        <Grid item xs={12} sm={6} md={3.5}>
+                                        <Grid item xs={12} sm={6} md={3}>
                                             <TextField fullWidth size="small"
                                                        label="Број на акт (архивски) "
                                                        value={form.brAktArhivski}
@@ -576,12 +403,14 @@ const PredmetForm = () => {
                                                        onChange={(e) => hc('brAktArhivski', e.target.value)}
                                             />
                                         </Grid>
-                                        <Grid item xs={12} sm={6} md={4}>
+                                        <Grid item xs={12} sm={6} md={3}>
                                             <DatePicker
                                                 label="Датум на испраќање *"
                                                 value={form.datumIsprakjanje}
                                                 onChange={(v) => hc('datumIsprakjanje', v)}
+                                                format="DD.MM.YYYY"
                                                 slotProps={{textField: {
+                                                    variant: 'standard',
                                                     size: 'small',
                                                         fullWidth: true,
                                                         error: !!formErrors.datumIsprakjanje,
@@ -592,16 +421,16 @@ const PredmetForm = () => {
                                     </>
                                 )}
                             </Grid>
-                        </Section>
+                        </SectionCard>
 
                         {/* ── ПРЕДМЕТ ── */}
-                        <Section title="Предмет" theme={T}>
+                        <SectionCard title="Предмет" theme={T}>
                             <Grid container spacing={1.5}>
-                                <Grid item xs={12} md={4}>
-                                    <Typography sx={{fontSize: '0.68rem', color: formErrors.vidPredmet ? '#d32f2f' : '#888',
-                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
-                                        Вид на предмет *
-                                    </Typography>
+                                <Grid item xs={12} md={3.6}>
+                                    {/*<Typography sx={{fontSize: '0.68rem', color: formErrors.vidPredmet ? '#d32f2f' : '#888',*/}
+                                    {/*    fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>*/}
+                                    {/*    Вид на предмет **/}
+                                    {/*</Typography>*/}
                                     {isDobiena ? (
                                         <MultiSelect
                                             label="Вид на предмет"
@@ -626,7 +455,7 @@ const PredmetForm = () => {
                                         />
                                     )}
                                 </Grid>
-                                <Grid item xs={12} md={8}>
+                                <Grid item xs={12} md={8.4}>
                                     <Typography sx={{fontSize: '0.68rem', color: formErrors.sodrzina ? '#d32f2f' : '#888',
                                         fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
                                         Содржина *
@@ -642,15 +471,13 @@ const PredmetForm = () => {
                                     />
                                 </Grid>
                             </Grid>
-                        </Section>
+                        </SectionCard>
 
                         {/* ── ДОДЕЛУВАЊЕ + ДОПОЛНИТЕЛНИ (ред) ── */}
-                        <Grid container spacing={1.5} sx={{mb: 1.5}}>
-
-                            {/* Доделување */}
-                            <Grid item xs={12} md={7}>
-                                <Section title="Доделување" theme={T}>
-                                    <Grid container spacing={2}>
+                        <Row gap={1.5}>
+                            <Col flex={7} minWidth={280}>
+                                <SectionCard title="Доделување" theme={T}>
+                                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
                                         <Grid item xs={12}>
                                             <MultiSelect
                                                 label="Одговорно лице *"
@@ -663,6 +490,23 @@ const PredmetForm = () => {
                                                 theme={T} fullWidth
                                             />
                                         </Grid>
+                                        {/*<Field label="Одговорно лице" theme={T}>*/}
+                                        {/*    <Box sx={{*/}
+                                            {/*    bgcolor: T.valueBg, border: '1px solid #E8E8E8',*/}
+                                            {/*    borderRadius: '6px', px: 1.2, py: 0.6, minHeight: 32*/}
+                                            {/*}}>*/}
+                                            {/*    <ChipList items={odgovornoLiceList}*/}
+                                            {/*              getLabel={(u) => `${u.ime} ${u.prezime}`} theme={T}/>*/}
+                                            {/*</Box>*/}
+                                        {/*</Field>*/}
+                                        {/*<Field label="Архива" theme={T}>*/}
+                                        {/*    <Box sx={{*/}
+                                        {/*        bgcolor: T.valueBg, border: '1px solid #E8E8E8',*/}
+                                        {/*        borderRadius: '6px', px: 1.2, py: 0.6, minHeight: 32*/}
+                                        {/*    }}>*/}
+                                        {/*        <ChipList items={arhivaList} getLabel={(a) => a.naziv} theme={T}/>*/}
+                                        {/*    </Box>*/}
+                                        {/*</Field>*/}
                                         <Grid item xs={12}>
                                             <MultiSelect
                                                 label="Архива"
@@ -674,32 +518,56 @@ const PredmetForm = () => {
                                                 theme={T} fullWidth
                                             />
                                         </Grid>
-                                    </Grid>
-                                    {/* Статус — поголем */}
-                                    <Grid item xs={12} md={5}>
-                                        <Typography sx={{fontSize: '0.68rem', color: formErrors.statusPredmet ? '#d32f2f' : '#888',
-                                            fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>
-                                            Статус на предмет *
-                                        </Typography>
-                                        <SingleSelect
-                                            label="Избери статус"
-                                            value={form.statusPredmet}
-                                            onChange={(v) => hc('statusPredmet', v)}
-                                            options={statusEnum?.map(s => ({id: s, naziv: s.replace(/_/g, ' ')})) || []}
-                                            getLabel={(o) => o.naziv}
-                                            getId={(o) => o.id}
-                                            error={formErrors.statusPredmet}
-                                            fullWidth
-                                            size="small"
-                                        />
-                                    </Grid>
-                                </Section>
+                                        <Grid item xs={12} md={5}>
+                                                <SingleSelect
+                                                    label="Статус на предмет"
+                                                    value={form.statusPredmet}
+                                                    onChange={(v) => hc('statusPredmet', v)}
+                                                    options={statusEnum?.map(s => ({id: s, naziv: s.replace(/_/g, ' ')})) || []}
+                                                    getLabel={(o) => o.naziv}
+                                                    getId={(o) => o.id}
+                                                    error={formErrors.statusPredmet}
+                                                    fullWidth
+                                                    size="small"
+                                                />
+                                            </Grid>
+                                    </Box>
+                                </SectionCard>
+                            </Col>
 
-                            </Grid>
-
-                            {/* Дополнителни */}
-                            <Grid item xs={12} md={5}>
-                                <Section title="Дополнителни" theme={T}>
+                            <Col flex={5} minWidth={220}>
+                                <SectionCard title="Дополнителни" theme={T}>
+                                    {/*<Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>*/}
+                                    {/*    {[*/}
+                                    {/*        {label: 'Информативна пошта', value: predmet.informativnaPosta},*/}
+                                    {/*        {label: 'Реализирано', value: predmet.realizirano},*/}
+                                    {/*    ].map(({label, value}) => (*/}
+                                    {/*        <Box key={label} sx={{*/}
+                                    {/*            border: `1px solid ${value ? T.border : '#E8E8E8'}`,*/}
+                                    {/*            borderRadius: '8px', px: 1.5, py: 0.8,*/}
+                                    {/*            display: 'flex', alignItems: 'center',*/}
+                                    {/*            justifyContent: 'space-between',*/}
+                                    {/*            bgcolor: value ? T.chipBg : '#fff'*/}
+                                    {/*        }}>*/}
+                                    {/*            <Box>*/}
+                                    {/*                <Typography sx={{*/}
+                                    {/*                    fontSize: '0.68rem', fontWeight: 600,*/}
+                                    {/*                    color: value ? T.accentDark : '#888',*/}
+                                    {/*                    letterSpacing: '0.06em', textTransform: 'uppercase'*/}
+                                    {/*                }}>*/}
+                                    {/*                    {label}*/}
+                                    {/*                </Typography>*/}
+                                    {/*                <Typography sx={{*/}
+                                    {/*                    fontSize: '0.65rem', mt: 0.1,*/}
+                                    {/*                    color: value ? T.accent : '#BBB'*/}
+                                    {/*                }}>*/}
+                                    {/*                    {value ? 'Да' : 'Не'}*/}
+                                    {/*                </Typography>*/}
+                                    {/*            </Box>*/}
+                                    {/*            <BoolBadge value={value} theme={T}/>*/}
+                                    {/*        </Box>*/}
+                                    {/*    ))}*/}
+                                    {/*</Box>*/}
                                     <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
                                         <SwitchCard
                                             label="Информативна пошта"
@@ -714,12 +582,14 @@ const PredmetForm = () => {
                                             theme={T}
                                         />
                                     </Box>
-                                </Section>
-                            </Grid>
-                        </Grid>
+                                </SectionCard>
+                            </Col>
+                        </Row>
+
+
 
                         {/* ── ЗАБЕЛЕШКА ── */}
-                        <Section title="Забелешка" theme={T}>
+                        <SectionCard title="Забелешка" theme={T}>
                             <TextField fullWidth multiline rows={2}
                                        label=""
                                        placeholder="Опционална забелешка..."
@@ -727,10 +597,10 @@ const PredmetForm = () => {
                                        onChange={(e) => hc('zabeleska', e.target.value)}
                                        sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}}}
                             />
-                        </Section>
+                        </SectionCard>
 
                         {/* ── ДОКУМЕНТИ ── */}
-                        <Section title="Скенирани документи" theme={T}>
+                        <SectionCard title="Скенирани документи" theme={T}>
                             <Box
                                 ref={dropRef}
                                 onDragOver={(e) => {e.preventDefault(); setIsDragging(true);}}
@@ -792,14 +662,14 @@ const PredmetForm = () => {
                                                             setAttachedFiles(p => p.filter((_, i) => i !== idx));
                                                             showSnackbar('Документот е отстранет', 'warning');
                                                         }}
-                                                        sx={{color: '#CCC', '&:hover': {color: '#d32f2f'}}}>
+                                                        sx={{color: '#CCC', '&:hover': {color: '#826f35'}}}>
                                                 <DeleteOutlineIcon sx={{fontSize: 15}}/>
                                             </IconButton>
                                         </Box>
                                     ))}
                                 </Box>
                             )}
-                        </Section>
+                        </SectionCard>
 
                         {/* ── ERROR ── */}
                         {error && (
@@ -815,9 +685,9 @@ const PredmetForm = () => {
                         }}>
                             <Button
                                 variant="contained"
-                                startIcon={loading ? <CircularProgress size={14} sx={{color: '#fff'}}/> : <SaveIcon sx={{fontSize: 16}}/>}
+                                startIcon={saving ? <CircularProgress size={14} sx={{color: '#fff'}}/> : <SaveIcon sx={{fontSize: 16}}/>}
                                 onClick={handleSubmit}
-                                disabled={loading}
+                                disabled={saving}
                                 sx={{
                                     bgcolor: T.btnBg, color: '#fff', fontWeight: 600,
                                     fontSize: '0.82rem', textTransform: 'none', px: 3, py: 0.9,
@@ -827,12 +697,27 @@ const PredmetForm = () => {
                                     minWidth: 130
                                 }}
                             >
-                                {loading ? 'Зачувување...' : 'Зачувај'}
+                                {saving ? 'Зачувување...' : 'Зачувај'}
                             </Button>
                         </Box>
 
                     </Box>
-                </Container>
+
+                    {/* ── ZATEMNUVANJE + BLOKIRANJE DODEKA SE ZACUVUVA ── */}
+                    <Backdrop
+                        open={saving}
+                        sx={{
+                            color: '#fff',
+                            zIndex: (theme) => theme.zIndex.modal + 1,
+                            bgcolor: 'rgba(0,0,0,0.5)',
+                            flexDirection: 'column', gap: 2,
+                        }}
+                    >
+                        <CircularProgress sx={{color: '#fff'}} size={44}/>
+                        <Typography sx={{color: '#fff', fontSize: '0.9rem', fontWeight: 500}}>
+                            Се зачувува предметот...
+                        </Typography>
+                    </Backdrop>
             </Box>
         </LocalizationProvider>
     );

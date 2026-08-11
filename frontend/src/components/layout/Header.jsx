@@ -7,7 +7,8 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
-import { useAuth } from '../context/AuthContext.jsx';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 // const MKFlag = () => (
 //     <Box sx={{
@@ -39,7 +40,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 //     </Box>
 // );
 
-const Header = ({ onMenuToggle }) => {
+const Header = ({ title, onMenuToggle }) => {
     const { user, logout } = useAuth();
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -57,104 +58,86 @@ const Header = ({ onMenuToggle }) => {
     return (
         <AppBar
             position="fixed"
-            elevation={0}
             sx={{
-                bgcolor: '#7B0D1E',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                zIndex: (theme) => theme.zIndex.drawer + 1,
+                background: 'linear-gradient(240deg, #a70023 0%, #610017 70%, #780004 100%)',
+                zIndex: (theme) => theme.zIndex.modal,
             }}
         >
-            <Toolbar sx={{ minHeight: '52px !important', px: 2, gap: 1.5 }}>
+            <Toolbar>
 
-                {/* Хамбургер — за мобилен */}
+                {/* Хамбургер */}
                 <IconButton
-                    sx={{ color: '#fff', p: 0.5, mr: 0.5 }}
+                    color="inherit"
+                    aria-label="open drawer"
+                    onClick={onMenuToggle}
+                    edge="start"
+                    sx={{ mr: 1 }}
                 >
-                    <MenuIcon fontSize="small"/>
+                    <MenuIcon/>
                 </IconButton>
 
+                {/* Знаме */}
+                <img
+                    alt="flag"
+                    width="180"
+                    height="62"
+                    className="flag"
+                    src={'/mk-flag.jpg'}
+                />
 
-                {/* Наслов */}
-                <Box sx={{
-                    width: 48,
-                    height: 32,
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                    borderRadius: '2px',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                }}>
-                    <img
-                        src={'mkdFlag.jpg'}
-                        alt={"mkdFlag"}
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block'
-                        }}
-                    />
-                </Box>
+                {/* Име на апликацијата */}
+                <Link
+                    to="/dashboard"
+                    style={{ textDecoration: 'none', marginLeft: '15px' }}
+                >
+                    <Typography
+                        component="span"
+                        variant="h6"
+                        noWrap
+                        style={{ color: 'white' }}
+                    >
+                        ИНТЕРНА КНИГА НА ПОШТА
+                    </Typography>
+                </Link>
 
-                <Typography sx={{
-                    color: '#fff',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    letterSpacing: '0.08em',
-                    flex: 1,
-                    ml: 0.5
-                }}>
-                    Dashboard
+                {/* Наслов на страница */}
+                <Typography
+                    component="h1"
+                    variant="h6"
+                    color="inherit"
+                    noWrap
+                    sx={{ flexGrow: 1, ml: 4 }}
+                >
+                    {title || ''}
                 </Typography>
 
                 {/* Иконки десно */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-
-                    {/* Пребарување */}
-                    <IconButton sx={{ color: 'rgba(255,255,255,0.85)', p: 0.8 }}>
-                        <PersonIcon sx={{ fontSize: 20 }}/>
-                    </IconButton>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 2 }}>
 
                     {/* Нотификации */}
-                    <IconButton sx={{ color: 'rgba(255,255,255,0.85)', p: 0.8 }}>
+                    <IconButton sx={{ color: '#fff' }}>
                         <Badge badgeContent={0} color="error">
-                            <NotificationsIcon sx={{ fontSize: 20 }}/>
+                            <NotificationsIcon/>
                         </Badge>
                     </IconButton>
-
-                    {/* Корисник */}
-                    <Box
-                        onClick={handleMenuOpen}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            cursor: 'pointer',
-                            ml: 0.5,
-                            px: 1,
-                            py: 0.5,
-                            borderRadius: '4px',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                        }}
-                    >
-                        <Typography sx={{
-                            color: '#fff',
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            display: { xs: 'none', sm: 'block' }
-                        }}>
-                            {fullName}
-                        </Typography>
-                        <Avatar sx={{
-                            width: 30, height: 30,
-                            bgcolor: 'rgba(255,255,255,0.25)',
-                            color: '#fff',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold'
-                        }}>
-                            {initials}
-                        </Avatar>
-                    </Box>
                 </Box>
+
+                {/* Корисник */}
+                <Typography align="right" sx={{ color: '#fff', mr: 1 }}>
+                    {fullName}
+                </Typography>
+
+                <IconButton onClick={handleMenuOpen} sx={{ p: 0.5 }}>
+                    <Avatar sx={{
+                        width: 32, height: 32,
+                        bgcolor: 'rgba(255,255,255,0.25)',
+                        color: '#fff',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold'
+                    }}>
+                        {initials}
+                    </Avatar>
+                </IconButton>
 
                 {/* Dropdown мени за корисник */}
                 <Menu
