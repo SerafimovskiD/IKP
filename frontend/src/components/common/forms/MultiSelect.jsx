@@ -21,7 +21,7 @@ const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, t
                     const {key, ...rest} = props;
                     return (
                         <li key={key} {...rest}>
-                            <Checkbox checked={isSelected} size="small" sx={{mr: 1, p: 0.5}}/>
+                            {/*<Checkbox checked={isSelected} size="small" sx={{mr: 1, p: 0.5}}/>*/}
                             {getLabel(option)}
                         </li>
                     );

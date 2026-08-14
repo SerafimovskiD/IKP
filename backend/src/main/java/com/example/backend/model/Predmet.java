@@ -73,9 +73,9 @@ public class Predmet {
     @Column(length = 2000)
     private String zabeleska;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+//    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "roditel_predmet_id")
-    private Predmet roditelPredmet;
+//    private Predmet roditelPredmet;
 
     @Enumerated(EnumType.STRING)
     private TipDelovnik tipDelovnik;
@@ -83,13 +83,18 @@ public class Predmet {
     private TipOdgovor tipOdgovor;
 
     //mozda visak <-Naum
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organizaciskaedinica_id")
-    private OrganizaciskaEdinica organizaciskaedinica;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "organizaciskaedinica_id")
+//    private OrganizaciskaEdinica organizaciskaedinica;
 
     @Enumerated(EnumType.STRING)
     private StatusPredmet statusPredmet;
 
     @Column(nullable = false)
     private boolean isActive;
+
+    private String isprakjacIme;
+
+    @ManyToOne
+    private UserTable promenil;
 }

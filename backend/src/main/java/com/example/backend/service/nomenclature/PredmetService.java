@@ -94,7 +94,7 @@ public class PredmetService {
         predmet.setZabeleska(request.getZabeleska());
         predmet.setStatusPredmet(request.getStatusPredmet());
         predmet.setTipDelovnik(tipDelovnik);
-
+        predmet.setPromenil(user);
 
         List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
                 .map(id -> userRepository.findById(id)
@@ -110,7 +110,7 @@ public class PredmetService {
         predmet.setOdgovornoLice(new HashSet<>(odgovornoLice));
         predmet.setArhiva(new HashSet<>(arhiva));
         predmet.setIsprakjac(isprakjac);
-
+        predmet.setIsprakjacIme(request.getIsprakjacIme());
         if (tipDelovnik == TipDelovnik.Dobiena) {
             predmet.setPrioritet(request.getPrioritet());
             predmet.setBrAktNivni(request.getBrAktNivni());
@@ -139,17 +139,86 @@ public class PredmetService {
                 .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
         return PostaResponse.from(refreshed);
     }
+    @Transactional
+    public PostaResponse editPosta(PostaRequest request,
+                                   Long predmetId,
+                                   String email
+//                                   TipDelovnik tipDelovnik
+
+    ) {
+        UserTable user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Predmet predmet = predmetRepository.findById(predmetId).orElseThrow(()->new ResourceNotFoundException("Predmet not found"));
+        predmet.setBrAkt(predmet.getBrAkt());
+        predmet.setGodina(predmet.getGodina());
+        predmet.setRedenBroj(predmet.getRedenBroj());
+        predmet.setPodBroj(predmet.getPodBroj());
+        predmet.setTipOdgovor(predmet.getTipOdgovor());
+        predmet.setDatumZaveduvanje(request.getDatumZaveduvanje());
+        predmet.setTipPosta(request.getTipPosta());
+        predmet.setSodrzina(request.getSodrzina());
+        predmet.setInformativnaPosta(request.getInformativnaPosta());
+        predmet.setRealizirano(request.getRealizirano());
+        predmet.setZabeleska(request.getZabeleska());
+        predmet.setStatusPredmet(request.getStatusPredmet());
+        predmet.setTipDelovnik(predmet.getTipDelovnik());
+        predmet.setPromenil(user);
+
+        List<UserTable> odgovornoLice = request.getOdgovornoLiceId().stream()
+                .map(id -> userRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id)))
+                .collect(Collectors.toList());
+
+        List<Arhiva> arhiva = request.getArhivaId().stream()
+                .map(id -> arhivaRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Arhiva with ID: " + id)))
+                .collect(Collectors.toList());
+        Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
+                .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
+        predmet.setOdgovornoLice(new HashSet<>(odgovornoLice));
+        predmet.setArhiva(new HashSet<>(arhiva));
+        predmet.setIsprakjac(isprakjac);
+        predmet.setIsprakjacIme(request.getIsprakjacIme());
+//        if (tipDelovnik == TipDelovnik.Dobiena) {
+            predmet.setPrioritet(request.getPrioritet());
+            predmet.setBrAktNivni(request.getBrAktNivni());
+            predmet.setDatumIsprakjanje(request.getDatumIsprakjanje());
+            predmet.setBrAktArhivski(request.getBrAktArhivski());
+
+            List<VidPredmetDobiena> vidPredmetDob = request.getVidPredmetDobienaId().stream()
+                    .map(id -> vidPredmetDobienaRepository.findById(id)
+                            .orElseThrow(() -> new ResourceNotFoundException("VidPredmetDobiena with ID: " + id)))
+                    .collect(Collectors.toList());
+            predmet.setVidPredmetDobiena(new HashSet<>(vidPredmetDob));
+//            predmet.setVidPredmetIspratena(new HashSet<>());
+
+//        } else {
+
+            List<VidPredmetIspratena> vidPredmetIsp = request.getVidPredmetIspratenaId().stream()
+                    .map(id -> vidPredmetIspratenaRepository.findById(id)
+                            .orElseThrow(() -> new ResourceNotFoundException("VidPredmetIspratena with ID: " + id)))
+                    .collect(Collectors.toList());
+            predmet.setVidPredmetIspratena(new HashSet<>(vidPredmetIsp));
+//            predmet.setVidPredmetDobiena(new HashSet<>());
+//        }
+
+        Predmet saved = predmetRepository.save(predmet);
+        Predmet refreshed = predmetRepository.findById(saved.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
+        return PostaResponse.from(refreshed);
+    }
 
     public Page<PredmetListResponse> getAllPredmeti(
             Pageable pageable, Integer godina,String redenBroj,
-            Long isprakjacId, Long odgovornoLiceId,
+            String isprakjacIme, Long odgovornoLiceId,
             Long vidPredmetDobienaId, Long vidPredmetIspratenaId,
             Boolean realizirano, String search,
             TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,Long arhivaId,
-        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska,Boolean isActive) {
+        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska) {
 
         Specification<Predmet> spec = Specification
-                .where(PredmetSpecification.isActive(isActive))
+                .where(PredmetSpecification.isActive())
                 .and(PredmetSpecification.hasTipDelovnik(tipDelovnik))
                 .and(PredmetSpecification.hasGodina(godina))
                 .and(PredmetSpecification.hasRedenBrojLike(redenBroj))
@@ -157,7 +226,7 @@ public class PredmetService {
                 .and(PredmetSpecification.isRealizirano(realizirano))
                 .and(PredmetSpecification.hasStatusPredmet(statusPredmet))
 
-                .and(PredmetSpecification.hasIsprakjac(isprakjacId))
+                .and(PredmetSpecification.hasIsprakjac(isprakjacIme))
                 .and(PredmetSpecification.hasArhiva(arhivaId))
                 .and(PredmetSpecification.hasOdgovornoLice(odgovornoLiceId))
                 .and(PredmetSpecification.hasVidPredmetDobiena(vidPredmetDobienaId))

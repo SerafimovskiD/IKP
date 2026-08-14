@@ -20,9 +20,11 @@ public class PredmetSpecification {
             return cb.like(cb.function("text",String.class, root.get("redenBroj")), redenBroj.toLowerCase() + "%");
         };
     }
-    public static Specification<Predmet> hasIsprakjac(Long isprakjacId) {
-        return (root, query, cb)->
-                isprakjacId==null ? null :cb.equal(root.get("isprakjac").get("id"),isprakjacId);
+    public static Specification<Predmet> hasIsprakjac(String isprakjacIme) {
+        return (root, query, cb) -> {
+            if (isprakjacIme == null || isprakjacIme.isEmpty()) return null;
+            return cb.like(cb.lower(root.get("isprakjacIme")), "%" + isprakjacIme.toLowerCase() + "%");
+        };
     }
     public static Specification<Predmet> hasOdgovornoLice(Long odgovornoLiceId) {
         return (root, query, cb)->{
@@ -132,9 +134,9 @@ public class PredmetSpecification {
             return cb.like(cb.lower(root.get("zabeleska")), "%" + zabeleska.toLowerCase() + "%");
         };
     }
-    public static Specification<Predmet> isActive(Boolean isActive) {
+    public static Specification<Predmet> isActive() {
         return (root, query, cb) ->
-                isActive == null ? null : cb.equal(root.get("isActive"), isActive);
+                cb.equal(root.get("podBroj"), 1);
     }
 
 }

@@ -53,7 +53,7 @@ const PredmetiList = () => {
         brAktNivni: '',
         sodrzina: '',
         zabeleska: '',
-        isprakjacId: '',
+        isprakjacIme: '',
         odgovornoLiceId: '',
         vidPredmetDobienaId: '',
         vidPredmetIspratenaId: '',
@@ -101,7 +101,7 @@ const PredmetiList = () => {
             if (debouncedFilters.brAktNivni) params.append('brAktNivni', debouncedFilters.brAktNivni);
             if (debouncedFilters.sodrzina) params.append('sodrzina', debouncedFilters.sodrzina);
             if (debouncedFilters.zabeleska) params.append('zabeleska', debouncedFilters.zabeleska);
-            if (debouncedFilters.isprakjacId) params.append('isprakjacId', debouncedFilters.isprakjacId);
+            if (debouncedFilters.isprakjacIme) params.append('isprakjacIme', debouncedFilters.isprakjacIme);
             if (debouncedFilters.odgovornoLiceId) params.append('odgovornoLiceId', debouncedFilters.odgovornoLiceId);
             if (debouncedFilters.vidPredmetDobienaId) params.append('vidPredmetDobienaId', debouncedFilters.vidPredmetDobienaId);
             if (debouncedFilters.vidPredmetIspratenaId) params.append('vidPredmetIspratenaId', debouncedFilters.vidPredmetIspratenaId);
@@ -145,7 +145,7 @@ const PredmetiList = () => {
         const empty = {
             search: '', godina: '', redenBroj: '', datumZaveduvanje: '',
             brAktNivni: '', sodrzina: '', zabeleska: '',
-            isprakjacId: '', odgovornoLiceId: '',
+            isprakjacIme: '', odgovornoLiceId: '',
             vidPredmetDobienaId: '', vidPredmetIspratenaId: '',
             realizirano: '', tipDelovnik: '', tipPosta: '',
             statusPredmet: '', arhivaId: ''
@@ -352,14 +352,17 @@ const PredmetiList = () => {
                                             },
                                             {
                                                 label: 'Испраќач', field: null,
-                                                filter: <ColDropdown
-                                                    value={filters.isprakjacId}
-                                                    onChange={(v) => hfInstant('isprakjacId', v)}
-                                                    options={isprakjaci || []}
-                                                    getLabel={(o) => o.naziv}
-                                                    getId={(o) => o.id}
-                                                    placeholder="Испраќач..."
-                                                />
+                                                filter: <ColFilter value={filters.isprakjacIme}
+                                                                   onChange={(v) => hf('isprakjacIme', v)}
+                                                                   placeholder="Содржина..."/>
+                                                // filter: <ColDropdown
+                                                //     value={filters.isprakjacId}
+                                                //     onChange={(v) => hfInstant('isprakjacId', v)}
+                                                //     options={isprakjaci || []}
+                                                //     getLabel={(o) => o.naziv}
+                                                //     getId={(o) => o.id}
+                                                //     placeholder="Испраќач..."
+                                                // />
                                             },
                                             {
                                                 label: 'Одговорно лице', field: null,
@@ -515,7 +518,7 @@ const PredmetiList = () => {
                                                     maxWidth: 140, overflow: 'hidden',
                                                     textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                                                 }}>
-                                                    {predmet.isprakjacNaziv || '—'}
+                                                    {predmet.isprakjacIme || '—'}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell sx={{py: 1}}>

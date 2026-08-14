@@ -203,7 +203,7 @@ const PostaDetails = () => {
     );
 
     if (!predmet) return null;
-
+    console.log(predmet);
     const isDobiena = predmet.tipDelovnik === "Dobiena";
     const T = isDobiena ? DOBIENA : ISPRATENA;
 
@@ -292,15 +292,12 @@ const PostaDetails = () => {
                                             borderRadius: '6px', px: 1.2, py: 0.6,
                                             minHeight: 32, display: 'flex', alignItems: 'center', gap: 0.5
                                         }}>
-                                            {isprakjac && (
-                                                <CheckCircleIcon sx={{fontSize: 13, color: T.accent, flexShrink: 0}}/>
-                                            )}
                                             <Typography sx={{
                                                 fontSize: '0.82rem',
                                                 color: isprakjac ? '#222' : '#BBB',
                                                 fontWeight: isprakjac ? 500 : 400
                                             }}>
-                                                {isprakjac?.naziv || '—'}
+                                                {predmet.isprakjacIme || '—'}
                                             </Typography>
                                         </Box>
                                     </Field>
@@ -471,7 +468,7 @@ const PostaDetails = () => {
                                             <thead>
                                             <tr>
                                                 {['Под број', 'Вид пошта', 'Тип пошта', 'Датум',
-                                                    'Бр. акт (нивни)', 'Испраќач', 'Одговорно лице',
+                                                    'Бр. акт (нивни)', 'Испраќач','Извр. промена', 'Одговорно лице',
                                                     'Предмет', 'Содржина', 'Реализ.',
                                                     'Архива', 'Забелешка', 'Статус'
                                                 ].map(h => (
@@ -567,6 +564,17 @@ const PostaDetails = () => {
                                                             textOverflow: 'ellipsis',
                                                             whiteSpace: 'nowrap'
                                                         }}>
+                                                            {p.promenilKorisnik || '—'}
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '4px 8px',
+                                                            fontSize: '0.75rem',
+                                                            color: '#444',
+                                                            maxWidth: 130,
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
                                                             {p.odgovornoLiceNaziv?.join(', ') || '—'}
                                                         </td>
                                                         <td style={{
@@ -641,7 +649,6 @@ const PostaDetails = () => {
                         )}
 
                         {/* КОПЧИЊА */}
-                        {predmet.isActive && (
                             <Box sx={{
                                 display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center',
                                 pt: 1.5, borderTop: '1px solid #E8E8E8', mt: 0.5
@@ -671,7 +678,6 @@ const PostaDetails = () => {
                                     </Button>
                                 ))}
                             </Box>
-                        )}
                     </Box>
             </Box>
         </LocalizationProvider>

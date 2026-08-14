@@ -30,7 +30,9 @@ public record PredmetListResponse(
         List<Long> odgovornoLiceId,
         List<Long> vidPredmetId,
         List<Long> arhivaId,
-        Boolean isActive
+        Boolean isActive,
+        String isprakjacIme,
+        String promenilKorisnik
 
 ) {
     public static PredmetListResponse from(Predmet p) {
@@ -41,6 +43,7 @@ public record PredmetListResponse(
                 : p.getVidPredmetIspratena().stream()
                 .map(VidPredmetIspratena::getNaziv)
                 .collect(Collectors.toList());
+        String promenil = p.getPromenil().getIme() +" "+ p.getPromenil().getPrezime();
         return new PredmetListResponse(
                 p.getId(),
                 p.getBrAkt(),
@@ -79,7 +82,9 @@ public record PredmetListResponse(
                         .map(VidPredmetIspratena::getId)
                         .collect(Collectors.toList()),
                 p.getArhiva().stream().map(Arhiva::getId).collect(Collectors.toList()),
-                p.isActive()
+                p.isActive(),
+                p.getIsprakjacIme(),
+                promenil
         );
 
     }

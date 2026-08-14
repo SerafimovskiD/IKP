@@ -124,7 +124,7 @@ public class PredmetController {
             @PageableDefault(size = 50,sort = "datumZaveduvanje",direction = Sort.Direction.DESC)Pageable pageable,
             @RequestParam(required = false) Integer godina,
             @RequestParam(required = false) String redenBroj,
-            @RequestParam(required = false) Long isprakjacId,
+            @RequestParam(required = false) String isprakjacIme,
             @RequestParam(required = false) Long odgovornoLiceId,
             @RequestParam(required = false) Long vidPredmetDobienaId,
             @RequestParam(required = false) Long vidPredmetIspratenaId,
@@ -137,12 +137,12 @@ public class PredmetController {
             @RequestParam(required = false) String datumZaveduvanje,
             @RequestParam(required = false) String brAktNivni,
             @RequestParam(required = false) String sodrzina,
-            @RequestParam(required = false) String zabeleska,
-            @RequestParam(required = false,defaultValue = "true") Boolean isActive
+            @RequestParam(required = false) String zabeleska
+//            @RequestParam(required = false,defaultValue = "true") Boolean isActive
     ){
-        return ResponseEntity.ok(predmetService.getAllPredmeti( pageable, godina, redenBroj, isprakjacId, odgovornoLiceId,
+        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable, godina, redenBroj, isprakjacIme, odgovornoLiceId,
                 vidPredmetDobienaId, vidPredmetIspratenaId, realizirano, search,
-                tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska,isActive));
+                tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska));
     }
     @GetMapping("/next-reden-broj")
     public ResponseEntity<Integer> getNextRedenBroj() {
@@ -203,5 +203,22 @@ public class PredmetController {
                 .stream()
                 .map(SkeniraniDokumentiResponse::from)
                 .collect(Collectors.toList()));
+    }
+
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<PostaResponse> editPosta(
+            @RequestBody PostaRequest request,
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails
+//            @RequestParam TipDelovnik tipDelovnik
+
+    ) {
+        return ResponseEntity.ok(
+                predmetService.editPosta(request,
+                        id,
+                        userDetails.getUsername()
+//                        tipDelovnik
+                )
+        );
     }
 }

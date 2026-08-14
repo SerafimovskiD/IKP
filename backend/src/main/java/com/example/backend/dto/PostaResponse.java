@@ -70,8 +70,12 @@ public class PostaResponse {
 
     private TipOdgovor tipOdgovor;
     private Boolean isActive;
+    private String isprakjacIme;
+    private String promenilKorisnik;
 
     public static PostaResponse from(Predmet predmet) {
+        String promenil = predmet.getPromenil().getIme() +" "+ predmet.getPromenil().getPrezime();
+
         PostaResponse dto = new PostaResponse();
 
         dto.setId(predmet.getId());
@@ -115,6 +119,8 @@ public class PostaResponse {
         dto.setTipDelovnik(predmet.getTipDelovnik());
         dto.setTipOdgovor(predmet.getTipOdgovor());
         dto.setIsActive(predmet.isActive());
+        dto.setIsprakjacIme(predmet.getIsprakjacIme());
+        dto.setPromenilKorisnik(promenil);
         return dto;
     }
 }

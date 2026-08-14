@@ -112,15 +112,15 @@ const Header = ({ title, onMenuToggle }) => {
                 </Typography>
 
                 {/* Иконки десно */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 2 }}>
+                {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 2 }}>*/}
 
                     {/* Нотификации */}
-                    <IconButton sx={{ color: '#fff' }}>
-                        <Badge badgeContent={0} color="error">
-                            <NotificationsIcon/>
-                        </Badge>
-                    </IconButton>
-                </Box>
+                    {/*<IconButton sx={{ color: '#fff' }}>*/}
+                    {/*    <Badge badgeContent={0} color="error">*/}
+                    {/*        <NotificationsIcon/>*/}
+                    {/*    </Badge>*/}
+                    {/*</IconButton>*/}
+                {/*</Box>*/}
 
                 {/* Корисник */}
                 <Typography align="right" sx={{ color: '#fff', mr: 1 }}>
