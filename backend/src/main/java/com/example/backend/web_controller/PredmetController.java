@@ -197,6 +197,15 @@ public class PredmetController {
                 .body(dok.getContent());
     }
 
+    @DeleteMapping("/dokumenti/{dokId}")
+    public ResponseEntity<Void> deleteDokument(@PathVariable Long dokId) {
+        if (!skeniraniDokumentiRepository.existsById(dokId)) {
+            throw new ResourceNotFoundException("SkeniraniDokumenti", dokId);
+        }
+        skeniraniDokumentiRepository.deleteById(dokId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}/dokumenti")
     public ResponseEntity<List<SkeniraniDokumentiResponse>> getDokumenti(@PathVariable Long id) {
         return ResponseEntity.ok(skeniraniDokumentiRepository.findAllByPredmetId(id)
@@ -209,15 +218,15 @@ public class PredmetController {
     public ResponseEntity<PostaResponse> editPosta(
             @RequestBody PostaRequest request,
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails
-//            @RequestParam TipDelovnik tipDelovnik
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam TipDelovnik tipDelovnik
 
     ) {
         return ResponseEntity.ok(
                 predmetService.editPosta(request,
                         id,
-                        userDetails.getUsername()
-//                        tipDelovnik
+                        userDetails.getUsername(),
+                        tipDelovnik
                 )
         );
     }

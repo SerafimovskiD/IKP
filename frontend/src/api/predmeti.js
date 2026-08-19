@@ -17,6 +17,12 @@ export const predmetiApi = {
         const res = await api.post(`/predmet/create?${params.toString()}`, data);
         return res.data;
     },
+    editPosta: async (data, id, tipDelovnik) => {
+        const params = new URLSearchParams();
+        params.append('tipDelovnik', tipDelovnik);
+        const res = await api.put(`/predmet/edit/${id}?${params.toString()}`, data);
+        return res.data;
+    },
     getAll: async (params = {}) => {
         const res = await api.get('/predmet', { params });
         return res.data;
@@ -59,5 +65,17 @@ export const predmetiApi = {
         a.download = ime;
         a.click();
         URL.revokeObjectURL(url);
+    },
+
+    // Го презема документот како blob, без веднаш да го преземе (за preview во UI-от).
+    getDokBlob: async (dokId) => {
+        const res = await api.get(`/predmet/dokumenti/${dokId}`, {
+            responseType: 'blob'
+        });
+        return res.data;
+    },
+
+    deleteDok: async (dokId) => {
+        await api.delete(`/predmet/dokumenti/${dokId}`);
     }
 };

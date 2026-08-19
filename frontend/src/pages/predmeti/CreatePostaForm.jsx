@@ -1,11 +1,12 @@
 import {useState, useRef, useEffect} from 'react';
 import {
-    Box, Typography, Grid, TextField, RadioGroup, FormControlLabel, Radio,
-    Button, Divider,
+    Box, Typography, TextField,
+    Button, Divider, Card, CardContent,
     CircularProgress, Switch, IconButton,
-    Backdrop
+    Backdrop, ToggleButton, ToggleButtonGroup
 
 } from '@mui/material';
+import {ThemeProvider, createTheme} from '@mui/material/styles';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -14,7 +15,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
 import {useSnackbar} from '../../context/SnackbarContext.jsx';
 import dayjs from 'dayjs';
-import {useNavigate, useSearchParams} from "react-router-dom";
+import {useNavigate, useParams, useSearchParams} from "react-router-dom";
 import {useEnums} from "../../hooks/useEnums.js";
 import useIsprakjac from "../../hooks/useIsprakjac.js";
 import useArhiva from "../../hooks/useArhiva.js";
@@ -26,46 +27,59 @@ import useOrgEdinica from "../../hooks/useOrgEdinica.js";
 import usePredmeti from "../../hooks/usePredmeti.js";
 import usePredmetDetails from "../../hooks/usePredmetiDetails.js";
 import {predmetiApi} from "../../api/predmeti.js";
-import SectionCard from "../../components/common/SectionCard.jsx";
 import SingleSelect from "../../components/common/forms/SingleSelect.jsx";
 import MultiSelect from "../../components/common/forms/MultiSelect.jsx";
-import Err from "../../components/common/forms/ErrorText.jsx";
+import ErrorText from "../../components/common/forms/ErrorText.jsx";
 
-const THEME = {
-    gradient: 'linear-gradient(135deg, #6B0D1E 0%, #9B1D2E 60%, #C8404A 100%)',
-    gradientLight: 'linear-gradient(135deg, #FBEEF0 0%, #F6DDE1 100%)',
-    border: '#C8A0A6',
-    borderLight: '#E3C3C8',
-    chipBg: '#f1e9d4',
-    chipColor: '#826f35',
-    accent: '#826f35',
-    accentDark: '#826f35',
-    btnBg: '#826f35',
-    btnHover: '#5a4d26',
-    sectionBg: '#FFF9F9',
+// Целосно одделени теми за Добиена (злато/жолто) и Испратена (зелено) пошта -
+// исти вредности како во PostaDetails.jsx, за визуелна конзистентност меѓу двете страници.
+const DOBIENA = {
+    gradient: 'linear-gradient(135deg, #7A5C10 0%, #A9821C 55%, #D4AF37 100%)',
+    border: '#C8A84B',
+    chipBg: '#FDF3D8',
+    chipColor: '#7A5C00',
+    accent: '#C8A84B',
+    accentDark: '#7A5C00',
+    btnBg: '#8B6914',
+    btnHover: '#6B4F0E',
+    sectionBg: '#FFFDF5',
 };
 
+const ISPRATENA = {
+    gradient: 'linear-gradient(135deg, #164A1A 0%, #2E7D32 55%, #5CB860 100%)',
+    border: '#388E3C',
+    chipBg: '#E8F5E9',
+    chipColor: '#1B5E20',
+    accent: '#388E3C',
+    accentDark: '#1B5E20',
+    btnBg: '#2E7D32',
+    btnHover: '#1B5E20',
+    sectionBg: '#F9FDF9',
+};
+
+// Вгнездени MUI теми (само primary бојата се менува) - за да сите вградени MUI
+// состојаби на активирање/фокус (TextField outline, Autocomplete, DatePicker
+// избран ден, итн.) автоматски ги следат бојите на Добиена/Испратена пошта.
+const dobienaMuiTheme = createTheme({palette: {primary: {main: DOBIENA.accentDark}}});
+const ispratenaMuiTheme = createTheme({palette: {primary: {main: ISPRATENA.accentDark}}});
+
 // ─── SWITCH CARD ──────────────────────────────────────────────────────────────
+// Нема фиксна висина - природно се обликува со padding, исто како другите полиња.
 const SwitchCard = ({label, checked, onChange, theme}) => (
     <Box sx={{
         border: `1px solid ${checked ? theme.border : '#E8E8E8'}`,
-        borderRadius: '8px', px: 2, py: 1.2,
+        borderRadius: '8px', px: 1.2,py:0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        bgcolor: checked ? theme.chipBg : '#fff',
+        bgcolor: checked ? theme.chipBg : '#fff',height:40,
         transition: 'all 0.2s', cursor: 'pointer',
         '&:hover': {borderColor: theme.border}
     }} onClick={() => onChange(!checked)}>
-        <Box>
-            <Typography sx={{
-                fontSize: '0.75rem', fontWeight: 600, color: checked ? theme.accentDark : '#666',
-                letterSpacing: '0.06em', textTransform: 'uppercase'
-            }}>
-                {label}
-            </Typography>
-            <Typography sx={{fontSize: '0.68rem', color: checked ? theme.accent : '#999', mt: 0.2}}>
-                {checked ? 'Да' : 'Не'}
-            </Typography>
-        </Box>
+        <Typography sx={{
+            fontSize: '0.7rem', fontWeight: 600, color: checked ? theme.accentDark : '#666',
+            letterSpacing: '0.04em', textTransform: 'uppercase'
+        }}>
+            {label}
+        </Typography>
         <Switch
             checked={checked}
             onChange={(e) => {
@@ -80,14 +94,55 @@ const SwitchCard = ({label, checked, onChange, theme}) => (
         />
     </Box>
 );
-const Row = ({children, gap = 1.5}) => (
-    <Box sx={{display: 'flex', gap, flexWrap: 'wrap', alignItems: 'flex-start'}}>
-        {children}
+
+// ─── СЕГМЕНТИРАНА КОНТРОЛА (како во /predmeti филтерот) - за Тип/Приоритет.
+// Нема фиксна висина - контролата ја има својата природна (size="small") висина,
+// а порамнувањето со другите полиња се прави преку margin, не преку height.
+const ToggleField = ({error, value, onChange, options, theme}) => (
+    <Box>
+        {/*<Typography sx={{*/}
+        {/*    fontSize: '0.7rem', color: error ? '#d32f2f' : '#888',*/}
+        {/*    fontWeight: 600, letterSpacing: '0.06em', mb: 0.8, textTransform: 'uppercase'*/}
+        {/*}}>*/}
+            {/*{label}{required && ' *'}*/}
+        {/*</Typography>*/}
+        <ToggleButtonGroup
+            exclusive
+            fullWidth
+            size="small"
+            value={value || null}
+            onChange={(_, next) => onChange(next ?? '')}
+            sx={{
+                '& .MuiToggleButton-root': {
+                    textTransform: 'none', fontSize: '0.8rem', fontWeight: 600,
+                    color: '#666', borderColor: error ? '#d32f2f' : 'rgba(0,0,0,0.23)',
+                    '&.Mui-selected': {
+                        bgcolor: theme.accentDark, color: '#fff',
+                        '&:hover': {bgcolor: theme.btnHover},
+                    },
+                },
+            }}
+        >
+            {options.map(opt => (
+                <ToggleButton key={opt} value={opt}>
+                    {opt}
+                </ToggleButton>
+            ))}
+        </ToggleButtonGroup>
+        <ErrorText msg={error}/>
     </Box>
 );
 
-const Col = ({children, flex = 1, minWidth = 180}) => (
-    <Box sx={{flex, minWidth}}>
+// ─── РЕД ОД ПОЛИЊА - секое дете подеднакво широко, освен ако не е зададено columns ──
+const FormRow = ({children, columns}) => (
+    <Box sx={{
+        display: 'grid', gap: 2,
+        gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: columns || `repeat(${Array.isArray(children) ? children.filter(Boolean).length : 1}, 1fr)`,
+        },
+    }}>
         {children}
     </Box>
 );
@@ -96,16 +151,18 @@ const Col = ({children, flex = 1, minWidth = 180}) => (
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 const PredmetForm = () => {
     const [searchParams] = useSearchParams();
+    const {id: editId} = useParams();
+    const isEditMode = !!editId;
     const tipDelovnik = searchParams.get("tipDelovnik") || "Dobiena";
     const isDobiena = tipDelovnik === "Dobiena";
-    const T = THEME;
+    const T = isDobiena ? DOBIENA : ISPRATENA;
     const today = dayjs();
     const fileInputRef = useRef(null);
     const dropRef = useRef(null);
 
     const [form, setForm] = useState({
         datumZaveduvanje: today,
-        tipPosta: "",
+        tipPosta: "писмо",
         prioritet: "",
         isprakjacId: "",
         brAktNivni: "",
@@ -144,9 +201,12 @@ const PredmetForm = () => {
     const [submitted, setSubmitted] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
+    // Овозможува клик било каде во полето (не само на календарчето) да го отвори DatePicker-от.
+    const [datumZaveduvanjeOpen, setDatumZaveduvanjeOpen] = useState(false);
+    const [datumIsprakjanjeOpen, setDatumIsprakjanjeOpen] = useState(false);
 
     const {prioritet: prioritetEnum, tipPosta: tipPostaEnum, statusPredmet: statusEnum} = useEnums();
-    const {createPosta, loading, error, nextRedenBroj} = usePredmeti();
+    const {createPosta, editPosta, loading, error, nextRedenBroj} = usePredmeti();
     const {isprakjaci, loading: lI} = useIsprakjac();
     const {arhiva, loading: lA} = useArhiva();
     const {vidPredmetD, loading: lVD} = useVidPredmetDobieno();
@@ -162,13 +222,60 @@ const PredmetForm = () => {
 
 
     const {predmet: roditel} = usePredmetDetails(roditelId);
+    const {predmet: existingPredmet, loading: lEdit} = usePredmetDetails(editId);
+    const [existingDocs, setExistingDocs] = useState([]);
+    const [prefillDone, setPrefillDone] = useState(false);
+
     useEffect(() => {
         if (user?.organizaciskaEdinicaId) {
             getOrgEdinicaById(user.organizaciskaEdinicaId).then(setOrgEdinica);
         }
     }, [user?.organizaciskaEdinicaId]);
 
-    const isPageLoading = lI || lA || lVD || lVI || lO;
+    // Пополнување на формата со постоечките податоци кога сме во режим на уредување.
+    useEffect(() => {
+        if (isEditMode && existingPredmet && !prefillDone) {
+            setForm({
+                datumZaveduvanje: existingPredmet.datumZaveduvanje ? dayjs(existingPredmet.datumZaveduvanje) : null,
+                tipPosta: existingPredmet.tipPosta || "",
+                prioritet: existingPredmet.prioritet || "",
+                isprakjacId: existingPredmet.isprakjacId || "",
+                brAktNivni: existingPredmet.brAktNivni || "",
+                datumIsprakjanje: existingPredmet.datumIsprakjanje ? dayjs(existingPredmet.datumIsprakjanje) : null,
+                brAktArhivski: existingPredmet.brAktArhivski || "",
+                vidPredmetDobienaId: existingPredmet.vidPredmetDobienaId || [],
+                vidPredmetIspratenaId: existingPredmet.vidPredmetIspratenaId || [],
+                sodrzina: existingPredmet.sodrzina || "",
+                odgovornoLiceId: existingPredmet.odgovornoLiceId || [],
+                informativnaPosta: !!existingPredmet.informativnaPosta,
+                realizirano: !!existingPredmet.realizirano,
+                arhivaId: existingPredmet.arhivaId || [],
+                zabeleska: existingPredmet.zabeleska || "",
+                statusPredmet: existingPredmet.statusPredmet || "",
+                isprakjacIme: existingPredmet.isprakjacIme || "",
+            });
+            setPrefillDone(true);
+        }
+    }, [isEditMode, existingPredmet, prefillDone]);
+
+    useEffect(() => {
+        if (isEditMode && editId) {
+            predmetiApi.getAllDok(editId).then(setExistingDocs);
+        }
+    }, [isEditMode, editId]);
+
+    const handleDeleteExistingDok = async (dok) => {
+        if (!window.confirm(`Да се отстрани документот „${dok.imeFile}“?`)) return;
+        try {
+            await predmetiApi.deleteDok(dok.id);
+            setExistingDocs(p => p.filter(d => d.id !== dok.id));
+            showSnackbar('Документот е отстранет', 'warning');
+        } catch {
+            showSnackbar('Грешка при бришење на документот!', 'error');
+        }
+    };
+
+    const isPageLoading = lI || lA || lVD || lVI || lO || (isEditMode && (lEdit || !prefillDone));
 
     const hc = (field, value) => {
         setForm(p => ({...p, [field]: value}));
@@ -241,163 +348,109 @@ const PredmetForm = () => {
             isprakjacIme: isprakjac_ime
         };
         try {
-            console.log(form)
-            const savedPredmet = await createPosta(
-                payload, tipDelovnik, tipOdgovor,
-                roditel?.redenBroj ?? null,
-                roditel?.godina ?? null,
-                roditel?.podBroj ?? null
-            );
+            const savedPredmet = isEditMode
+                ? await editPosta(payload, editId, tipDelovnik)
+                : await createPosta(
+                    payload, tipDelovnik, tipOdgovor,
+                    roditel?.redenBroj ?? null,
+                    roditel?.godina ?? null,
+                    roditel?.podBroj ?? null
+                );
             if (attachedFiles.length > 0) {
                 for (const file of attachedFiles) {
                     await predmetiApi.uploadDok(savedPredmet.id, file);
                 }
             }
-            showSnackbar('Успешно зачувано!', 'success');
+            showSnackbar(isEditMode ? 'Успешно зачувани промени!' : 'Успешно зачувано!', 'success');
             setSubmitted(false);
             setFormErrors({});
-            navigate("/predmeti")
+            navigate(isEditMode ? `/posta/${editId}` : "/predmeti");
         } catch (e) {
             console.error(e.response?.data);
             showSnackbar('Грешка при зачувување!', 'error');
             setSaving(false);
         }
     };
+    const brojNaAkt = isEditMode
+        ? `${existingPredmet?.brAkt ?? '···'} / ${existingPredmet?.redenBroj ?? '···'} / ${existingPredmet?.podBroj ?? '···'} / ${existingPredmet?.godina ?? '···'}`
+        : roditelId
+            ? `${roditel?.brAkt ?? '···'} / ${roditel?.redenBroj ?? '···'} / ${(roditel?.podBroj ?? 0) + 1} / ${roditel?.godina ?? today.year()}`
+            : `${orgEdinica?.code ?? '·····'} / ${nextRedenBroj ?? '···'} / 1 / ${today.year()}`;
+
     return (
+        <ThemeProvider theme={isDobiena ? dobienaMuiTheme : ispratenaMuiTheme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
 
             <Box sx={{p: 3}}>
 
-                {/* ── НАСЛОВ (изглед идентичен на DemoApp SectionTitle) ── */}
-                <Box sx={{
-                    background: 'linear-gradient(240deg, #b6a268 0%, #dbbd5e 70%, #826f35 100%)',
-                    borderRadius: '0% 100% 100% 0% / 50% 50% 50% 50%',
-                    mb: '5px', px: 2,
+                <Card sx={{
+                    borderRadius: '12px', overflow: 'hidden',
+                    border: '1px solid #E4E4E4', boxShadow: '0 1px 3px rgba(16,24,40,0.05)'
                 }}>
-                    <Typography variant="h6" sx={{color: '#000'}}>
-                        {isDobiena ? 'Добиена пошта' : 'Испратена пошта'} — Нов предмет
-                    </Typography>
-                </Box>
-                <Divider/>
-                <Typography sx={{color: '#888', fontSize: '1.2rem', mt: 0.5, mb: 2}}>
-                    Број на акт: {roditelId
-                    ? `${roditel?.brAkt ?? '···'} / ${roditel?.redenBroj ?? '···'} / ${(roditel?.podBroj ?? 0) + 1} / ${roditel?.godina ?? today.year()}`
-                    : `${orgEdinica?.code ?? '·····'} / ${nextRedenBroj ?? '···'} / 1 / ${today.year()}`
-                }
-                </Typography>
 
-                <Box>
+                    {/* ── ЕДИНСТВЕН НАСЛОВ НА КАРТИЧКАТА ── */}
+                    <Box sx={{
+                        background: T.gradient,
+                        px: {xs: 2, md: 3}, py: 1.75,
+                        display: 'flex', flexWrap: 'wrap', alignItems: 'center',
+                        justifyContent: 'space-between', gap: 1,
+                    }}>
+                        <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '1.05rem'}}>
+                            {isDobiena ? 'Добиена пошта' : 'Испратена пошта'} — {isEditMode ? 'Уредување на предмет' : 'Нов предмет'}
+                        </Typography>
+                        <Typography sx={{
+                            color: 'rgba(255,255,255,0.9)', fontSize: '0.85rem',
+                            fontFamily: 'monospace', letterSpacing: '0.02em'
+                        }}>
+                            Број на акт: {brojNaAkt}
+                        </Typography>
+                    </Box>
 
-                    {/* ── РЕД 1: СТАТУС + ДАТУМ + ТИП ── */}
-                    <SectionCard title="Регистрација" theme={T}>
-                        <Grid container spacing={1.5} alignItems="flex-start">
+                    <CardContent sx={{p: {xs: 2, md: 3}}}>
 
+                        {/* ── СИТЕ ПОЛИЊА ВО РЕДОВИ, БЕЗ ПОДЕЛБА НА СЕКЦИИ ── */}
+                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
 
-                            {/* Датум */}
-                            <Grid item xs={12} sm={6} md={3}>
-                                <Typography sx={{
-                                    fontSize: '0.68rem', color: formErrors.datumZaveduvanje ? '#d32f2f' : '#888',
-                                    fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'
-                                }}>
-                                    Датум на заведување *
-                                </Typography>
+                            {/* РЕД 1: Датум на заведување, Тип, Приоритет, Испраќач, [Друг испраќач] */}
+                            <FormRow>
                                 <DatePicker
+                                    label="Датум на заведување *"
                                     value={form.datumZaveduvanje}
                                     onChange={(v) => hc('datumZaveduvanje', v)}
                                     format="DD.MM.YYYY"
+                                    open={datumZaveduvanjeOpen}
+                                    onOpen={() => setDatumZaveduvanjeOpen(true)}
+                                    onClose={() => setDatumZaveduvanjeOpen(false)}
                                     slotProps={{
                                         textField: {
-                                            variant: 'standard',
-                                            size: 'small',
-                                            fullWidth: true,
+                                            size: 'small', fullWidth: true,
                                             error: !!formErrors.datumZaveduvanje,
-                                            helperText: formErrors.datumZaveduvanje,
+                                            helperText: formErrors.datumZaveduvanje || ' ',
+                                            onClick: () => setDatumZaveduvanjeOpen(true),
                                         }
                                     }}
-
                                 />
-                            </Grid>
 
-                            {/* Тип */}
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Typography sx={{
-                                    fontSize: '0.68rem', color: formErrors.tipPosta ? '#d32f2f' : '#888',
-                                    fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'
-                                }}>
-                                    Тип *
-                                </Typography>
-                                <Box sx={{
-                                    border: `1px solid ${formErrors.tipPosta ? '#d32f2f' : '#D8D8D8'}`,
-                                    borderRadius: '8px', px: 1, py: 0.3, bgcolor: '#fff'  // ← py: 1 → 0.3
-                                }}>
-                                    <RadioGroup value={form.tipPosta}
-                                                onChange={(e) => hc('tipPosta', e.target.value)}>
-                                        {(tipPostaEnum.length > 0 ? tipPostaEnum : ['писмо', 'телеграма']).map(t => (
-                                            <FormControlLabel key={t} value={t}
-                                                              control={<Radio size="small" sx={{
-                                                                  '&.Mui-checked': {color: T.accent},
-                                                                  p: 0.3
-                                                              }}/>}
-                                                              label={<Typography
-                                                                  sx={{fontSize: '0.78rem'}}>{t}</Typography>}
-                                                              sx={{m: 0, mb: 0}}/>
-                                        ))}
-                                    </RadioGroup>
-                                </Box>
-                                <Err msg={formErrors.tipPosta}/>
-                            </Grid>
+                                <ToggleField
+                                    label="Тип" required error={formErrors.tipPosta}
+                                    value={form.tipPosta}
+                                    onChange={(v) => hc('tipPosta', v)}
+                                    options={tipPostaEnum.length > 0 ? tipPostaEnum : ['писмо', 'телеграма']}
+                                    theme={T}
+                                />
 
+                                {isDobiena && (
+                                    <ToggleField
+                                        label="Приоритет" required error={formErrors.prioritet}
+                                        value={form.prioritet}
+                                        onChange={(v) => hc('prioritet', v)}
+                                        options={prioritetEnum.length > 0 ? prioritetEnum : ['Висок', 'Нормален']}
+                                        theme={T}
+                                    />
+                                )}
 
-                            {/* Приоритет — само добиена */}
-                            {isDobiena && (
-                                <Grid item xs={12} sm={6} md={2}>
-                                    <Typography sx={{
-                                        fontSize: '0.68rem', color: formErrors.prioritet ? '#d32f2f' : '#888',
-                                        fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'
-                                    }}>
-                                        Приоритет *
-                                    </Typography>
-                                    <Box sx={{
-                                        border: `1px solid ${formErrors.prioritet ? '#d32f2f' : '#D8D8D8'}`,
-                                        borderRadius: '8px', px: 1.5, py: 0.3, bgcolor: '#fff'
-                                    }}>
-                                        <RadioGroup value={form.prioritet}
-                                                    onChange={(e) => hc('prioritet', e.target.value)}>
-                                            {(prioritetEnum.length > 0 ? prioritetEnum : ['Висок', 'Нормален']).map(p => (
-                                                <FormControlLabel key={p} value={p}
-                                                                  control={<Radio size="small" sx={{
-                                                                      '&.Mui-checked': {color: T.accent},
-                                                                      p: 0.3
-                                                                  }}/>}
-                                                                  label={<Typography
-                                                                      sx={{fontSize: '0.78rem'}}>{p}</Typography>}
-                                                                  sx={{m: 0, mb: 0}}/>
-                                            ))}
-                                        </RadioGroup>
-                                    </Box>
-                                    <Err msg={formErrors.prioritet}/>
-                                </Grid>
-                            )}
-                        </Grid>
-
-                    </SectionCard>
-
-                    {/* ── ИСПРАЌАЧ ── */}
-                    <SectionCard title={isDobiena ? "Испраќач" : "Испратено до"} theme={T}>
-                        <Grid container spacing={2.5}>
-
-                            {/* Испраќач dropdown — поголем */}
-                            <Grid item xs={12} md={isDobiena ? 3 : 12}>
-                                {/*{selectedIsprakjac && (*/}
-                                {/*    <Box sx={{display: 'flex', alignItems: 'center', gap: 0.6, mb: 1}}>*/}
-                                {/*        <CheckCircleIcon sx={{fontSize: 13, color: T.accent}}/>*/}
-                                {/*        <Typography sx={{fontSize: '0.75rem', color: T.accentDark, fontWeight: 600}}>*/}
-                                {/*            {selectedIsprakjac.naziv}*/}
-                                {/*        </Typography>*/}
-                                {/*    </Box>*/}
-                                {/*)}*/}
                                 <SingleSelect
-                                    label={isDobiena ? "Избери испраќач *" : "Избери примач *"}
+                                    label={isDobiena ? 'Избери испраќач' : 'Избери примач'}
                                     value={form.isprakjacId}
                                     onChange={(v) => hc('isprakjacId', v)}
                                     options={isprakjaci || []}
@@ -407,73 +460,57 @@ const PredmetForm = () => {
                                     fullWidth
                                     size="small"
                                 />
-                            </Grid>
-                            {isDrugo && (
-                                <>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <TextField fullWidth size="small"
-                                                   label="Друг испраќач"
-                                                   value={form.isprakjacIme}
-                                                   error={!!formErrors.isprakjacIme}
-                                                   helperText={formErrors.isprakjacIme || " "}
-                                                   onChange={(e) => hc('isprakjacIme', e.target.value)}
-                                        />
-                                    </Grid>
-                                </>
-                            )}
+                                <TextField fullWidth size="small"
+                                           label="Друг испраќач"
+                                           value={form.isprakjacIme}
+                                           error={!!formErrors.isprakjacIme}
+                                           helperText={formErrors.isprakjacIme || ' '}
+                                           onChange={(e) => hc('isprakjacIme', e.target.value)}
+                                           disabled={!isDrugo}
+                                           sx={{visibility: isDrugo ? 'visible' : 'hidden'}}
+                                />
+                            </FormRow>
 
-                            {/* Бројки — само добиена */}
+                            {/* РЕД 2: Број на акт (нивни), Број на акт (архивски), Датум на испраќање */}
                             {isDobiena && (
-                                <>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <TextField fullWidth size="small"
-                                                   label="Број на акт (нивни) *"
-                                                   placeholder="пр. 12.1.1-924/2-25"
-                                                   value={form.brAktNivni}
-                                                   error={!!formErrors.brAktNivni}
-                                                   helperText={formErrors.brAktNivni || " "}
-                                                   onChange={(e) => hc('brAktNivni', e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <TextField fullWidth size="small"
-                                                   label="Број на акт (архивски) "
-                                                   value={form.brAktArhivski}
-                                                   error={!!formErrors.brAktArhivski}
-                                                   helperText={formErrors.brAktArhivski}
-                                                   onChange={(e) => hc('brAktArhivski', e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <DatePicker
-                                            label="Датум на испраќање *"
-                                            value={form.datumIsprakjanje}
-                                            onChange={(v) => hc('datumIsprakjanje', v)}
-                                            format="DD.MM.YYYY"
-                                            slotProps={{
-                                                textField: {
-                                                    variant: 'standard',
-                                                    size: 'small',
-                                                    fullWidth: true,
-                                                    error: !!formErrors.datumIsprakjanje,
-                                                    helperText: formErrors.datumIsprakjanje || " ",
-                                                }
-                                            }}
-                                        />
-                                    </Grid>
-                                </>
+                                <FormRow>
+                                    <TextField fullWidth size="small"
+                                               label="Број на акт (нивни)"
+                                               placeholder="пр. 12.1.1-924/2-25"
+                                               value={form.brAktNivni}
+                                               error={!!formErrors.brAktNivni}
+                                               helperText={formErrors.brAktNivni || ' '}
+                                               onChange={(e) => hc('brAktNivni', e.target.value)}
+                                    />
+                                    <TextField fullWidth size="small"
+                                               label="Број на акт (архивски)"
+                                               value={form.brAktArhivski}
+                                               error={!!formErrors.brAktArhivski}
+                                               helperText={formErrors.brAktArhivski || ' '}
+                                               onChange={(e) => hc('brAktArhivski', e.target.value)}
+                                    />
+                                    <DatePicker
+                                        label="Датум на испраќање"
+                                        value={form.datumIsprakjanje}
+                                        onChange={(v) => hc('datumIsprakjanje', v)}
+                                        format="DD.MM.YYYY"
+                                        open={datumIsprakjanjeOpen}
+                                        onOpen={() => setDatumIsprakjanjeOpen(true)}
+                                        onClose={() => setDatumIsprakjanjeOpen(false)}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small', fullWidth: true,
+                                                error: !!formErrors.datumIsprakjanje,
+                                                helperText: formErrors.datumIsprakjanje || ' ',
+                                                onClick: () => setDatumIsprakjanjeOpen(true),
+                                            }
+                                        }}
+                                    />
+                                </FormRow>
                             )}
-                        </Grid>
-                    </SectionCard>
 
-                    {/* ── ПРЕДМЕТ ── */}
-                    <SectionCard title="Предмет" theme={T}>
-                        <Grid container spacing={1.5}>
-                            <Grid item xs={12} md={3.6}>
-                                {/*<Typography sx={{fontSize: '0.68rem', color: formErrors.vidPredmet ? '#d32f2f' : '#888',*/}
-                                {/*    fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'}}>*/}
-                                {/*    Вид на предмет **/}
-                                {/*</Typography>*/}
+                            {/* РЕД 3: Вид на предмет, Информативна пошта, Реализирано */}
+                            <FormRow columns="2fr 1fr 1fr">
                                 {isDobiena ? (
                                     <MultiSelect
                                         label="Вид на предмет"
@@ -497,154 +534,115 @@ const PredmetForm = () => {
                                         theme={T} fullWidth
                                     />
                                 )}
-                            </Grid>
-                            <Grid item xs={12} md={8.4}>
-                                <Typography sx={{
-                                    fontSize: '0.68rem', color: formErrors.sodrzina ? '#d32f2f' : '#888',
-                                    fontWeight: 600, letterSpacing: '0.08em', mb: 0.8, textTransform: 'uppercase'
-                                }}>
-                                    Содржина *
-                                </Typography>
-                                <TextField fullWidth multiline rows={5}
-                                           label=""
-                                           placeholder="Внесете кратка содржина на предметот..."
-                                           value={form.sodrzina}
-                                           error={!!formErrors.sodrzina}
-                                           helperText={formErrors.sodrzina}
-                                           onChange={(e) => hc('sodrzina', e.target.value)}
-                                           sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}, minWidth: 800}}
+                                <SwitchCard
+                                    label="Информативна пошта"
+                                    checked={form.informativnaPosta}
+                                    onChange={(v) => hc('informativnaPosta', v)}
+                                    theme={T}
                                 />
-                            </Grid>
-                        </Grid>
-                    </SectionCard>
+                                <SwitchCard
+                                    label="Реализирано"
+                                    checked={form.realizirano}
+                                    onChange={(v) => hc('realizirano', v)}
+                                    theme={T}
+                                />
+                            </FormRow>
 
-                    {/* ── ДОДЕЛУВАЊЕ + ДОПОЛНИТЕЛНИ (ред) ── */}
-                    <Row gap={1.5}>
-                        <Col flex={7} minWidth={280}>
-                            <SectionCard title="Доделување" theme={T}>
-                                <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
-                                    <Grid item xs={12}>
-                                        <MultiSelect
-                                            label="Одговорно лице *"
-                                            value={form.odgovornoLiceId}
-                                            onChange={(v) => hc('odgovornoLiceId', v)}
-                                            options={odgovornoLice || []}
-                                            getLabel={(o) => `${o.ime} ${o.prezime}`}
-                                            getId={(o) => o.id}
-                                            error={formErrors.odgovornoLiceId}
-                                            theme={T} fullWidth
-                                        />
-                                    </Grid>
-                                    {/*<Field label="Одговорно лице" theme={T}>*/}
-                                    {/*    <Box sx={{*/}
-                                    {/*    bgcolor: T.valueBg, border: '1px solid #E8E8E8',*/}
-                                    {/*    borderRadius: '6px', px: 1.2, py: 0.6, minHeight: 32*/}
-                                    {/*}}>*/}
-                                    {/*    <ChipList items={odgovornoLiceList}*/}
-                                    {/*              getLabel={(u) => `${u.ime} ${u.prezime}`} theme={T}/>*/}
-                                    {/*</Box>*/}
-                                    {/*</Field>*/}
-                                    {/*<Field label="Архива" theme={T}>*/}
-                                    {/*    <Box sx={{*/}
-                                    {/*        bgcolor: T.valueBg, border: '1px solid #E8E8E8',*/}
-                                    {/*        borderRadius: '6px', px: 1.2, py: 0.6, minHeight: 32*/}
-                                    {/*    }}>*/}
-                                    {/*        <ChipList items={arhivaList} getLabel={(a) => a.naziv} theme={T}/>*/}
-                                    {/*    </Box>*/}
-                                    {/*</Field>*/}
-                                    <Grid item xs={12}>
-                                        <MultiSelect
-                                            label="Архива"
-                                            value={form.arhivaId}
-                                            onChange={(v) => hc('arhivaId', v)}
-                                            options={arhiva || []}
-                                            getLabel={(o) => o.naziv}
-                                            getId={(o) => o.id}
-                                            theme={T} fullWidth
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={5}>
-                                        <SingleSelect
-                                            label="Статус на предмет"
-                                            value={form.statusPredmet}
-                                            onChange={(v) => hc('statusPredmet', v)}
-                                            options={statusEnum?.map(s => ({id: s, naziv: s.replace(/_/g, ' ')})) || []}
-                                            getLabel={(o) => o.naziv}
-                                            getId={(o) => o.id}
-                                            error={formErrors.statusPredmet}
-                                            fullWidth
-                                            size="small"
-                                        />
-                                    </Grid>
-                                </Box>
-                            </SectionCard>
-                        </Col>
+                            {/* РЕД 4: Содржина */}
+                            <TextField fullWidth multiline rows={4}
+                                       label="Содржина"
+                                       placeholder="Внесете кратка содржина на предметот..."
+                                       value={form.sodrzina}
+                                       error={!!formErrors.sodrzina}
+                                       helperText={formErrors.sodrzina || ' '}
+                                       onChange={(e) => hc('sodrzina', e.target.value)}
+                                       sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}}}
+                            />
 
-                        <Col flex={5} minWidth={220}>
-                            <SectionCard title="Дополнителни" theme={T}>
-                                {/*<Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>*/}
-                                {/*    {[*/}
-                                {/*        {label: 'Информативна пошта', value: predmet.informativnaPosta},*/}
-                                {/*        {label: 'Реализирано', value: predmet.realizirano},*/}
-                                {/*    ].map(({label, value}) => (*/}
-                                {/*        <Box key={label} sx={{*/}
-                                {/*            border: `1px solid ${value ? T.border : '#E8E8E8'}`,*/}
-                                {/*            borderRadius: '8px', px: 1.5, py: 0.8,*/}
-                                {/*            display: 'flex', alignItems: 'center',*/}
-                                {/*            justifyContent: 'space-between',*/}
-                                {/*            bgcolor: value ? T.chipBg : '#fff'*/}
-                                {/*        }}>*/}
-                                {/*            <Box>*/}
-                                {/*                <Typography sx={{*/}
-                                {/*                    fontSize: '0.68rem', fontWeight: 600,*/}
-                                {/*                    color: value ? T.accentDark : '#888',*/}
-                                {/*                    letterSpacing: '0.06em', textTransform: 'uppercase'*/}
-                                {/*                }}>*/}
-                                {/*                    {label}*/}
-                                {/*                </Typography>*/}
-                                {/*                <Typography sx={{*/}
-                                {/*                    fontSize: '0.65rem', mt: 0.1,*/}
-                                {/*                    color: value ? T.accent : '#BBB'*/}
-                                {/*                }}>*/}
-                                {/*                    {value ? 'Да' : 'Не'}*/}
-                                {/*                </Typography>*/}
-                                {/*            </Box>*/}
-                                {/*            <BoolBadge value={value} theme={T}/>*/}
-                                {/*        </Box>*/}
-                                {/*    ))}*/}
-                                {/*</Box>*/}
-                                <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
-                                    <SwitchCard
-                                        label="Информативна пошта"
-                                        checked={form.informativnaPosta}
-                                        onChange={(v) => hc('informativnaPosta', v)}
-                                        theme={T}
-                                    />
-                                    <SwitchCard
-                                        label="Реализирано"
-                                        checked={form.realizirano}
-                                        onChange={(v) => hc('realizirano', v)}
-                                        theme={T}
-                                    />
-                                </Box>
-                            </SectionCard>
-                        </Col>
-                    </Row>
+                            {/* РЕД 5: Одговорно лице, Архива */}
+                            <FormRow columns="1fr 1fr">
+                                <MultiSelect
+                                    label="Одговорно лице"
+                                    value={form.odgovornoLiceId}
+                                    onChange={(v) => hc('odgovornoLiceId', v)}
+                                    options={odgovornoLice || []}
+                                    getLabel={(o) => `${o.ime} ${o.prezime}`}
+                                    getId={(o) => o.id}
+                                    error={formErrors.odgovornoLiceId}
+                                    theme={T} fullWidth
+                                />
+                                <MultiSelect
+                                    label="Архива"
+                                    value={form.arhivaId}
+                                    onChange={(v) => hc('arhivaId', v)}
+                                    options={arhiva || []}
+                                    getLabel={(o) => o.naziv}
+                                    getId={(o) => o.id}
+                                    theme={T} fullWidth
+                                />
+                            </FormRow>
 
+                            {/* РЕД 6: Забелешка (80%), Статус на предмет (20%) */}
+                            <FormRow columns="4fr 1fr">
+                                <TextField fullWidth multiline rows={2}
+                                           label="Забелешка"
+                                           placeholder="Опционална забелешка..."
+                                           value={form.zabeleska}
+                                           onChange={(e) => hc('zabeleska', e.target.value)}
+                                           sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}}}
+                                />
+                                <SingleSelect
+                                    label="Статус на предмет"
+                                    value={form.statusPredmet}
+                                    onChange={(v) => hc('statusPredmet', v)}
+                                    options={statusEnum
+                                        ?.filter(s => s.startsWith(isDobiena ? 'ДП' : 'ИП'))
+                                        .map(s => ({id: s, naziv: s.replace(/_/g, ' ')})) || []}
+                                    getLabel={(o) => o.naziv}
+                                    getId={(o) => o.id}
+                                    error={formErrors.statusPredmet}
+                                    fullWidth
+                                    size="small"
+                                />
+                            </FormRow>
+                        </Box>
 
-                    {/* ── ЗАБЕЛЕШКА ── */}
-                    <SectionCard title="Забелешка" theme={T}>
-                        <TextField fullWidth multiline rows={2}
-                                   label=""
-                                   placeholder="Опционална забелешка..."
-                                   value={form.zabeleska}
-                                   onChange={(e) => hc('zabeleska', e.target.value)}
-                                   sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}}}
-                        />
-                    </SectionCard>
+                        <Divider sx={{my: 2.5}}/>
 
-                    {/* ── ДОКУМЕНТИ ── */}
-                    <SectionCard title="Скенирани документи" theme={T}>
+                        {/* ── ПОСТОЈНИ ДОКУМЕНТИ (само во режим на уредување) ── */}
+                        {isEditMode && existingDocs.length > 0 && (
+                            <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.6, mb: 1.5}}>
+                                {existingDocs.map(dok => (
+                                    <Box key={dok.id} sx={{
+                                        display: 'flex', alignItems: 'center', gap: 1,
+                                        px: 1.5, py: 0.8, bgcolor: '#fff',
+                                        border: '1px solid #EAEAEA', borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        '&:hover': {bgcolor: T.chipBg}
+                                    }}
+                                         onClick={() => predmetiApi.downloadDok(dok.id, dok.imeFile)}
+                                    >
+                                        <AttachFileIcon sx={{fontSize: 15, color: T.accent}}/>
+                                        <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
+                                            {dok.imeFile}
+                                        </Typography>
+                                        <Typography sx={{fontSize: '0.68rem', color: '#999'}}>
+                                            {dok.tipFile}
+                                        </Typography>
+                                        <IconButton size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteExistingDok(dok);
+                                                    }}
+                                                    sx={{color: '#CCC', '&:hover': {color: '#d32f2f'}}}>
+                                            <DeleteOutlineIcon sx={{fontSize: 15}}/>
+                                        </IconButton>
+                                    </Box>
+                                ))}
+                            </Box>
+                        )}
+
+                        {/* ── ДОКУМЕНТИ ── */}
                         <Box
                             ref={dropRef}
                             onDragOver={(e) => {
@@ -689,7 +687,7 @@ const PredmetForm = () => {
                         />
 
                         {attachedFiles.length > 0 && (
-                            <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.6}}>
+                            <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.6, mt: 1.5}}>
                                 {attachedFiles.map((file, idx) => (
                                     <Box key={idx} sx={{
                                         display: 'flex', alignItems: 'center', gap: 1,
@@ -716,40 +714,43 @@ const PredmetForm = () => {
                                 ))}
                             </Box>
                         )}
-                    </SectionCard>
 
-                    {/* ── ERROR ── */}
-                    {error && (
-                        <Box sx={{mb: 2, p: 1.5, bgcolor: '#FFF3F3', border: '1px solid #FFCDD2', borderRadius: '6px'}}>
-                            <Typography sx={{color: '#C62828', fontSize: '0.8rem'}}>{error}</Typography>
-                        </Box>
-                    )}
+                        {/* ── ERROR ── */}
+                        {error && (
+                            <Box sx={{
+                                mt: 3, p: 1.5, bgcolor: '#FFF3F3',
+                                border: '1px solid #FFCDD2', borderRadius: '6px'
+                            }}>
+                                <Typography sx={{color: '#C62828', fontSize: '0.8rem'}}>{error}</Typography>
+                            </Box>
+                        )}
+                    </CardContent>
 
-                    {/* ── КОПЧИЊА ── */}
+                    {/* ── ФУТЕР СО КОПЧЕТО ── */}
                     <Box sx={{
-                        display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center',
-                        pt: 1.5, borderTop: '1px solid #E8E8E8', mt: 0.5
+                        display: 'flex', justifyContent: 'flex-end',
+                        px: {xs: 2, md: 3}, py: 2,
+                        bgcolor: '#FAFAF9', borderTop: '1px solid #EEE',
                     }}>
                         <Button
                             variant="contained"
+                            disableElevation
                             startIcon={saving ? <CircularProgress size={14} sx={{color: '#fff'}}/> :
                                 <SaveIcon sx={{fontSize: 16}}/>}
                             onClick={handleSubmit}
                             disabled={saving}
                             sx={{
                                 bgcolor: T.btnBg, color: '#fff', fontWeight: 600,
-                                fontSize: '0.82rem', textTransform: 'none', px: 3, py: 0.9,
+                                fontSize: '0.85rem', textTransform: 'none', px: 3.5, py: 1,
                                 borderRadius: '8px',
-                                boxShadow: `0 2px 8px ${T.accent}44`,
-                                '&:hover': {bgcolor: T.btnHover, boxShadow: `0 4px 12px ${T.accent}66`},
-                                minWidth: 130
+                                '&:hover': {bgcolor: T.btnHover},
+                                minWidth: 140
                             }}
                         >
-                            {saving ? 'Зачувување...' : 'Зачувај'}
+                            {saving ? 'Зачувување...' : (isEditMode ? 'Зачувај промени' : 'Зачувај')}
                         </Button>
                     </Box>
-
-                </Box>
+                </Card>
 
                 {/* ── ZATEMNUVANJE + BLOKIRANJE DODEKA SE ZACUVUVA ── */}
                 <Backdrop
@@ -768,6 +769,7 @@ const PredmetForm = () => {
                 </Backdrop>
             </Box>
         </LocalizationProvider>
+        </ThemeProvider>
     );
 };
 

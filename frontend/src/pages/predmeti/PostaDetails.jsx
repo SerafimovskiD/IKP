@@ -2,18 +2,20 @@ import {useState, useEffect} from 'react';
 import {
     Box, Typography,
     Button, Chip, CircularProgress,
-    Divider
+    Card, CardContent, Divider,
+    Dialog, DialogTitle, DialogContent, DialogActions, IconButton
 } from '@mui/material';
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import ReplyIcon from '@mui/icons-material/Reply';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from '@mui/icons-material/Edit';
 import InboxIcon from '@mui/icons-material/Inbox';
 import OutboxIcon from '@mui/icons-material/Outbox';
+import CloseIcon from '@mui/icons-material/Close';
+import DownloadIcon from '@mui/icons-material/Download';
+import DescriptionIcon from '@mui/icons-material/Description';
 import {useNavigate, useParams} from "react-router-dom";
 import usePredmetDetails from "../../hooks/usePredmetiDetails.js";
-import useIsprakjac from "../../hooks/useIsprakjac.js";
 import useArhiva from "../../hooks/useArhiva.js";
 import useVidPredmetDobieno from "../../hooks/useVidPredmetDobieno.js";
 import useVidPredmetIspratena from "../../hooks/useVidPredmetIspratena.js";
@@ -23,10 +25,10 @@ import useOrgEdinica from "../../hooks/useOrgEdinica.js";
 import usePredmeti from "../../hooks/usePredmeti.js";
 import {formatStatus} from "../../utils/formatters.js";
 import {predmetiApi as dokumentiApi} from "../../api/predmeti.js";
-import SectionCard from "../../components/common/SectionCard.jsx";
+import * as mammoth from "mammoth";
 
 const DOBIENA = {
-    gradient: 'linear-gradient(135deg, #6B4F0E 0%, #C8A84B 60%, #E8D48A 100%)',
+    gradient: 'linear-gradient(135deg, #7A5C10 0%, #A9821C 55%, #D4AF37 100%)',
     border: '#C8A84B',
     chipBg: '#FDF3D8',
     chipColor: '#7A5C00',
@@ -40,7 +42,7 @@ const DOBIENA = {
 };
 
 const ISPRATENA = {
-    gradient: 'linear-gradient(135deg, #1B5E20 0%, #388E3C 60%, #81C784 100%)',
+    gradient: 'linear-gradient(135deg, #164A1A 0%, #2E7D32 55%, #5CB860 100%)',
     border: '#388E3C',
     chipBg: '#E8F5E9',
     chipColor: '#1B5E20',
@@ -53,71 +55,141 @@ const ISPRATENA = {
     valueBg: '#fff',
 };
 
-const Field = ({label, value, theme, children}) => (
-    <Box>
+// ─── РЕД ОД ПОЛИЊА - исто како во CreatePostaForm ───────────────────────────────
+const FormRow = ({children, columns}) => (
+    <Box sx={{
+        display: 'grid', gap: 2,
+        gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: columns || `repeat(${Array.isArray(children) ? children.filter(Boolean).length : 1}, 1fr)`,
+        },
+    }}>
+        {children}
+    </Box>
+);
+
+// ─── ПРОСТО ПОЛЕ (само за читање) - надпис одозгора + вредност во рамка ─────────
+const DetailField = ({label, value, sx}) => (
+    <Box sx={sx}>
         <Typography sx={{
-            fontSize: '0.62rem', color: '#999', fontWeight: 600,
-            letterSpacing: '0.08em', textTransform: 'uppercase', mb: 0.3
+            fontSize: '0.7rem', color: '#888', fontWeight: 600,
+            letterSpacing: '0.06em', mb: 0.8, textTransform: 'uppercase'
         }}>
             {label}
         </Typography>
-        {children || (
-            <Box sx={{
-                bgcolor: theme.valueBg,
-                border: '1px solid #E8E8E8',
-                borderRadius: '6px',
-                px: 1.2, py: 0.6,
-                minHeight: 32,
-                display: 'flex', alignItems: 'center'
-            }}>
-                <Typography sx={{fontSize: '0.82rem', color: value ? '#222' : '#BBB'}}>
-                    {value || '—'}
-                </Typography>
-            </Box>
-        )}
-    </Box>
-);
-
-const BoolBadge = ({value, theme}) => (
-    <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
-        {value
-            ? <CheckCircleIcon sx={{fontSize: 16, color: theme.accent}}/>
-            : <CancelIcon sx={{fontSize: 16, color: '#CCC'}}/>
-        }
-        <Typography sx={{
-            fontSize: '0.8rem', fontWeight: 600,
-            color: value ? theme.accentDark : '#AAA'
+        <Box sx={{
+            border: '1px solid #D8D8D8', borderRadius: '8px', px: 1.5, minHeight: 40,
+            display: 'flex', alignItems: 'center', bgcolor: '#fff'
         }}>
-            {value ? 'Да' : 'Не'}
+            <Typography sx={{fontSize: '0.85rem', color: value ? '#222' : '#BBB'}}>
+                {value || '—'}
+            </Typography>
+        </Box>
+    </Box>
+);
+
+// ─── ВИШЕЗНАЧНО ПОЛЕ (chips) - за читање ────────────────────────────────────────
+const DetailChipsField = ({label, items, getLabel, theme, sx}) => (
+    <Box sx={sx}>
+        <Typography sx={{
+            fontSize: '0.7rem', color: '#888', fontWeight: 600,
+            letterSpacing: '0.06em', mb: 0.8, textTransform: 'uppercase'
+        }}>
+            {label}
         </Typography>
+        <Box sx={{
+            border: '1px solid #D8D8D8', borderRadius: '8px', px: 1.2, py: 0.8, minHeight: 40,
+            display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, bgcolor: '#fff'
+        }}>
+            {items.length > 0
+                ? items.map((item, i) => (
+                    <Chip key={i} label={getLabel(item)} size="small"
+                          sx={{
+                              bgcolor: theme.chipBg, color: theme.chipColor,
+                              fontSize: '0.7rem', fontWeight: 500, height: 22
+                          }}
+                    />
+                ))
+                : <Typography sx={{fontSize: '0.82rem', color: '#BBB'}}>—</Typography>
+            }
+        </Box>
     </Box>
 );
 
-const ChipList = ({items, getLabel, theme}) => (
-    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
-        {items.length > 0
-            ? items.map((item, i) => (
-                <Chip key={i} label={getLabel(item)} size="small"
-                      sx={{
-                          bgcolor: theme.chipBg, color: theme.chipColor,
-                          fontSize: '0.7rem', fontWeight: 500, height: 22
-                      }}
-                />
-            ))
-            : <Typography sx={{fontSize: '0.82rem', color: '#BBB'}}>—</Typography>
-        }
+// ─── МУЛТИЛИНИСКО ПОЛЕ (Содржина/Забелешка) - за читање ─────────────────────────
+const DetailTextArea = ({label, value, minHeight, sx}) => (
+    <Box sx={sx}>
+        <Typography sx={{
+            fontSize: '0.7rem', color: '#888', fontWeight: 600,
+            letterSpacing: '0.06em', mb: 0.8, textTransform: 'uppercase'
+        }}>
+            {label}
+        </Typography>
+        <Box sx={{
+            border: '1px solid #D8D8D8', borderRadius: '8px', px: 1.5, py: 1.2, minHeight,
+            bgcolor: '#fff'
+        }}>
+            <Typography sx={{
+                fontSize: '0.85rem', color: value ? '#222' : '#BBB',
+                whiteSpace: 'pre-wrap', lineHeight: 1.6
+            }}>
+                {value || '—'}
+            </Typography>
+        </Box>
     </Box>
 );
 
-const Row = ({children, gap = 1.5}) => (
-    <Box sx={{display: 'flex', gap, flexWrap: 'wrap', alignItems: 'flex-start'}}>
-        {children}
+// ─── СЕГМЕНТИРАН ПРИКАЗ (Тип/Приоритет) - исто како ToggleField, но само за читање ──
+const DetailToggle = ({label, value, options, theme}) => (
+    <Box>
+        <Typography sx={{
+            fontSize: '0.7rem', color: '#888', fontWeight: 600,
+            letterSpacing: '0.06em', mb: 0.8, textTransform: 'uppercase'
+        }}>
+            {label}
+        </Typography>
+        <Box sx={{display: 'flex', border: '1px solid rgba(0,0,0,0.23)', borderRadius: '8px', overflow: 'hidden'}}>
+            {options.map((opt, i) => {
+                const selected = opt === value;
+                return (
+                    <Box key={opt} sx={{
+                        flex: 1, textAlign: 'center', py: 0.9, fontSize: '0.8rem', fontWeight: 600,
+                        color: selected ? '#fff' : '#666',
+                        bgcolor: selected ? theme.accentDark : 'transparent',
+                        borderLeft: i > 0 ? '1px solid rgba(0,0,0,0.23)' : 'none',
+                    }}>
+                        {opt}
+                    </Box>
+                );
+            })}
+        </Box>
     </Box>
 );
 
-const Col = ({children, flex = 1, minWidth = 180}) => (
-    <Box sx={{flex, minWidth}}>
-        {children}
+// ─── ПРИКАЗ НА ДА/НЕ (Информативна пошта/Реализирано) - иста структура (надпис
+// одозгора + рамка) како и другите Detail* полиња, за да се порамнат во истиот ред.
+const DetailSwitch = ({label, checked, theme}) => (
+    <Box>
+        <Typography sx={{
+            fontSize: '0.7rem', color: '#888', fontWeight: 600,
+            letterSpacing: '0.06em', mb: 0.8, textTransform: 'uppercase'
+        }}>
+            {label}
+        </Typography>
+        <Box sx={{
+            border: `1px solid ${checked ? theme.border : '#D8D8D8'}`,
+            borderRadius: '8px', px: 1.5, minHeight: 40,
+            display: 'flex', alignItems: 'center',
+            bgcolor: checked ? theme.chipBg : '#fff',
+        }}>
+            <Typography sx={{
+                fontSize: '0.85rem', fontWeight: 600,
+                color: checked ? theme.accentDark : '#BBB'
+            }}>
+                {checked ? 'Да' : 'Не'}
+            </Typography>
+        </Box>
     </Box>
 );
 
@@ -134,14 +206,13 @@ const PostaDetails = () => {
 
     // ── СЕ HOOKS ПРВО ──
     const {predmet, loading, error} = usePredmetDetails(id);
-    const {isprakjaci} = useIsprakjac();
     const {arhiva} = useArhiva();
     const {vidPredmetD} = useVidPredmetDobieno();
     const {vidPredmetI} = useVidPredmetIspratena();
     const {odgovornoLice} = useUsersOdgovornoLice();
     const {user} = useAuth();
     const {getOrgEdinicaById} = useOrgEdinica();
-    const {getPrethodniPredmeti,getDoc} = usePredmeti();
+    const {getPrethodniPredmeti, getDoc} = usePredmeti();
 
     const [orgEdinica, setOrgEdinica] = useState(null);
     const [prethodni, setPrethodni] = useState([]);
@@ -150,6 +221,41 @@ const PostaDetails = () => {
 
     const [dokumenti, setDokumenti] = useState([]);
 
+    // Преглед на документ (Dialog) - blob URL (слики/PDF) или HTML (.docx преку mammoth.js).
+    const [previewDoc, setPreviewDoc] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [previewHtml, setPreviewHtml] = useState(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewError, setPreviewError] = useState(false);
+
+    const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    const openPreview = async (dok) => {
+        setPreviewDoc(dok);
+        setPreviewLoading(true);
+        setPreviewError(false);
+        try {
+            const blob = await dokumentiApi.getDokBlob(dok.id);
+            if (dok.tipFile === DOCX_MIME) {
+                const arrayBuffer = await blob.arrayBuffer();
+                const {value} = await mammoth.convertToHtml({arrayBuffer});
+                setPreviewHtml(value);
+            } else {
+                setPreviewUrl(URL.createObjectURL(blob));
+            }
+        } catch {
+            setPreviewError(true);
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+
+    const closePreview = () => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        setPreviewHtml(null);
+        setPreviewDoc(null);
+    };
 
     useEffect(() => {
         if (predmet?.id) {
@@ -181,9 +287,9 @@ const PostaDetails = () => {
     }, [predmet?.redenBroj, predmet?.godina]);
     useEffect(() => {
         setLoadingDok(true);
-            getDoc(id)
-                .then(res=>setDokumenti(res||[]))
-                .finally(() => setLoadingDok(false));
+        getDoc(id)
+            .then(res => setDokumenti(res || []))
+            .finally(() => setLoadingDok(false));
     }, [id]);
     // ── УСЛОВНИ RETURNS ПОСЛЕ HOOKS ──
     if (loading) return (
@@ -203,235 +309,107 @@ const PostaDetails = () => {
     );
 
     if (!predmet) return null;
-    console.log(predmet);
     const isDobiena = predmet.tipDelovnik === "Dobiena";
     const T = isDobiena ? DOBIENA : ISPRATENA;
 
-    const isprakjac = isprakjaci?.find(i => i.id === predmet.isprakjacId);
     const odgovornoLiceList = (odgovornoLice || []).filter(u => predmet.odgovornoLiceId?.includes(u.id));
     const arhivaList = (arhiva || []).filter(a => predmet.arhivaId?.includes(a.id));
     const vidPredmetList = isDobiena
         ? (vidPredmetD || []).filter(v => predmet.vidPredmetDobienaId?.includes(v.id))
-        : (vidPredmetI || []).filter(v => predmet.vidPredmetIspratenaId?.includes(v.id))
-    console.log(dokumenti)
+        : (vidPredmetI || []).filter(v => predmet.vidPredmetIspratenaId?.includes(v.id));
+
+    const brojNaAkt = `${predmet.brAkt} / ${predmet.redenBroj} / ${predmet.podBroj} / ${predmet.godina}`;
+
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Box sx={{p: 3}}>
 
-                    {/* ── НАСЛОВ (изглед идентичен на DemoApp SectionTitle) ── */}
+                <Card sx={{
+                    borderRadius: '12px', overflow: 'hidden',
+                    border: '1px solid #E4E4E4', boxShadow: '0 1px 3px rgba(16,24,40,0.05)'
+                }}>
+
+                    {/* ── ЕДИНСТВЕН НАСЛОВ НА КАРТИЧКАТА ── */}
                     <Box sx={{
-                        background: 'linear-gradient(240deg, #b6a268 0%, #dbbd5e 70%, #826f35 100%)',
-                        borderRadius: '0% 100% 100% 0% / 50% 50% 50% 50%',
-                        mb: '5px', px: 2,
+                        background: T.gradient, px: {xs: 2, md: 3}, py: 1.75,
+                        display: 'flex', flexWrap: 'wrap', alignItems: 'center',
+                        justifyContent: 'space-between', gap: 1,
                     }}>
-                        <Typography variant="h6" sx={{color: '#000'}}>
+                        <Typography sx={{color: '#fff', fontWeight: 700, fontSize: '1.05rem'}}>
                             {isDobiena ? 'Добиена пошта' : 'Испратена пошта'} — Детали на предмет
                         </Typography>
+                        <Typography sx={{
+                            color: 'rgba(255,255,255,0.9)', fontSize: '0.85rem',
+                            fontFamily: 'monospace', letterSpacing: '0.02em'
+                        }}>
+                            Број на акт: {brojNaAkt}
+                        </Typography>
                     </Box>
-                    <Divider/>
-                    <Typography sx={{color: '#888', fontSize: '1.2rem', mt: 0.5, mb: 2}}>
-                        Број на акт: {predmet.brAkt} / {predmet.redenBroj} / {predmet.podBroj} / {predmet.godina}
-                    </Typography>
 
-                    <Box>
+                    <CardContent sx={{p: {xs: 2, md: 3}}}>
 
-                        {/* РЕГИСТРАЦИЈА */}
-                        <SectionCard title="Регистрација" theme={T}>
-                            <Row>
-                                <Col flex={2} minWidth={220}>
-                                    <Field label="Статус на предмет" theme={T}>
-                                        <Box sx={{
-                                            bgcolor: T.chipBg,
-                                            border: `1px solid ${T.border}`,
-                                            borderRadius: '6px', px: 1.2, py: 0.5,
-                                            display: 'inline-flex', alignItems: 'center', gap: 0.5
-                                        }}>
-                                            <Box sx={{width: 5, height: 5, borderRadius: '50%', bgcolor: T.accent}}/>
-                                            <Typography sx={{fontSize: '0.8rem', fontWeight: 600, color: T.accentDark}}>
-                                                {formatStatus(predmet.statusPredmet) || '—'}
-                                            </Typography>
-                                        </Box>
-                                    </Field>
-                                </Col>
-                                <Col flex={1} minWidth={140}>
-                                    <Field label="Датум на заведување" value={predmet.datumZaveduvanje} theme={T}/>
-                                </Col>
-                                <Col flex={1} minWidth={100}>
-                                    <Field label="Тип" value={predmet.tipPosta} theme={T}/>
-                                </Col>
+                        {/* ── СИТЕ ПОЛИЊА ВО РЕДОВИ, ИСТО КАКО ВО CreatePostaForm ── */}
+                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+
+                            {/* РЕД 1: Датум на заведување, Тип, Приоритет, Испраќач, [Друг испраќач] */}
+                            <FormRow>
+                                <DetailField label="Датум на заведување" value={predmet.datumZaveduvanje}/>
+                                <DetailToggle label="Тип" value={predmet.tipPosta} options={['писмо', 'телеграма']}
+                                              theme={T}/>
                                 {isDobiena && (
-                                    <Col flex={1} minWidth={100}>
-                                        <Field label="Приоритет" theme={T}>
-                                            <Box sx={{
-                                                bgcolor: predmet.prioritet === 'Висок' ? '#FFF3E0' : T.valueBg,
-                                                border: `1px solid ${predmet.prioritet === 'Висок' ? '#FFB300' : '#E8E8E8'}`,
-                                                borderRadius: '6px', px: 1.2, py: 0.6,
-                                                minHeight: 32, display: 'flex', alignItems: 'center'
-                                            }}>
-                                                <Typography sx={{
-                                                    fontSize: '0.82rem', fontWeight: 600,
-                                                    color: predmet.prioritet === 'Висок' ? '#E65100' : '#222'
-                                                }}>
-                                                    {predmet.prioritet || '—'}
-                                                </Typography>
-                                            </Box>
-                                        </Field>
-                                    </Col>
+                                    <DetailToggle label="Приоритет" value={predmet.prioritet}
+                                                  options={['Висок', 'Нормален']} theme={T}/>
                                 )}
-                            </Row>
-                        </SectionCard>
+                                <DetailField label={isDobiena ? 'Испраќач' : 'Примач'} value={predmet.isprakjacIme}/>
+                                {/*<DetailField label="Друг испраќач" value={predmet.isprakjacIme}*/}
+                                {/*             sx={{visibility: isDrugo ? 'visible' : 'hidden'}}/>*/}
+                            </FormRow>
 
-                        {/* ИСПРАЌАЧ */}
-                        <SectionCard title={isDobiena ? "Испраќач" : "Испратено до"} theme={T}>
-                            <Row>
-                                <Col flex={isDobiena ? 2 : 4} minWidth={220}>
-                                    <Field label={isDobiena ? "Испраќач" : "Примач"} theme={T}>
-                                        <Box sx={{
-                                            bgcolor: T.valueBg,
-                                            border: '1px solid #E8E8E8',
-                                            borderRadius: '6px', px: 1.2, py: 0.6,
-                                            minHeight: 32, display: 'flex', alignItems: 'center', gap: 0.5
-                                        }}>
-                                            <Typography sx={{
-                                                fontSize: '0.82rem',
-                                                color: isprakjac ? '#222' : '#BBB',
-                                                fontWeight: isprakjac ? 500 : 400
-                                            }}>
-                                                {predmet.isprakjacIme || '—'}
-                                            </Typography>
-                                        </Box>
-                                    </Field>
-                                </Col>
-                                {isDobiena && (
-                                    <>
-                                        <Col flex={1} minWidth={140}>
-                                            <Field label="Број на акт (нивни)" value={predmet.brAktNivni} theme={T}/>
-                                        </Col>
-                                        <Col flex={1} minWidth={140}>
-                                            <Field label="Број на акт (архивски)" value={predmet.brAktArhivski}
-                                                   theme={T}/>
-                                        </Col>
-                                        <Col flex={1} minWidth={140}>
-                                            <Field label="Датум на испраќање" value={predmet.datumIsprakjanje}
-                                                   theme={T}/>
-                                        </Col>
-                                    </>
-                                )}
-                            </Row>
-                        </SectionCard>
+                            {/* РЕД 2: Број на акт (нивни), Број на акт (архивски), Датум на испраќање */}
+                            {isDobiena && (
+                                <FormRow>
+                                    <DetailField label="Број на акт (нивни)" value={predmet.brAktNivni}/>
+                                    <DetailField label="Број на акт (архивски)" value={predmet.brAktArhivski}/>
+                                    <DetailField label="Датум на испраќање" value={predmet.datumIsprakjanje}/>
+                                </FormRow>
+                            )}
 
-                        {/* ПРЕДМЕТ */}
-                        <SectionCard title="Предмет" theme={T}>
-                            <Row>
-                                <Col flex={1} minWidth={180}>
-                                    <Field label="Вид на предмет" theme={T}>
-                                        <Box sx={{
-                                            bgcolor: T.valueBg, border: '1px solid #E8E8E8',
-                                            borderRadius: '6px', px: 1.2, py: 0.6, minHeight: 32
-                                        }}>
-                                            <ChipList items={vidPredmetList} getLabel={(v) => v.naziv} theme={T}/>
-                                        </Box>
-                                    </Field>
-                                </Col>
-                                <Col flex={2} minWidth={280}>
-                                    <Field label="Содржина" theme={T}>
-                                        <Box sx={{
-                                            bgcolor: T.valueBg, border: '1px solid #E8E8E8',
-                                            borderRadius: '6px', px: 1.2, py: 1, minHeight: 80
-                                        }}>
-                                            <Typography sx={{
-                                                fontSize: '0.82rem',
-                                                color: predmet.sodrzina ? '#222' : '#BBB',
-                                                whiteSpace: 'pre-wrap', lineHeight: 1.6
-                                            }}>
-                                                {predmet.sodrzina || '—'}
-                                            </Typography>
-                                        </Box>
-                                    </Field>
-                                </Col>
-                            </Row>
-                        </SectionCard>
+                            {/* РЕД 3: Вид на предмет, Информативна пошта, Реализирано */}
+                            <FormRow columns="2fr 1fr 1fr" sx={{ alignItems: 'center' }}>
+                                <DetailChipsField label="Вид на предмет" items={vidPredmetList}
+                                                  getLabel={(v) => v.naziv} theme={T}/>
+                                <DetailSwitch label="Информативна пошта" checked={predmet.informativnaPosta}
+                                              theme={T}/>
+                                <DetailSwitch label="Реализирано" checked={predmet.realizirano} theme={T}/>
+                            </FormRow>
 
-                        {/* ДОДЕЛУВАЊЕ + ДОПОЛНИТЕЛНИ */}
-                        <Row gap={1.5}>
-                            <Col flex={7} minWidth={280}>
-                                <SectionCard title="Доделување" theme={T}>
-                                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5}}>
-                                        <Field label="Одговорно лице" theme={T}>
-                                            <Box sx={{
-                                                bgcolor: T.valueBg, border: '1px solid #E8E8E8',
-                                                borderRadius: '6px', px: 1.2, py: 0.6, minHeight: 32
-                                            }}>
-                                                <ChipList items={odgovornoLiceList}
-                                                          getLabel={(u) => `${u.ime} ${u.prezime}`} theme={T}/>
-                                            </Box>
-                                        </Field>
-                                        <Field label="Архива" theme={T}>
-                                            <Box sx={{
-                                                bgcolor: T.valueBg, border: '1px solid #E8E8E8',
-                                                borderRadius: '6px', px: 1.2, py: 0.6, minHeight: 32
-                                            }}>
-                                                <ChipList items={arhivaList} getLabel={(a) => a.naziv} theme={T}/>
-                                            </Box>
-                                        </Field>
-                                    </Box>
-                                </SectionCard>
-                            </Col>
+                            {/* РЕД 4: Содржина */}
+                            <DetailTextArea label="Содржина" value={predmet.sodrzina} minHeight={100}/>
 
-                            <Col flex={5} minWidth={220}>
-                                <SectionCard title="Дополнителни" theme={T}>
-                                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
-                                        {[
-                                            {label: 'Информативна пошта', value: predmet.informativnaPosta},
-                                            {label: 'Реализирано', value: predmet.realizirano},
-                                        ].map(({label, value}) => (
-                                            <Box key={label} sx={{
-                                                border: `1px solid ${value ? T.border : '#E8E8E8'}`,
-                                                borderRadius: '8px', px: 1.5, py: 0.8,
-                                                display: 'flex', alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                bgcolor: value ? T.chipBg : '#fff'
-                                            }}>
-                                                <Box>
-                                                    <Typography sx={{
-                                                        fontSize: '0.68rem', fontWeight: 600,
-                                                        color: value ? T.accentDark : '#888',
-                                                        letterSpacing: '0.06em', textTransform: 'uppercase'
-                                                    }}>
-                                                        {label}
-                                                    </Typography>
-                                                    <Typography sx={{
-                                                        fontSize: '0.65rem', mt: 0.1,
-                                                        color: value ? T.accent : '#BBB'
-                                                    }}>
-                                                        {value ? 'Да' : 'Не'}
-                                                    </Typography>
-                                                </Box>
-                                                <BoolBadge value={value} theme={T}/>
-                                            </Box>
-                                        ))}
-                                    </Box>
-                                </SectionCard>
-                            </Col>
-                        </Row>
+                            {/* РЕД 5: Одговорно лице, Архива */}
+                            <FormRow columns="1fr 1fr">
+                                <DetailChipsField label="Одговорно лице" items={odgovornoLiceList}
+                                                  getLabel={(u) => `${u.ime} ${u.prezime}`} theme={T}/>
+                                <DetailChipsField label="Архива" items={arhivaList}
+                                                  getLabel={(a) => a.naziv} theme={T}/>
+                            </FormRow>
 
-                        {/* ЗАБЕЛЕШКА */}
-                        <SectionCard title="Забелешка" theme={T}>
-                            <Box sx={{
-                                bgcolor: T.valueBg, border: '1px solid #E8E8E8',
-                                borderRadius: '6px', px: 1.2, py: 1, minHeight: 50
-                            }}>
-                                <Typography sx={{
-                                    fontSize: '0.82rem',
-                                    color: predmet.zabeleska ? '#222' : '#BBB',
-                                    whiteSpace: 'pre-wrap', lineHeight: 1.6
-                                }}>
-                                    {predmet.zabeleska || '—'}
-                                </Typography>
-                            </Box>
-                        </SectionCard>
+                            {/* РЕД 6: Забелешка (80%), Статус на предмет (20%) */}
+                            <FormRow columns="4fr 1fr">
+                                <DetailTextArea label="Забелешка" value={predmet.zabeleska} minHeight={64}/>
+                                <DetailField label="Статус на предмет" value={formatStatus(predmet.statusPredmet)}/>
+                            </FormRow>
+                        </Box>
+
                         {dokumenti.length > 0 && (
-                            <SectionCard title="Скенирани документи" theme={T}>
+                            <>
+                                <Divider sx={{my: 2.5}}/>
+                                <Typography sx={{
+                                    fontSize: '0.7rem', color: '#888', fontWeight: 600,
+                                    letterSpacing: '0.06em', mb: 1, textTransform: 'uppercase'
+                                }}>
+                                    Скенирани документи
+                                </Typography>
                                 <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.8}}>
                                     {dokumenti.map(dok => (
                                         <Box key={dok.id} sx={{
@@ -441,9 +419,9 @@ const PostaDetails = () => {
                                             cursor: 'pointer',
                                             '&:hover': {bgcolor: T.chipBg}
                                         }}
-                                             onClick={() => dokumentiApi.downloadDok(dok.id, dok.imeFile)}
+                                             onClick={() => openPreview(dok)}
                                         >
-                                            {/*<AttachFileIcon sx={{fontSize: 15, color: T.accent}}/>*/}
+                                            <DescriptionIcon sx={{fontSize: 16, color: T.accent}}/>
                                             <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
                                                 {dok.imeFile}
                                             </Typography>
@@ -453,11 +431,18 @@ const PostaDetails = () => {
                                         </Box>
                                     ))}
                                 </Box>
-                            </SectionCard>
+                            </>
                         )}
-                        {/* ИСТОРИЈА */}
+
                         {(loadingPrethodni || prethodni.length > 0) && (
-                            <SectionCard title="Историја на предмет" theme={T}>
+                            <>
+                                <Divider sx={{my: 2.5}}/>
+                                <Typography sx={{
+                                    fontSize: '0.7rem', color: '#888', fontWeight: 600,
+                                    letterSpacing: '0.06em', mb: 1, textTransform: 'uppercase'
+                                }}>
+                                    Историја на предмет
+                                </Typography>
                                 {loadingPrethodni ? (
                                     <Box sx={{display: 'flex', justifyContent: 'center', py: 2}}>
                                         <CircularProgress size={24} sx={{color: T.accent}}/>
@@ -468,7 +453,7 @@ const PostaDetails = () => {
                                             <thead>
                                             <tr>
                                                 {['Под број', 'Вид пошта', 'Тип пошта', 'Датум',
-                                                    'Бр. акт (нивни)', 'Испраќач','Извр. промена', 'Одговорно лице',
+                                                    'Бр. акт (нивни)', 'Испраќач', 'Извр. промена', 'Одговорно лице',
                                                     'Предмет', 'Содржина', 'Реализ.',
                                                     'Архива', 'Забелешка', 'Статус'
                                                 ].map(h => (
@@ -645,40 +630,129 @@ const PostaDetails = () => {
                                         </table>
                                     </Box>
                                 )}
-                            </SectionCard>
+                            </>
                         )}
+                    </CardContent>
 
-                        {/* КОПЧИЊА */}
-                            <Box sx={{
-                                display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center',
-                                pt: 1.5, borderTop: '1px solid #E8E8E8', mt: 0.5
-                            }}>
-                                {[
-                                    {label: 'Одговор добиена', tipOdgovor: 'DP_odgovor', tipDelovnik: 'Dobiena'},
-                                    {label: 'СД одговор', tipOdgovor: 'SD_odgovor', tipDelovnik: 'Dobiena'},
-                                    {label: 'Одговор испратена', tipOdgovor: 'IP_odgovor', tipDelovnik: 'Ispratena'},
-                                ].map(({label, tipOdgovor, tipDelovnik}) => (
-                                    <Button key={label}
-                                            variant="outlined"
-                                            startIcon={<ReplyIcon sx={{fontSize: 14}}/>}
-                                            onClick={() => handleOdgovor(tipOdgovor, tipDelovnik)}
-                                            sx={{
-                                                borderColor: '#D8D8D8', color: '#666',
-                                                fontWeight: 500, fontSize: '0.75rem',
-                                                textTransform: 'none', px: 1.5, py: 0.7,
-                                                borderRadius: '8px',
-                                                '&:hover': {
-                                                    borderColor: T.border,
-                                                    color: T.accentDark,
-                                                    bgcolor: T.chipBg
-                                                }
-                                            }}
-                                    >
-                                        {label}
-                                    </Button>
-                                ))}
-                            </Box>
+                    {/* ── ФУТЕР СО КОПЧИЊА ── */}
+                    <Box sx={{
+                        display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center',
+                        px: {xs: 2, md: 3}, py: 2, bgcolor: '#FAFAF9', borderTop: '1px solid #EEE',
+                    }}>
+                        <Button
+                            variant="contained"
+                            disableElevation
+                            startIcon={<EditIcon sx={{fontSize: 15}}/>}
+                            onClick={() => navigate(`/createPosta/edit/${predmet.id}?tipDelovnik=${predmet.tipDelovnik}`)}
+                            sx={{
+                                bgcolor: T.btnBg, color: '#fff', fontWeight: 600,
+                                fontSize: '0.75rem', textTransform: 'none', px: 2, py: 0.7,
+                                borderRadius: '8px',
+                                '&:hover': {bgcolor: T.btnHover}
+                            }}
+                        >
+                            Уреди
+                        </Button>
+                        {[
+                            {label: 'Одговор добиена', tipOdgovor: 'DP_odgovor', tipDelovnik: 'Dobiena'},
+                            {label: 'СД одговор', tipOdgovor: 'SD_odgovor', tipDelovnik: 'Dobiena'},
+                            {label: 'Одговор испратена', tipOdgovor: 'IP_odgovor', tipDelovnik: 'Ispratena'},
+                        ].map(({label, tipOdgovor, tipDelovnik}) => (
+                            <Button key={label}
+                                    variant="outlined"
+                                    startIcon={<ReplyIcon sx={{fontSize: 14}}/>}
+                                    onClick={() => handleOdgovor(tipOdgovor, tipDelovnik)}
+                                    sx={{
+                                        borderColor: '#D8D8D8', color: '#666',
+                                        fontWeight: 500, fontSize: '0.75rem',
+                                        textTransform: 'none', px: 1.5, py: 0.7,
+                                        borderRadius: '8px',
+                                        '&:hover': {
+                                            borderColor: T.border,
+                                            color: T.accentDark,
+                                            bgcolor: T.chipBg
+                                        }
+                                    }}
+                            >
+                                {label}
+                            </Button>
+                        ))}
                     </Box>
+                </Card>
+
+                {/* ── PREVIEW НА ДОКУМЕНТ ── */}
+                <Dialog open={!!previewDoc} onClose={closePreview} maxWidth="md" fullWidth
+                        PaperProps={{sx: {borderRadius: '12px', overflow: 'hidden'}}}>
+                    <DialogTitle sx={{
+                        display: 'flex', alignItems: 'center', gap: 1,
+                        bgcolor: T.chipBg, py: 1.5
+                    }}>
+                        <DescriptionIcon sx={{fontSize: 18, color: T.accentDark}}/>
+                        <Typography sx={{flex: 1, fontSize: '0.9rem', fontWeight: 600, color: T.accentDark}}>
+                            {previewDoc?.imeFile}
+                        </Typography>
+                        <IconButton size="small" onClick={closePreview}>
+                            <CloseIcon sx={{fontSize: 18}}/>
+                        </IconButton>
+                    </DialogTitle>
+                    <DialogContent sx={{p: 0, bgcolor: '#F5F5F5', minHeight: 300, display: 'flex'}}>
+                        {previewLoading ? (
+                            <Box sx={{
+                                flex: 1, display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', minHeight: 300
+                            }}>
+                                <CircularProgress size={32} sx={{color: T.accent}}/>
+                            </Box>
+                        ) : previewUrl && previewDoc?.tipFile?.startsWith('image/') ? (
+                            <Box component="img" src={previewUrl} alt={previewDoc.imeFile}
+                                 sx={{maxWidth: '100%', maxHeight: '80vh', m: 'auto', display: 'block'}}/>
+                        ) : previewUrl && previewDoc?.tipFile === 'application/pdf' ? (
+                            <Box component="iframe" src={previewUrl} title={previewDoc.imeFile}
+                                 sx={{width: '100%', height: '80vh', border: 'none'}}/>
+                        ) : previewHtml ? (
+                            <Box sx={{
+                                bgcolor: '#fff', mx: 'auto', my: 2, p: 4,
+                                width: '100%', maxWidth: 800, maxHeight: '80vh', overflowY: 'auto',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                                fontSize: '0.9rem', lineHeight: 1.6, color: '#222',
+                                '& img': {maxWidth: '100%'},
+                                '& table': {borderCollapse: 'collapse'},
+                                '& td, & th': {border: '1px solid #ddd', p: 0.5},
+                            }}
+                                 dangerouslySetInnerHTML={{__html: previewHtml}}
+                            />
+                        ) : (
+                            <Box sx={{
+                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                justifyContent: 'center', gap: 1, minHeight: 300, p: 3
+                            }}>
+                                <DescriptionIcon sx={{fontSize: 40, color: '#CCC'}}/>
+                                <Typography sx={{fontSize: '0.85rem', color: '#888', textAlign: 'center'}}>
+                                    {previewError
+                                        ? 'Прегледот не успеа да се вчита за овој документ.'
+                                        : `Прегледот не е достапен за овој тип документ (${previewDoc?.tipFile}).`}
+                                    {' '}Преземете го за да го отворите.
+                                </Typography>
+                            </Box>
+                        )}
+                    </DialogContent>
+                    <DialogActions sx={{px: 2.5, py: 1.5, borderTop: '1px solid #EEE'}}>
+                        <Button onClick={closePreview} sx={{textTransform: 'none', color: '#666'}}>
+                            Затвори
+                        </Button>
+                        <Button
+                            variant="contained" disableElevation
+                            startIcon={<DownloadIcon sx={{fontSize: 16}}/>}
+                            onClick={() => dokumentiApi.downloadDok(previewDoc.id, previewDoc.imeFile)}
+                            sx={{
+                                textTransform: 'none', bgcolor: T.btnBg,
+                                '&:hover': {bgcolor: T.btnHover}
+                            }}
+                        >
+                            Преземи
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </Box>
         </LocalizationProvider>
     );

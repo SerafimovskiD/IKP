@@ -43,6 +43,19 @@ const usePredmeti = () => {
             setLoading(false);
         }
     };
+    const editPosta = async (data, id, tipDelovnik) => {
+        setLoading(true);
+        setError(null);
+        try {
+            return await predmetiApi.editPosta(data, id, tipDelovnik);
+        } catch (err) {
+            const message = err.response?.data?.message || "Грешка при уредување на пошта";
+            setError(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
     const getPrethodniPredmeti = async (redenBroj, godina) => {
         setLoading(true);
         setError(null);
@@ -70,11 +83,10 @@ const usePredmeti = () => {
         }
     };
     useEffect(() => {
-        fetchPredmeti();
         fetchNextRedenBroj();
-    }, [fetchPredmeti,fetchNextRedenBroj]);
+    }, [fetchNextRedenBroj]);
 
-    return { predmeti,createPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj,getPrethodniPredmeti,getDoc };
+    return { predmeti,createPosta,editPosta, loading, error,nextRedenBroj, refetch: fetchPredmeti, refetchNextRedenBroj: fetchNextRedenBroj,getPrethodniPredmeti,getDoc };
 };
 
 export default usePredmeti;

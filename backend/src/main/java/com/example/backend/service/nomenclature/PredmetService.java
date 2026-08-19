@@ -142,8 +142,8 @@ public class PredmetService {
     @Transactional
     public PostaResponse editPosta(PostaRequest request,
                                    Long predmetId,
-                                   String email
-//                                   TipDelovnik tipDelovnik
+                                   String email,
+                                   TipDelovnik tipDelovnik
 
     ) {
         UserTable user = userRepository.findByEmail(email)
@@ -180,7 +180,7 @@ public class PredmetService {
         predmet.setArhiva(new HashSet<>(arhiva));
         predmet.setIsprakjac(isprakjac);
         predmet.setIsprakjacIme(request.getIsprakjacIme());
-//        if (tipDelovnik == TipDelovnik.Dobiena) {
+        if (tipDelovnik == TipDelovnik.Dobiena) {
             predmet.setPrioritet(request.getPrioritet());
             predmet.setBrAktNivni(request.getBrAktNivni());
             predmet.setDatumIsprakjanje(request.getDatumIsprakjanje());
@@ -191,17 +191,17 @@ public class PredmetService {
                             .orElseThrow(() -> new ResourceNotFoundException("VidPredmetDobiena with ID: " + id)))
                     .collect(Collectors.toList());
             predmet.setVidPredmetDobiena(new HashSet<>(vidPredmetDob));
-//            predmet.setVidPredmetIspratena(new HashSet<>());
+            predmet.setVidPredmetIspratena(new HashSet<>());
 
-//        } else {
+        } else {
 
             List<VidPredmetIspratena> vidPredmetIsp = request.getVidPredmetIspratenaId().stream()
                     .map(id -> vidPredmetIspratenaRepository.findById(id)
                             .orElseThrow(() -> new ResourceNotFoundException("VidPredmetIspratena with ID: " + id)))
                     .collect(Collectors.toList());
             predmet.setVidPredmetIspratena(new HashSet<>(vidPredmetIsp));
-//            predmet.setVidPredmetDobiena(new HashSet<>());
-//        }
+            predmet.setVidPredmetDobiena(new HashSet<>());
+        }
 
         Predmet saved = predmetRepository.save(predmet);
         Predmet refreshed = predmetRepository.findById(saved.getId())

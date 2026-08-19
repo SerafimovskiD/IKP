@@ -47,6 +47,13 @@ export default function App() {
                                 </Layout>
                             </ProtectedRoute>
                         }/>
+                        <Route path="/createPosta/edit/:id" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <PredmetForm/>
+                                </Layout>
+                            </ProtectedRoute>
+                        }/>
                         <Route path="/predmeti" element={
                             <ProtectedRoute>
                                 <Layout>
