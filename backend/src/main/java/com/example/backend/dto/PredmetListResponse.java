@@ -32,7 +32,9 @@ public record PredmetListResponse(
         List<Long> arhivaId,
         Boolean isActive,
         String isprakjacIme,
-        String promenilKorisnik
+        String promenilKorisnik,
+        String brAktArhivski,
+        LocalDate datumIsprakjanje
 
 ) {
     public static PredmetListResponse from(Predmet p) {
@@ -84,7 +86,9 @@ public record PredmetListResponse(
                 p.getArhiva().stream().map(Arhiva::getId).collect(Collectors.toList()),
                 p.isActive(),
                 p.getIsprakjacIme(),
-                promenil
+                promenil,
+                p.getBrAktArhivski(),
+                p.getDatumIsprakjanje()
         );
 
     }

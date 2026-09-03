@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {
     Box, Typography,
     Button, Chip, CircularProgress,
@@ -25,7 +25,8 @@ import useOrgEdinica from "../../hooks/useOrgEdinica.js";
 import usePredmeti from "../../hooks/usePredmeti.js";
 import {formatStatus} from "../../utils/formatters.js";
 import {predmetiApi as dokumentiApi} from "../../api/predmeti.js";
-import * as mammoth from "mammoth";
+import {renderAsync as renderDocxAsync} from "docx-preview";
+import * as XLSX from "xlsx";
 
 const DOBIENA = {
     gradient: 'linear-gradient(135deg, #7A5C10 0%, #A9821C 55%, #D4AF37 100%)',
@@ -221,25 +222,47 @@ const PostaDetails = () => {
 
     const [dokumenti, setDokumenti] = useState([]);
 
-    // Преглед на документ (Dialog) - blob URL (слики/PDF) или HTML (.docx преку mammoth.js).
+    // Преглед на документ (Dialog) - blob URL (слики/PDF), вистински рендериран
+    // .docx преку docx-preview (изгледа идентично како кога документот ќе се преземе
+    // и отвори во Word - страници, маргини, фонтови), или Excel (.xls/.xlsx) преку
+    // SheetJS (xlsx) - секој лист (sheet) се рендерира како HTML табела.
     const [previewDoc, setPreviewDoc] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
-    const [previewHtml, setPreviewHtml] = useState(null);
+    const [previewDocxBlob, setPreviewDocxBlob] = useState(null);
+    const [previewExcelSheets, setPreviewExcelSheets] = useState(null);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [previewError, setPreviewError] = useState(false);
+    const docxContainerRef = useRef(null);
 
+    // Word - новиот .docx (OOXML) формат целосно се рендерира преку docx-preview.
+    // Стариот бинарен .doc формат нема доверлива JS библиотека за преглед во прелистувач,
+    // затоа за него само се овозможува преземање (истото важи и за легацискиот .xls
+    // формат ако SheetJS не успее да го парсира - многу стари/оштетени фајлови).
     const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const DOC_MIME = 'application/msword';
+    const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const XLS_MIME = 'application/vnd.ms-excel';
+    const EXCEL_MIMES = [XLSX_MIME, XLS_MIME];
 
     const openPreview = async (dok) => {
         setPreviewDoc(dok);
         setPreviewLoading(true);
         setPreviewError(false);
+        setPreviewUrl(null);
+        setPreviewDocxBlob(null);
+        setPreviewExcelSheets(null);
         try {
             const blob = await dokumentiApi.getDokBlob(dok.id);
             if (dok.tipFile === DOCX_MIME) {
+                setPreviewDocxBlob(blob);
+            } else if (EXCEL_MIMES.includes(dok.tipFile)) {
                 const arrayBuffer = await blob.arrayBuffer();
-                const {value} = await mammoth.convertToHtml({arrayBuffer});
-                setPreviewHtml(value);
+                const workbook = XLSX.read(arrayBuffer, {type: 'array'});
+                const sheets = workbook.SheetNames.map(name => ({
+                    name,
+                    html: XLSX.utils.sheet_to_html(workbook.Sheets[name], {id: undefined, editable: false}),
+                }));
+                setPreviewExcelSheets(sheets);
             } else {
                 setPreviewUrl(URL.createObjectURL(blob));
             }
@@ -250,10 +273,30 @@ const PostaDetails = () => {
         }
     };
 
+    // Откако blob-от на .docx е превземен и контејнерот е монтиран во DOM-от,
+    // docx-preview го рендерира внатре во него - со вистинска пагинација.
+    useEffect(() => {
+        if (previewDocxBlob && docxContainerRef.current) {
+            docxContainerRef.current.innerHTML = '';
+            renderDocxAsync(previewDocxBlob, docxContainerRef.current, undefined, {
+                className: 'docx-preview-content',
+                inWrapper: true,
+                ignoreWidth: false,
+                ignoreHeight: false,
+                // Word автоматски вметнува lastRenderedPageBreak таму каде страницата
+                // природно се пренела (без рачен page break) - без ова, docx-preview
+                // го игнорира тоа и целата содржина завршува во еден "прв" контејнер
+                // со фиксна висина, па остатокот од страниците исчезнува/се сече.
+                ignoreLastRenderedPageBreak: false,
+            }).catch(() => setPreviewError(true));
+        }
+    }, [previewDocxBlob]);
+
     const closePreview = () => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
-        setPreviewHtml(null);
+        setPreviewDocxBlob(null);
+        setPreviewExcelSheets(null);
         setPreviewDoc(null);
     };
 
@@ -709,18 +752,47 @@ const PostaDetails = () => {
                         ) : previewUrl && previewDoc?.tipFile === 'application/pdf' ? (
                             <Box component="iframe" src={previewUrl} title={previewDoc.imeFile}
                                  sx={{width: '100%', height: '80vh', border: 'none'}}/>
-                        ) : previewHtml ? (
-                            <Box sx={{
-                                bgcolor: '#fff', mx: 'auto', my: 2, p: 4,
-                                width: '100%', maxWidth: 800, maxHeight: '80vh', overflowY: 'auto',
-                                boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                                fontSize: '0.9rem', lineHeight: 1.6, color: '#222',
-                                '& img': {maxWidth: '100%'},
-                                '& table': {borderCollapse: 'collapse'},
-                                '& td, & th': {border: '1px solid #ddd', p: 0.5},
-                            }}
-                                 dangerouslySetInnerHTML={{__html: previewHtml}}
+                        ) : previewDoc?.tipFile === DOCX_MIME && !previewError ? (
+                            <Box
+                                ref={docxContainerRef}
+                                sx={{
+                                    width: '100%', maxHeight: '80vh', overflowY: 'auto',
+                                    py: 2, display: 'flex', justifyContent: 'center',
+                                    '& .docx-preview-content': {bgcolor: 'transparent'},
+                                    '& .docx-wrapper': {
+                                        bgcolor: 'transparent', display: 'flex',
+                                        flexDirection: 'column', alignItems: 'center', gap: '16px',
+                                    },
+                                    '& .docx-wrapper > section': {
+                                        boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                                    },
+                                }}
                             />
+                        ) : previewExcelSheets && !previewError ? (
+                            <Box sx={{
+                                width: '100%', maxHeight: '80vh', overflow: 'auto', p: 2,
+                            }}>
+                                {previewExcelSheets.map((sheet) => (
+                                    <Box key={sheet.name} sx={{mb: 3}}>
+                                        {previewExcelSheets.length > 1 && (
+                                            <Typography sx={{
+                                                fontSize: '0.8rem', fontWeight: 700, color: T.accentDark,
+                                                mb: 0.75, px: 0.5,
+                                            }}>
+                                                {sheet.name}
+                                            </Typography>
+                                        )}
+                                        <Box sx={{
+                                            bgcolor: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                                            overflowX: 'auto', p: 1,
+                                            '& table': {borderCollapse: 'collapse', fontSize: '0.8rem'},
+                                            '& td, & th': {border: '1px solid #ddd', padding: '4px 8px', whiteSpace: 'nowrap'},
+                                        }}
+                                             dangerouslySetInnerHTML={{__html: sheet.html}}
+                                        />
+                                    </Box>
+                                ))}
+                            </Box>
                         ) : (
                             <Box sx={{
                                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -730,7 +802,9 @@ const PostaDetails = () => {
                                 <Typography sx={{fontSize: '0.85rem', color: '#888', textAlign: 'center'}}>
                                     {previewError
                                         ? 'Прегледот не успеа да се вчита за овој документ.'
-                                        : `Прегледот не е достапен за овој тип документ (${previewDoc?.tipFile}).`}
+                                        : previewDoc?.tipFile === DOC_MIME
+                                            ? 'Прегледот не е достапен за стариот .doc формат.'
+                                            : `Прегледот не е достапен за овој тип документ (${previewDoc?.tipFile}).`}
                                     {' '}Преземете го за да го отворите.
                                 </Typography>
                             </Box>

@@ -5,8 +5,9 @@ import {
     Button, CircularProgress, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow,
     Paper, Pagination, InputAdornment,
-    Card, CardHeader, CardContent, Divider,
-    ToggleButton, ToggleButtonGroup
+    Card, CardHeader, CardContent, Divider, Collapse, IconButton,
+    ToggleButton, ToggleButtonGroup,
+    Menu, MenuItem, Checkbox, ListItemText
 } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -18,6 +19,9 @@ import TagIcon from '@mui/icons-material/Tag';
 import PersonIcon from '@mui/icons-material/Person';
 import DescriptionIcon from '@mui/icons-material/Description';
 import NotesIcon from '@mui/icons-material/Notes';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useNavigate } from 'react-router-dom';
 import { predmetiApi } from '../../api/predmeti.js';
 import useUsersOdgovornoLice from '../../hooks/useUsersOdgovornoLice.js';
@@ -39,18 +43,29 @@ const THEME = {
     border: '#E8C8C8',
 };
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 500;
 
 const MESECI_IMINJA = ['Јан', 'Фев', 'Мар', 'Апр', 'Мај', 'Јун', 'Јул', 'Авг', 'Сеп', 'Окт', 'Нов', 'Дек'];
 const MESECI_OPTIONS = MESECI_IMINJA.map((label, i) => ({value: String(i + 1).padStart(2, '0'), label}));
 
 
+// Клучевите на сите колони од табелата (за состојбата на видливост).
+const COLUMN_KEYS = [
+    'redenBroj', 'tipDelovnik', 'tipPosta', 'datumZaveduvanje', 'brAktNivni',
+    'brAktArhivski', 'datumIsprakjanje',
+    'isprakjacIme', 'odgovornoLice', 'vidPredmet', 'sodrzina', 'realizirano',
+    'arhiva', 'zabeleska', 'statusPredmet',
+];
+
 const EMPTY_FILTERS = {
+    search: '',
     arhivaId: '',
     arhivaNaziv: '',
     brAkt: '',
     brAktNivni: '',
+    brAktArhivski: '',
     datumZaveduvanje: '',
+    datumIsprakjanje: '',
     godina: '',
     isprakjacIme: '',
     odgovornoLiceId: '',
@@ -71,9 +86,16 @@ const PredmetiList = () => {
 
     // Сите записи од последното пребарување кон backend-от (само еден повик).
     const [allData, setAllData] = useState([]);
+    // Ако backend-от навистина има повеќе резултати отколку што ги превземавме во еден повик
+    // (size=100000), тука го чуваме реалниот вкупен број за да предупредиме дека листата е
+    // намалена, наместо молчешкум да недостасуваат резултати.
+    const [totalOnServer, setTotalOnServer] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [hasSearched, setHasSearched] = useState(false);
+    // Формата со филтрите е отворена при прв пристап до страницата; по пребарувањето
+    // се затвора (за да не зазема простор) но останува достапна преку копчето за отворање.
+    const [filtersOpen, setFiltersOpen] = useState(true);
 
     // Филтрите од главната форма - се користат ИСКЛУЧИВО за повикот кон backend-от (копчето „Пребарај“).
     const [searchForm, setSearchForm] = useState(EMPTY_FILTERS);
@@ -87,6 +109,19 @@ const PredmetiList = () => {
 
     const [page, setPage] = useState(0);
     const [sort, setSort] = useState({field: 'datumZaveduvanje', dir: 'desc'});
+    // Кои колони од табелата се видливи - корисникот сам избира преку копчето "Колони".
+    // Иницијално видливи се само: Наш број, вид пошта, датум заведување, број акт(нивни),
+    // испраќач, одговорно лице, предмет, содржина, реализ, архива, забелешка, статус.
+    const DEFAULT_VISIBLE_COLS = [
+        'redenBroj', 'tipPosta', 'datumZaveduvanje', 'brAktNivni',
+        'isprakjacIme', 'odgovornoLice', 'vidPredmet', 'sodrzina',
+        'realizirano', 'arhiva', 'zabeleska', 'statusPredmet',
+    ];
+    const [visibleCols, setVisibleCols] = useState(
+        () => Object.fromEntries(COLUMN_KEYS.map(k => [k, DEFAULT_VISIBLE_COLS.includes(k)]))
+    );
+    const [colsMenuAnchor, setColsMenuAnchor] = useState(null);
+    const toggleCol = (key) => setVisibleCols(p => ({...p, [key]: !p[key]}));
     const {odgovornoLice} = useUsersOdgovornoLice();
     const {vidPredmetD} = useVidPredmetDobieno();
     const {vidPredmetI} = useVidPredmetIspratena();
@@ -101,7 +136,7 @@ const PredmetiList = () => {
         try {
             const params = new URLSearchParams();
             params.append('page', 0);
-            params.append('size', 100000);
+            params.append('size', 1000000);
             params.append('sort', `${sort.field},${sort.dir}`);
 
             if (searchFilters.godina) params.append('godina', searchFilters.godina);
@@ -119,10 +154,11 @@ const PredmetiList = () => {
             if (searchFilters.tipPosta) params.append('tipPosta', searchFilters.tipPosta);
             if (searchFilters.statusPredmet) params.append('statusPredmet', searchFilters.statusPredmet);
             if (searchFilters.arhivaId) params.append('arhivaId', searchFilters.arhivaId);
+            if (searchFilters.search) params.append('search', searchFilters.search);
 
             const res = await predmetiApi.getAll(Object.fromEntries(params));
             let content = res?.content ?? [];
-
+            setTotalOnServer(res?.page?.totalElements ?? content.length);
             // Backend-от филтрира datumZaveduvanje со LIKE '%-MM-%' - точна позиција на месецот
             // во "YYYY-MM-DD", но тука сепак ја потврдуваме точноста врз реалната вредност на секој
             // предмет (без нов backend повик), како дополнителна гаранција.
@@ -165,12 +201,20 @@ const PredmetiList = () => {
         setSearchForm(EMPTY_FILTERS);
         setMesecZaveduvanje('');
         setAllData([]);
+        setTotalOnServer(null);
         setHasSearched(false);
+        setFiltersOpen(true);
         setPage(0);
     };
 
     const handleSearch = () => {
         setHasSearched(true);
+        // Секое ново пребарување кон backend-от ги ресетира и филтрите во колоните -
+        // инаку "заборавен" филтер во некоја колона би можел молчешкум да сокрие
+        // резултат што backend-от штотуку точно го врати.
+        setColFilters(EMPTY_FILTERS);
+        setPage(0);
+        setFiltersOpen(false);
         fetchData(searchForm);
     };
 
@@ -178,7 +222,6 @@ const PredmetiList = () => {
         () => Object.values(searchForm).filter(v => v !== '').length,
         [searchForm]
     );
-
     // Филтрирањето во колоните на табелата работи ИСКЛУЧИВО локално, врз веќе
     // превземените податоци (allData) - без никаков нов повик кон backend-от.
     const filteredData = useMemo(() => {
@@ -190,7 +233,9 @@ const PredmetiList = () => {
             if (!matchesText((p.arhivaNaziv ?? []).join(', '), colFilters.arhivaNaziv)) return false;
             if (!matchesText(p.brAkt, colFilters.brAkt)) return false;
             if (!matchesText(p.brAktNivni, colFilters.brAktNivni)) return false;
+            if (!matchesText(p.brAktArhivski, colFilters.brAktArhivski)) return false;
             if (!matchesText(p.datumZaveduvanje, colFilters.datumZaveduvanje)) return false;
+            if (!matchesText(p.datumIsprakjanje, colFilters.datumIsprakjanje)) return false;
             if (colFilters.godina && String(p.godina) !== String(colFilters.godina)) return false;
             if (!matchesText(p.isprakjacIme, colFilters.isprakjacIme)) return false;
             if (colFilters.odgovornoLiceId && !(p.odgovornoLiceId ?? []).map(String).includes(String(colFilters.odgovornoLiceId))) return false;
@@ -243,6 +288,244 @@ const PredmetiList = () => {
         setPage(0);
     };
 
+    // Дефиниција на сите колони - заедничка за заглавието и телото на табелата,
+    // за да "Колони" копчето може да ги вклучува/исклучува двете конзистентно.
+    const allColumns = [
+        {
+            key: 'redenBroj', label: 'Наш бр.', field: 'redenBroj', minWidth: 20,
+            filter: <ColFilter value={colFilters.redenBroj}
+                               onChange={(v) => hfCol('redenBroj', v)}
+                               placeholder="Број..."/>,
+            cell: (predmet) => (
+                <Typography sx={{fontSize: '0.82rem', fontWeight: 600, color: '#333', fontFamily: 'monospace'}}>
+                    {predmet.redenBroj}
+                </Typography>
+            ),
+        },
+        {
+            key: 'tipDelovnik', label: 'Вид пошта', field: null, minWidth: 115,
+            filter: <ColRadio
+                value={colFilters.tipDelovnik}
+                onChange={(v) => hfCol('tipDelovnik', v)}
+                options={[
+                    {label: 'ДП', value: 'Dobiena'},
+                    {label: 'ИП', value: 'Ispratena'},
+                ]}
+            />,
+            cell: (predmet) => <TipBadge tip={predmet.tipDelovnik}/>,
+        },
+        {
+            key: 'tipPosta', label: 'Тип пошта', field: null, minWidth: 105,
+            filter: <ColRadio
+                value={colFilters.tipPosta}
+                onChange={(v) => hfCol('tipPosta', v)}
+                options={[
+                    {label: 'П', value: 'писмо'},
+                    {label: 'Т', value: 'телеграма'},
+                ]}
+            />,
+            cell: (predmet) => (
+                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.tipPosta}</Typography>
+            ),
+        },
+        {
+            key: 'datumZaveduvanje', label: 'Датум завед.', field: 'datumZaveduvanje', minWidth: 100,
+            filter: <ColFilter value={colFilters.datumZaveduvanje}
+                               onChange={(v) => hfCol('datumZaveduvanje', v)}
+                               placeholder="Датум..."/>,
+            cell: (predmet) => (
+                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.datumZaveduvanje}</Typography>
+            ),
+        },
+        {
+            key: 'brAktNivni', label: 'Број акт (нивни)', field: null, minWidth: 150,
+            filter: <ColFilter value={colFilters.brAktNivni}
+                               onChange={(v) => hfCol('brAktNivni', v)}
+                               placeholder="Бр.акт..."/>,
+            cell: (predmet) => (
+                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.brAktNivni || '—'}</Typography>
+            ),
+        },
+        {
+            key: 'brAktArhivski', label: 'Број акт (архивски)', field: null, minWidth: 150,
+            filter: <ColFilter value={colFilters.brAktArhivski}
+                               onChange={(v) => hfCol('brAktArhivski', v)}
+                               placeholder="Бр.акт..."/>,
+            cell: (predmet) => (
+                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.brAktArhivski || '—'}</Typography>
+            ),
+        },
+        {
+            key: 'datumIsprakjanje', label: 'Датум испр.', field: 'datumIsprakjanje', minWidth: 105,
+            filter: <ColFilter value={colFilters.datumIsprakjanje}
+                               onChange={(v) => hfCol('datumIsprakjanje', v)}
+                               placeholder="Датум..."/>,
+            cell: (predmet) => (
+                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.datumIsprakjanje || '—'}</Typography>
+            ),
+        },
+        {
+            key: 'isprakjacIme', label: 'Испраќач', field: null, minWidth: 140,
+            filter: <ColFilter value={colFilters.isprakjacIme}
+                               onChange={(v) => hfCol('isprakjacIme', v)}
+                               placeholder="Содржина..."/>,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.isprakjacIme || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'odgovornoLice', label: 'Одговорно лице', field: null, minWidth: 140,
+            filter: <ColDropdown
+                value={colFilters.odgovornoLiceId}
+                onChange={(v) => hfCol('odgovornoLiceId', v)}
+                options={odgovornoLice || []}
+                getLabel={(o) => `${o.ime} ${o.prezime}`}
+                getId={(o) => o.id}
+                placeholder="Лице..."
+            />,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.odgovornoLiceNaziv?.join(', ') || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'vidPredmet', label: 'Предмет', field: null, minWidth: 140,
+            // Оваа колона спојува два различни списока - "Вид предмет (добиена)" и
+            // "Вид предмет (испратена)" - во еден dropdown. За да не се мешаат опциите
+            // (и за да не се постави погрешно поле кога филтерот "Вид пошта" не е избран),
+            // секоја опција се означува со _tip ('D'/'I'), се групираат визуелно во
+            // dropdown-от (ColDropdown groupBy), а id-то се прави уникатно ("D:5"/"I:5")
+            // за да не се судираат идентични ID-а од двете табели.
+            filter: <ColDropdown
+                value={
+                    colFilters.vidPredmetIspratenaId ? `I:${colFilters.vidPredmetIspratenaId}`
+                        : colFilters.vidPredmetDobienaId ? `D:${colFilters.vidPredmetDobienaId}`
+                        : ''
+                }
+                onChange={(_, option) => {
+                    if (!option) {
+                        hfCol('vidPredmetDobienaId', '');
+                        hfCol('vidPredmetIspratenaId', '');
+                        return;
+                    }
+                    if (option._tip === 'I') {
+                        hfCol('vidPredmetIspratenaId', option.id);
+                        hfCol('vidPredmetDobienaId', '');
+                    } else {
+                        hfCol('vidPredmetDobienaId', option.id);
+                        hfCol('vidPredmetIspratenaId', '');
+                    }
+                }}
+                options={colFilters.tipDelovnik === 'Ispratena'
+                    ? (vidPredmetI || []).map(o => ({...o, _tip: 'I'}))
+                    : [
+                        ...(vidPredmetD || []).map(o => ({...o, _tip: 'D'})),
+                        ...(vidPredmetI || []).map(o => ({...o, _tip: 'I'})),
+                    ]}
+                getLabel={(o) => o.naziv}
+                getId={(o) => `${o._tip}:${o.id}`}
+                groupBy={(o) => o._tip === 'I' ? 'Испратена' : 'Добиена'}
+                placeholder="Предмет..."
+            />,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.vidPredmetNaziv?.join('/') || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'sodrzina', label: 'Содржина', field: null, minWidth: 200,
+            filter: <ColFilter value={colFilters.sodrzina}
+                               onChange={(v) => hfCol('sodrzina', v)}
+                               placeholder="Содржина..."/>,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.sodrzina || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'realizirano', label: 'Реализ.', field: null, minWidth: 100,
+            filter: <ColRadio
+                value={colFilters.realizirano}
+                onChange={(v) => hfCol('realizirano', v)}
+                options={[
+                    {label: 'Да', value: 'true'},
+                    {label: 'Не', value: 'false'},
+                ]}
+            />,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.realizirano ? "Да" : "Не"}
+                </Typography>
+            ),
+        },
+        {
+            key: 'arhiva', label: 'Архива', field: null, minWidth: 160,
+            filter: <ColDropdown
+                value={colFilters.arhivaId}
+                onChange={(v) => hfCol('arhivaId', v)}
+                options={arhiva || []}
+                getLabel={(o) => `${o.naziv}`}
+                getId={(o) => o.id}
+                placeholder="Архива..."
+            />,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.arhivaNaziv?.join(', ') || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'zabeleska', label: 'Забелешка', field: null, minWidth: 200,
+            filter: <ColFilter value={colFilters.zabeleska}
+                               onChange={(v) => hfCol('zabeleska', v)}
+                               placeholder="Забелешка..."/>,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.zabeleska || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'statusPredmet', label: 'Статус', field: null, minWidth: 160,
+            filter: <ColDropdown
+                value={colFilters.statusPredmet}
+                onChange={(v) => hfCol('statusPredmet', v)}
+                options={statusPredmet?.map(s => ({id: s, naziv: s.replace(/_/g, ' ')})) || []}
+                getLabel={(o) => o.naziv}
+                getId={(o) => o.id}
+                placeholder="Статус..."
+            />,
+            cell: (predmet) => <StatusChip status={formatStatus(predmet.statusPredmet)}/>,
+        },
+    ];
+
+    const columns = allColumns.filter(c => visibleCols[c.key]);
 
     return (
         <Box sx={{p: 3}}>
@@ -275,7 +558,6 @@ const PredmetiList = () => {
                 />
                 <CardContent>
 
-                    {/* ФОРМА СО СИТЕ ФИЛТРИ - секогаш видлива */}
                     <Box
                         component="form"
                         onSubmit={(e) => {
@@ -289,23 +571,101 @@ const PredmetiList = () => {
                             overflow: 'hidden'
                         }}>
                         <Box sx={{
-                            display: 'flex', alignItems: 'center', gap: 1,
-                            px: {xs: 2, md: 3}, py: 1.75,
-                            borderBottom: '1px solid #EEE',
+                            display: 'flex', alignItems: 'center',
+                            px: {xs: 2, md: 1},
+                            borderBottom: filtersOpen ? '1px solid #EEE' : 'none',
                         }}>
-                            <FilterListIcon sx={{fontSize: 19, color: THEME.accent}}/>
-                            <Typography sx={{fontWeight: 700, fontSize: '0.92rem', color: '#333', letterSpacing: '0.01em'}}>
-                                Филтри за пребарување
-                            </Typography>
-                            {activeFilterCount > 0 && (
-                                <Box sx={{
-                                    bgcolor: THEME.accent, color: '#fff', fontSize: '0.68rem',
-                                    fontWeight: 700, borderRadius: '9px', minWidth: 18, height: 18,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', px: 0.6,
+                            {/* Копче за избор на видливи колони - мала икона, лево */}
+                            <IconButton
+                                size="small"
+                                onClick={(e) => setColsMenuAnchor(e.currentTarget)}
+                                title="Избери видливи колони"
+                                sx={{color: THEME.accent, mr: 0.5}}
+                            >
+                                <ViewColumnIcon sx={{fontSize: 18}}/>
+                            </IconButton>
+                            <Menu
+                                anchorEl={colsMenuAnchor}
+                                open={!!colsMenuAnchor}
+                                onClose={() => setColsMenuAnchor(null)}
+                                anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+                                transformOrigin={{vertical: 'top', horizontal: 'left'}}
+                            >
+                                {allColumns.map(col => (
+                                    <MenuItem key={col.key} onClick={() => toggleCol(col.key)} dense>
+                                        <Checkbox size="small" checked={!!visibleCols[col.key]}
+                                                  sx={{p: 0.5, mr: 0.5, color: THEME.accent, '&.Mui-checked': {color: THEME.accent}}}/>
+                                        <ListItemText primaryTypographyProps={{fontSize: '0.85rem'}}>
+                                            {col.label}
+                                        </ListItemText>
+                                    </MenuItem>
+                                ))}
+                            </Menu>
+
+                            <Box
+                                onClick={() => setFiltersOpen(o => !o)}
+                                sx={{
+                                    flex: '0 0 95%', maxWidth: '95%',
+                                    display: 'flex', alignItems: 'center', gap: 1,
+                                    py: 1.25,
+                                    cursor: 'pointer',
                                 }}>
-                                    {activeFilterCount}
-                                </Box>
-                            )}
+                                <FilterListIcon sx={{fontSize: 19, color: THEME.accent}}/>
+                                <Typography sx={{fontWeight: 700, fontSize: '0.92rem', color: '#333', letterSpacing: '0.01em'}}>
+                                    Филтри за пребарување
+                                </Typography>
+                                {activeFilterCount > 0 && (
+                                    <Box sx={{
+                                        bgcolor: THEME.accent, color: '#fff', fontSize: '0.68rem',
+                                        fontWeight: 700, borderRadius: '9px', minWidth: 18, height: 18,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', px: 0.6,
+                                    }}>
+                                        {activeFilterCount}
+                                    </Box>
+                                )}
+                                <Box sx={{flex: 1}}/>
+                                <IconButton
+                                    size="small"
+                                    disabled={true}
+                                    onClick={(e) => { e.stopPropagation(); setFiltersOpen(o => !o); }}
+                                    sx={{color: THEME.accent}}
+                                >
+                                    {filtersOpen ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
+                                </IconButton>
+                            </Box>
+                        </Box>
+
+                        <Collapse in={filtersOpen}>
+                        {/* ГОЛЕМ ОПШТ ФИЛТЕР - пребарува преку backend-от (searchText) низ број
+                            акт, број акт (нивни), тип пошта, содржина, забелешка, испраќач,
+                            одговорно лице, вид на предмет и архива - едновремено. */}
+                        <Box sx={{px: {xs: 2, md: 3}, pt: 2.5}}>
+                            <TextField
+                                fullWidth
+                                value={searchForm.search}
+                                onChange={(e) => hf('search', e.target.value)}
+                                placeholder="Општо пребарување — број акт, содржина, забелешка, испраќач, одговорно лице, вид на предмет, архива..."
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon sx={{fontSize: 20, color: THEME.accent}}/>
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: searchForm.search && (
+                                        <InputAdornment position="end">
+                                            <ClearIcon
+                                                sx={{fontSize: 16, color: '#999', cursor: 'pointer'}}
+                                                onClick={() => hf('search', '')}
+                                            />
+                                        </InputAdornment>
+                                    ),
+                                    sx: {
+                                        bgcolor: THEME.accentLight, fontSize: '0.95rem',
+                                        '& fieldset': {borderColor: THEME.border},
+                                        '&:hover fieldset': {borderColor: THEME.accent},
+                                    }
+                                }}
+                            />
                         </Box>
 
                         <Box sx={{
@@ -492,6 +852,7 @@ const PredmetiList = () => {
                                 Пребарај
                             </Button>
                         </Box>
+                        </Collapse>
                     </Box>
 
                     {/* TABLE */}
@@ -501,7 +862,9 @@ const PredmetiList = () => {
                                 Внесете филтри и кликнете „Пребарај“ за да ги видите предметите
                             </Typography>
                         </Box>
-                    ) : loading ? (
+                    ) : (
+                    <>
+                    {loading ? (
                         <Box sx={{display: 'flex', justifyContent: 'center', py: 6}}>
                             <CircularProgress sx={{color: THEME.accent}}/>
                         </Box>
@@ -528,138 +891,14 @@ const PredmetiList = () => {
                                     <TableRow sx={{
                                         background: 'linear-gradient(240deg, #b6a268 0%, #dbbd5e 70%, #826f35 100%)',
                                     }}>
-                                        {[
-                                            {
-                                                label: 'Наш Број', field: 'redenBroj',
-                                                filter: <ColFilter value={colFilters.redenBroj}
-                                                                   onChange={(v) => hfCol('redenBroj', v)}
-                                                                   placeholder="Број..."/>
-                                            },
-                                            {
-                                                label: 'Вид пошта', field: null,
-                                                filter: <ColRadio
-                                                    value={colFilters.tipDelovnik}
-                                                    onChange={(v) => hfCol('tipDelovnik', v)}
-                                                    options={[
-                                                        {label: 'ДП', value: 'Dobiena'},
-                                                        {label: 'ИП', value: 'Ispratena'},
-                                                    ]}
-                                                />
-                                            },
-                                            {
-                                                label: 'Тип пошта', field: null,
-                                                filter: <ColRadio
-                                                    value={colFilters.tipPosta}
-                                                    onChange={(v) => hfCol('tipPosta', v)}
-                                                    options={[
-                                                        {label: 'П', value: 'писмо'},
-                                                        {label: 'Т', value: 'телеграма'},
-                                                    ]}
-                                                />
-                                            },
-                                            {
-                                                label: 'Датум заведување', field: 'datumZaveduvanje',
-                                                filter: <ColFilter value={colFilters.datumZaveduvanje}
-                                                                   onChange={(v) => hfCol('datumZaveduvanje', v)}
-                                                                   placeholder="Датум..."/>
-                                            },
-                                            {
-                                                label: 'Број акт (нивни)', field: null,
-                                                filter: <ColFilter value={colFilters.brAktNivni}
-                                                                   onChange={(v) => hfCol('brAktNivni', v)}
-                                                                   placeholder="Бр.акт..."/>
-                                            },
-                                            {
-                                                label: 'Испраќач', field: null,
-                                                filter: <ColFilter value={colFilters.isprakjacIme}
-                                                                   onChange={(v) => hfCol('isprakjacIme', v)}
-                                                                   placeholder="Содржина..."/>
-                                            },
-                                            {
-                                                label: 'Одговорно лице', field: null,
-                                                filter: <ColDropdown
-                                                    value={colFilters.odgovornoLiceId}
-                                                    onChange={(v) => hfCol('odgovornoLiceId', v)}
-                                                    options={odgovornoLice || []}
-                                                    getLabel={(o) => `${o.ime} ${o.prezime}`}
-                                                    getId={(o) => o.id}
-                                                    placeholder="Лице..."
-                                                />
-                                            },
-                                            {
-                                                label: 'Предмет', field: null,
-                                                filter: <ColDropdown
-                                                    value={colFilters.vidPredmetDobienaId || colFilters.vidPredmetIspratenaId}
-                                                    onChange={(v) => {
-                                                        if (colFilters.tipDelovnik === 'Ispratena') {
-                                                            hfCol('vidPredmetIspratenaId', v);
-                                                        } else {
-                                                            hfCol('vidPredmetDobienaId', v);
-                                                        }
-                                                    }}
-                                                    options={colFilters.tipDelovnik === 'Ispratena'
-                                                        ? (vidPredmetI || [])
-                                                        : [...(vidPredmetD || []), ...(vidPredmetI || [])]}
-                                                    getLabel={(o) => o.naziv}
-                                                    getId={(o) => o.id}
-                                                    placeholder="Предмет..."
-                                                />
-                                            },
-                                            {
-                                                label: 'Содржина', field: null,
-                                                filter: <ColFilter value={colFilters.sodrzina}
-                                                                   onChange={(v) => hfCol('sodrzina', v)}
-                                                                   placeholder="Содржина..."/>
-                                            },
-                                            {
-                                                label: 'Реализ.', field: null,
-                                                filter: <ColRadio
-                                                    value={colFilters.realizirano}
-                                                    onChange={(v) => hfCol('realizirano', v)}
-                                                    options={[
-                                                        {label: 'Да', value: 'true'},
-                                                        {label: 'Не', value: 'false'},
-                                                    ]}
-                                                />
-                                            },
-                                            {
-                                                label: 'Архива', field: null,
-                                                filter: <ColDropdown
-                                                    value={colFilters.arhivaId}
-                                                    onChange={(v) => hfCol('arhivaId', v)}
-                                                    options={arhiva || []}
-                                                    getLabel={(o) => `${o.naziv}`}
-                                                    getId={(o) => o.id}
-                                                    placeholder="Архива..."
-                                                />
-                                            },
-                                            {
-                                                label: 'Забелешка', field: null,
-                                                filter: <ColFilter value={colFilters.zabeleska}
-                                                                   onChange={(v) => hfCol('zabeleska', v)}
-                                                                   placeholder="Забелешка..."/>
-                                            },
-                                            {
-                                                label: 'Статус', field: null,
-                                                filter: <ColDropdown
-                                                    value={colFilters.statusPredmet}
-                                                    onChange={(v) => hfCol('statusPredmet', v)}
-                                                    options={statusPredmet?.map(s => ({
-                                                        id: s,
-                                                        naziv: s.replace(/_/g, ' ')
-                                                    })) || []}
-                                                    getLabel={(o) => o.naziv}
-                                                    getId={(o) => o.id}
-                                                    placeholder="Статус..."
-                                                />
-                                            },
-                                        ].map(({label, field, filter}) => (
-                                            <TableCell key={label}
+                                        {columns.map(({key, label, field, filter, minWidth}) => (
+                                            <TableCell key={key}
                                                        sx={{
                                                            verticalAlign: 'top',
                                                            whiteSpace: 'nowrap',
                                                            borderBottom: 'none',
                                                            padding: '8px !important',
+                                                           minWidth: minWidth || 100,
                                                        }}
                                             >
                                                 <Box
@@ -683,7 +922,7 @@ const PredmetiList = () => {
                                 <TableBody>
                                     {pagedData.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={13} sx={{textAlign: 'center', py: 6}}>
+                                            <TableCell colSpan={columns.length || 1} sx={{textAlign: 'center', py: 6}}>
                                                 <Typography sx={{color: '#BBB', fontSize: '0.875rem'}}>
                                                     Нема пронајдени предмети
                                                 </Typography>
@@ -697,103 +936,32 @@ const PredmetiList = () => {
                                                   }}
                                                   onClick={() => navigate(`/posta/${predmet.id}`)}
                                         >
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.82rem',
-                                                    fontWeight: 600,
-                                                    color: '#333',
-                                                    fontFamily: 'monospace'
-                                                }}>
-                                                    {predmet.redenBroj}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}><TipBadge tip={predmet.tipDelovnik}/></TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>
-                                                    {predmet.tipPosta}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>
-                                                    {predmet.datumZaveduvanje}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>
-                                                    {predmet.brAktNivni || '—'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.78rem', color: '#444',
-                                                    maxWidth: 140, overflow: 'hidden',
-                                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                }}>
-                                                    {predmet.isprakjacIme || '—'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.78rem', color: '#444',
-                                                    maxWidth: 140, overflow: 'hidden',
-                                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                }}>
-                                                    {predmet.odgovornoLiceNaziv?.join(', ') || '—'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.78rem', color: '#444',
-                                                    maxWidth: 140, overflow: 'hidden',
-                                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                }}>
-                                                    {predmet.vidPredmetNaziv?.join('/') || '—'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.78rem', color: '#444',
-                                                    maxWidth: 200, overflow: 'hidden',
-                                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                }}>
-                                                    {predmet.sodrzina || '—'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.78rem', color: '#444',
-                                                    maxWidth: 200, overflow: 'hidden',
-                                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                }}>
-                                                    {predmet.realizirano ? "Да" : "Не"}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.78rem', color: '#444',
-                                                    maxWidth: 140, overflow: 'hidden',
-                                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                }}>
-                                                    {predmet.arhivaNaziv?.join(', ') || '—'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <Typography sx={{
-                                                    fontSize: '0.78rem', color: '#444',
-                                                    maxWidth: 140, overflow: 'hidden',
-                                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                                }}>
-                                                    {predmet.zabeleska || '—'}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{py: 1}}>
-                                                <StatusChip status={formatStatus(predmet.statusPredmet)}/>
-                                            </TableCell>
+                                            {columns.map(({key, cell, minWidth}) => (
+                                                <TableCell key={key} sx={{py: 1, minWidth: minWidth || 100}}>
+                                                    {cell(predmet)}
+                                                </TableCell>
+                                            ))}
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
+                    )}
+                    </>
+                    )}
+
+                    {/* ПРЕДУПРЕДУВАЊЕ - ако backend-от навистина има повеќе резултати од
+                        големината на еден повик (100000), листата е намалена и не се сите. */}
+                    {hasSearched && totalOnServer !== null && totalOnServer > allData.length && (
+                        <Box sx={{
+                            mt: 2, p: 1.5, bgcolor: '#FFF8E1',
+                            border: '1px solid #FFE082', borderRadius: '6px'
+                        }}>
+                            <Typography sx={{color: '#8D6E00', fontSize: '0.8rem'}}>
+                                Прикажани се само првите {allData.length.toLocaleString()} од вкупно {totalOnServer.toLocaleString()} резултати.
+                                Стеснете ги филтрите за да ги видите сите.
+                            </Typography>
+                        </Box>
                     )}
 
                     {/* PAGINATION (клиентска, врз веќе превземените и филтрирани податоци) */}

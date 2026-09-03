@@ -1,19 +1,18 @@
 import { Box } from '@mui/material';
 
-// Пилюли-филтер (радио група) во заглавие на колона
+// Пилюли-филтер (радио група) во заглавие на колона - транспарентен, со бела
+// линија под избраната опција (ист "underline" стил како ColFilter/ColDatePicker).
 const ColRadio = ({value, onChange, options}) => (
     <Box sx={{
-        display: 'flex', gap: 0.3, flexWrap: 'nowrap',
-        bgcolor: '#fff', borderRadius: '6px', p: 0.25,mt:1.6,
+        display: 'flex', gap: 1.2, flexWrap: 'nowrap', mt: 1.6,
     }}>
         <Box
             onClick={() => onChange('')}
             sx={{
-                fontSize: '0.68rem', fontWeight: 600, px: 0.9, py: 0.4,
-                borderRadius: '4px', cursor: 'pointer', transition: 'all 0.15s',
-                bgcolor: value === '' ? '#826f35' : 'transparent',
-                color: value === '' ? '#fff' : '#888',
-                '&:hover': {bgcolor: value === '' ? '#826f35' : '#F0F0F0'}
+                fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                color: value === '' ? '#fff' : 'rgba(255,255,255,0.65)',
+                borderBottom: value === '' ? '2px solid #fff' : '2px solid transparent', pb:0.3,
+                '&:hover': {color: '#fff'}
             }}
         >
             Сите
@@ -22,11 +21,10 @@ const ColRadio = ({value, onChange, options}) => (
             <Box key={opt.value}
                  onClick={() => onChange(value === opt.value ? '' : opt.value)}
                  sx={{
-                     fontSize: '0.68rem', fontWeight: 600, px: 0.9, py: 0.4,
-                     borderRadius: '4px', cursor: 'pointer', transition: 'all 0.15s',
-                     bgcolor: value === opt.value ? '#826f35' : 'transparent',
-                     color: value === opt.value ? '#fff' : '#888',
-                     '&:hover': {bgcolor: value === opt.value ? '#826f35' : '#F0F0F0'}
+                     fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                     color: value === opt.value ? '#fff' : 'rgba(255,255,255,0.65)',
+                     borderBottom: value === opt.value ? '2px solid #fff' : '2px solid transparent',
+                     '&:hover': {color: '#fff'}
                  }}
             >
                 {opt.label}

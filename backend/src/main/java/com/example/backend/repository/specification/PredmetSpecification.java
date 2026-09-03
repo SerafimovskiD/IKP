@@ -73,18 +73,24 @@ public class PredmetSpecification {
             var arhiva=root.join("arhiva", JoinType.LEFT);
 
             return cb.or(
-                    cb.like(cb.lower(root.get("brAkt")), pattern),
+//                    cb.like(cb.lower(root.get("brAkt")), pattern),
+                    cb.like(cb.lower(root.get("brAktArhivski")), pattern),
                     cb.like(cb.lower(root.get("brAktNivni")), pattern),
-                    cb.like(cb.lower(root.get("tipPosta").as(String.class)), pattern),
+                    cb.like(cb.function("to_char", String.class,
+                            root.get("datumIsprakjanje"), cb.literal("YYYY-MM-DD")), pattern),
+                    cb.like(cb.function("to_char", String.class,
+                            root.get("datumZaveduvanje"), cb.literal("YYYY-MM-DD")), pattern),
+                    cb.like(cb.function("text", String.class, root.get("redenBroj")), pattern),
                     cb.like(cb.lower(root.get("sodrzina")), pattern),
                     cb.like(cb.lower(root.get("zabeleska")), pattern),
-                    cb.like(cb.lower(isprakjac.get("naziv")), pattern),
+//                    cb.like(cb.lower(root.get("tipPosta").as(String.class)), pattern),
+                    cb.like(cb.lower(root.get("isprakjacIme")), pattern),
                     cb.like(cb.lower(odgovornoLice.get("ime")), pattern),
                     cb.like(cb.lower(odgovornoLice.get("prezime")), pattern),
                     cb.like(cb.lower(vidDobiena.get("naziv")), pattern),
                     cb.like(cb.lower(vidIspratena.get("naziv")), pattern),
                     cb.like(cb.lower(arhiva.get("naziv")), pattern)
-            );
+                    );
         };
     }
     public static Specification<Predmet> hasTipDelovnik(TipDelovnik tipDelovnik) {

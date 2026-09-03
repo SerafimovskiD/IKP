@@ -1,22 +1,26 @@
 import { TextField } from '@mui/material';
 
-// Текст-филтер во заглавие на колона
+// Текст-филтер во заглавие на колона - транспарентен, само линија под полето
+// (се стопува со златната позадина на заглавието).
 const ColFilter = ({value, onChange, placeholder = '...'}) => (
     <TextField
-        variant="outlined"
+        variant="standard"
         size="small" fullWidth
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onClick={(e) => e.stopPropagation()}
+        InputProps={{disableUnderline: false}}
         sx={{
-            '& .MuiOutlinedInput-root': {
+            '& .MuiInput-root': {
                 fontSize: '0.75rem',
-                bgcolor: '#fff',
-                borderRadius: '6px',
-                '& input': {py:1, px: 1},
+                color: '#fff',
+                '&:before': {borderBottom: '1.5px solid rgba(255,255,255,0.8)'},
+                '&:hover:not(.Mui-disabled):before': {borderBottom: '1.5px solid #fff'},
+                '&:after': {borderBottom: '2px solid #fff'},
             },
-            '& .MuiOutlinedInput-notchedOutline': {border: 'none'},
+            '& .MuiInput-input': {py: 0.5, px: 0.25},
+            '& .MuiInput-input::placeholder': {color: 'rgba(255,255,255,0.75)', opacity: 1},
         }}
     />
 );
