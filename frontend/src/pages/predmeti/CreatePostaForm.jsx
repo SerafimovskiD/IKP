@@ -172,6 +172,7 @@ const PredmetForm = () => {
         vidPredmetIspratenaId: [],
         sodrzina: "",
         odgovornoLiceId: [],
+        dodelenoNaId:[],
         informativnaPosta: false,
         realizirano: false,
         arhivaId: [],
@@ -191,6 +192,7 @@ const PredmetForm = () => {
         vidPredmetIspratenaId: [],
         sodrzina: "",
         odgovornoLiceId: [],
+        dodelenoNaId: [],
         informativnaPosta: false,
         realizirano: false,
         arhivaId: [],
@@ -211,7 +213,7 @@ const PredmetForm = () => {
     const {arhiva, loading: lA} = useArhiva();
     const {vidPredmetD, loading: lVD} = useVidPredmetDobieno();
     const {vidPredmetI, loading: lVI} = useVidPredmetIspratena();
-    const {odgovornoLice, loading: lO} = useUsersOdgovornoLice();
+    const {odgovornoLice, dodelenoNa, loading: lO} = useUsersOdgovornoLice();
     const {user} = useAuth();
     const {showSnackbar} = useSnackbar();
     const {getOrgEdinicaById} = useOrgEdinica();
@@ -247,6 +249,7 @@ const PredmetForm = () => {
                 vidPredmetIspratenaId: existingPredmet.vidPredmetIspratenaId || [],
                 sodrzina: existingPredmet.sodrzina || "",
                 odgovornoLiceId: existingPredmet.odgovornoLiceId || [],
+                dodelenoNaId: existingPredmet.dodelenoNaId || [],
                 informativnaPosta: !!existingPredmet.informativnaPosta,
                 realizirano: !!existingPredmet.realizirano,
                 arhivaId: existingPredmet.arhivaId || [],
@@ -331,6 +334,7 @@ const PredmetForm = () => {
             tipPosta: form.tipPosta,
             sodrzina: form.sodrzina,
             odgovornoLiceId: form.odgovornoLiceId,
+            dodelenoNaId: form.dodelenoNaId,
             informativnaPosta: form.informativnaPosta,
             realizirano: form.realizirano,
             arhivaId: form.arhivaId,
@@ -560,7 +564,7 @@ const PredmetForm = () => {
                             />
 
                             {/* РЕД 5: Одговорно лице, Архива */}
-                            <FormRow columns="1fr 1fr">
+                            <FormRow columns="1fr 1fr 1fr">
                                 <MultiSelect
                                     label="Одговорно лице"
                                     value={form.odgovornoLiceId}
@@ -569,6 +573,16 @@ const PredmetForm = () => {
                                     getLabel={(o) => `${o.ime} ${o.prezime}`}
                                     getId={(o) => o.id}
                                     error={formErrors.odgovornoLiceId}
+                                    theme={T} fullWidth
+                                />
+                                <MultiSelect
+                                    label="Доделено на"
+                                    value={form.dodelenoNaId}
+                                    onChange={(v) => hc('dodelenoNaId', v)}
+                                    options={dodelenoNa || []}
+                                    getLabel={(o) => `${o.ime} ${o.prezime}`}
+                                    getId={(o) => o.id}
+                                    error={formErrors.dodelenoNaId}
                                     theme={T} fullWidth
                                 />
                                 <MultiSelect

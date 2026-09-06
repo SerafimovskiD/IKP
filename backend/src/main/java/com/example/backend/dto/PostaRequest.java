@@ -23,6 +23,7 @@ public class PostaRequest {
     private Long isprakjacId;
     private Boolean isActive;
     private String isprakjacIme;
+    private List<Long> dodelenoNaId;
     // Samo dobiena
     private Prioritet prioritet;
     private String brAktNivni;

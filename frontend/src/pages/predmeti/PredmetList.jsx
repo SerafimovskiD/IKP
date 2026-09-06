@@ -1,5 +1,5 @@
 // src/pages/PredmetiList.jsx
-import {useState, useMemo, useCallback} from 'react';
+import {useState, useMemo, useCallback, useEffect} from 'react';
 import {
     Box, Typography, TextField, Autocomplete,
     Button, CircularProgress, Table, TableBody,
@@ -43,7 +43,7 @@ const THEME = {
     border: '#E8C8C8',
 };
 
-const PAGE_SIZE = 500;
+const PAGE_SIZE = 20;
 
 const MESECI_IMINJA = ['Јан', 'Фев', 'Мар', 'Апр', 'Мај', 'Јун', 'Јул', 'Авг', 'Сеп', 'Окт', 'Нов', 'Дек'];
 const MESECI_OPTIONS = MESECI_IMINJA.map((label, i) => ({value: String(i + 1).padStart(2, '0'), label}));
@@ -53,7 +53,7 @@ const MESECI_OPTIONS = MESECI_IMINJA.map((label, i) => ({value: String(i + 1).pa
 const COLUMN_KEYS = [
     'redenBroj', 'tipDelovnik', 'tipPosta', 'datumZaveduvanje', 'brAktNivni',
     'brAktArhivski', 'datumIsprakjanje',
-    'isprakjacIme', 'odgovornoLice', 'vidPredmet', 'sodrzina', 'realizirano',
+    'isprakjacIme', 'promenilKorisnik', 'odgovornoLice', 'dodelenoNa', 'vidPredmet', 'sodrzina', 'realizirano',
     'arhiva', 'zabeleska', 'statusPredmet',
 ];
 
@@ -68,7 +68,9 @@ const EMPTY_FILTERS = {
     datumIsprakjanje: '',
     godina: '',
     isprakjacIme: '',
+    promenilKorisnik: '',
     odgovornoLiceId: '',
+    dodelenoNaId: '',
     realizirano: '',
     redenBroj: '',
     sodrzina: '',
@@ -80,49 +82,111 @@ const EMPTY_FILTERS = {
     zabeleska: '',
 };
 
+// Ги паметиме последната состојба на пребарувањето/табелата во sessionStorage - за
+// да не се губи кога корисникот отвора предмет и се враќа назад (browser back).
+// sessionStorage (не localStorage) - се брише кога ќе се затвори табот, не е трајно.
+// Одделени клучеви за филтрите/поставките (мали, менуваат често) и за самите
+// превземени податоци (allData - поголеми, менуваат само по пребарување), за да не
+// се сериjализира целиот allData на секој тастер во некој филтер.
+const FILTERS_STORAGE_KEY = 'predmetList.filters.v1';
+const DATA_STORAGE_KEY = 'predmetList.data.v1';
+// Паметењето важи само 2 минути откако корисникот ќе ја напушти страницата - по тоа
+// истечено време состојбата се смета за застарена и страницата тргнува од почеток
+// (како да немало ништо зачувано), наместо да остане "заглавена" на старото пребарување.
+const STATE_TTL_MS = 2 * 60 * 1000;
+
+const readStored = (key) => {
+    try {
+        const raw = sessionStorage.getItem(key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.savedAt || Date.now() - parsed.savedAt > STATE_TTL_MS) {
+            sessionStorage.removeItem(key);
+            return null;
+        }
+        return parsed.value;
+    } catch {
+        return null;
+    }
+};
+
+const writeStored = (key, value) => {
+    try {
+        sessionStorage.setItem(key, JSON.stringify({savedAt: Date.now(), value}));
+    } catch {
+        // sessionStorage недостапен/полн - тивко се прескокнува.
+    }
+};
+
+const readStoredFilters = () => readStored(FILTERS_STORAGE_KEY);
+const readStoredData = () => readStored(DATA_STORAGE_KEY);
+
 const PredmetiList = () => {
 
     const navigate = useNavigate();
 
+    // Иницијално видливи се само: Наш број, вид пошта, датум заведување, број акт(нивни),
+    // испраќач, одговорно лице, доделено на, предмет, содржина, реализ, архива, забелешка, статус.
+    const DEFAULT_VISIBLE_COLS = [
+        'redenBroj', 'tipPosta', 'datumZaveduvanje', 'brAktNivni',
+        'isprakjacIme', 'promenilKorisnik', 'odgovornoLice', 'dodelenoNa', 'vidPredmet', 'sodrzina',
+        'realizirano', 'arhiva', 'zabeleska', 'statusPredmet',
+    ];
+
+    // Се читаат еднаш при монтирање (свежо на секое враќање на страницата преку "back").
+    const storedFilters = readStoredFilters();
+    const storedData = readStoredData();
+
     // Сите записи од последното пребарување кон backend-от (само еден повик).
-    const [allData, setAllData] = useState([]);
+    const [allData, setAllData] = useState(() => storedData?.allData ?? []);
     // Ако backend-от навистина има повеќе резултати отколку што ги превземавме во еден повик
     // (size=100000), тука го чуваме реалниот вкупен број за да предупредиме дека листата е
     // намалена, наместо молчешкум да недостасуваат резултати.
-    const [totalOnServer, setTotalOnServer] = useState(null);
+    const [totalOnServer, setTotalOnServer] = useState(() => storedData?.totalOnServer ?? null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [hasSearched, setHasSearched] = useState(false);
+    const [hasSearched, setHasSearched] = useState(() => storedFilters?.hasSearched ?? false);
     // Формата со филтрите е отворена при прв пристап до страницата; по пребарувањето
     // се затвора (за да не зазема простор) но останува достапна преку копчето за отворање.
-    const [filtersOpen, setFiltersOpen] = useState(true);
+    const [filtersOpen, setFiltersOpen] = useState(() => storedFilters?.filtersOpen ?? true);
 
     // Филтрите од главната форма - се користат ИСКЛУЧИВО за повикот кон backend-от (копчето „Пребарај“).
-    const [searchForm, setSearchForm] = useState(EMPTY_FILTERS);
+    const [searchForm, setSearchForm] = useState(() => storedFilters?.searchForm ?? EMPTY_FILTERS);
     // Филтрите во колоните на табелата - работат ИСКЛУЧИВО локално, врз веќе превземените
     // податоци (allData), без никаков повик кон backend-от.
-    const [colFilters, setColFilters] = useState(EMPTY_FILTERS);
+    const [colFilters, setColFilters] = useState(() => storedFilters?.colFilters ?? EMPTY_FILTERS);
     // Филтерот за месец во формата (комбинирано со постоечкото поле "Година") се спојува во истиот
     // searchForm.datumZaveduvanje низа-филтер како и досега (истата логика на backend-от -
     // hasDatumZaveduvanjeLike прави LIKE '%YYYY-MM-DD%' пребарување).
-    const [mesecZaveduvanje, setMesecZaveduvanje] = useState('');
+    const [mesecZaveduvanje, setMesecZaveduvanje] = useState(() => storedFilters?.mesecZaveduvanje ?? '');
 
-    const [page, setPage] = useState(0);
-    const [sort, setSort] = useState({field: 'datumZaveduvanje', dir: 'desc'});
+    const [page, setPage] = useState(() => storedFilters?.page ?? 0);
+    const [sort, setSort] = useState(() => storedFilters?.sort ?? {field: 'datumZaveduvanje', dir: 'desc'});
     // Кои колони од табелата се видливи - корисникот сам избира преку копчето "Колони".
-    // Иницијално видливи се само: Наш број, вид пошта, датум заведување, број акт(нивни),
-    // испраќач, одговорно лице, предмет, содржина, реализ, архива, забелешка, статус.
-    const DEFAULT_VISIBLE_COLS = [
-        'redenBroj', 'tipPosta', 'datumZaveduvanje', 'brAktNivni',
-        'isprakjacIme', 'odgovornoLice', 'vidPredmet', 'sodrzina',
-        'realizirano', 'arhiva', 'zabeleska', 'statusPredmet',
-    ];
     const [visibleCols, setVisibleCols] = useState(
-        () => Object.fromEntries(COLUMN_KEYS.map(k => [k, DEFAULT_VISIBLE_COLS.includes(k)]))
+        () => storedFilters?.visibleCols
+            ?? Object.fromEntries(COLUMN_KEYS.map(k => [k, DEFAULT_VISIBLE_COLS.includes(k)]))
     );
     const [colsMenuAnchor, setColsMenuAnchor] = useState(null);
     const toggleCol = (key) => setVisibleCols(p => ({...p, [key]: !p[key]}));
-    const {odgovornoLice} = useUsersOdgovornoLice();
+
+    // Ги зачувуваме филтрите/поставките на секоја промена (лесни податоци, честа промена -
+    // на секој тастер во некој филтер) - за да се вратат при следно монтирање (browser back),
+    // но само во рок од 2 минути (STATE_TTL_MS) - по тоа се смета за застарено.
+    useEffect(() => {
+        writeStored(FILTERS_STORAGE_KEY, {
+            hasSearched, filtersOpen, searchForm, colFilters,
+            mesecZaveduvanje, page, sort, visibleCols,
+        });
+    }, [hasSearched, filtersOpen, searchForm, colFilters, mesecZaveduvanje, page, sort, visibleCols]);
+
+    // Одделно ги зачувуваме превземените податоци (allData) - поголеми, се менуваат само
+    // по завршено пребарување, не на секој тастер.
+    useEffect(() => {
+        writeStored(DATA_STORAGE_KEY, {allData, totalOnServer});
+    }, [allData, totalOnServer]);
+
+    const {odgovornoLice, dodelenoNa} = useUsersOdgovornoLice();
     const {vidPredmetD} = useVidPredmetDobieno();
     const {vidPredmetI} = useVidPredmetIspratena();
     const {arhiva} = useArhiva();
@@ -238,7 +302,9 @@ const PredmetiList = () => {
             if (!matchesText(p.datumIsprakjanje, colFilters.datumIsprakjanje)) return false;
             if (colFilters.godina && String(p.godina) !== String(colFilters.godina)) return false;
             if (!matchesText(p.isprakjacIme, colFilters.isprakjacIme)) return false;
+            if (!matchesText(p.promenilKorisnik, colFilters.promenilKorisnik)) return false;
             if (colFilters.odgovornoLiceId && !(p.odgovornoLiceId ?? []).map(String).includes(String(colFilters.odgovornoLiceId))) return false;
+            if (colFilters.dodelenoNaId && !(p.dodelenoNaId ?? []).map(String).includes(String(colFilters.dodelenoNaId))) return false;
             if (colFilters.realizirano !== '' && String(!!p.realizirano) !== String(colFilters.realizirano)) return false;
             if (!matchesText(p.redenBroj, colFilters.redenBroj)) return false;
             if (!matchesText(p.sodrzina, colFilters.sodrzina)) return false;
@@ -292,7 +358,7 @@ const PredmetiList = () => {
     // за да "Колони" копчето може да ги вклучува/исклучува двете конзистентно.
     const allColumns = [
         {
-            key: 'redenBroj', label: 'Наш бр.', field: 'redenBroj', minWidth: 20,
+            key: 'redenBroj', label: 'Наш бр.', field: 'redenBroj', minWidth: 80,
             filter: <ColFilter value={colFilters.redenBroj}
                                onChange={(v) => hfCol('redenBroj', v)}
                                placeholder="Број..."/>,
@@ -303,7 +369,7 @@ const PredmetiList = () => {
             ),
         },
         {
-            key: 'tipDelovnik', label: 'Вид пошта', field: null, minWidth: 115,
+            key: 'tipDelovnik', label: 'Вид пошта', field: null, minWidth: 100,
             filter: <ColRadio
                 value={colFilters.tipDelovnik}
                 onChange={(v) => hfCol('tipDelovnik', v)}
@@ -315,13 +381,13 @@ const PredmetiList = () => {
             cell: (predmet) => <TipBadge tip={predmet.tipDelovnik}/>,
         },
         {
-            key: 'tipPosta', label: 'Тип пошта', field: null, minWidth: 105,
+            key: 'tipPosta', label: 'Тип пошта', field: null, minWidth: 85,
             filter: <ColRadio
                 value={colFilters.tipPosta}
                 onChange={(v) => hfCol('tipPosta', v)}
                 options={[
-                    {label: 'П', value: 'писмо'},
-                    {label: 'Т', value: 'телеграма'},
+                    {label: 'ПО', value: 'писмо'},
+                    {label: 'ТE', value: 'телеграма'},
                 ]}
             />,
             cell: (predmet) => (
@@ -329,7 +395,7 @@ const PredmetiList = () => {
             ),
         },
         {
-            key: 'datumZaveduvanje', label: 'Датум завед.', field: 'datumZaveduvanje', minWidth: 100,
+            key: 'datumZaveduvanje', label: 'Датум завед.', field: 'datumZaveduvanje', minWidth: 110,
             filter: <ColFilter value={colFilters.datumZaveduvanje}
                                onChange={(v) => hfCol('datumZaveduvanje', v)}
                                placeholder="Датум..."/>,
@@ -338,7 +404,7 @@ const PredmetiList = () => {
             ),
         },
         {
-            key: 'brAktNivni', label: 'Број акт (нивни)', field: null, minWidth: 150,
+            key: 'brAktNivni', label: 'Број акт (нивни)', field: null, minWidth: 110,
             filter: <ColFilter value={colFilters.brAktNivni}
                                onChange={(v) => hfCol('brAktNivni', v)}
                                placeholder="Бр.акт..."/>,
@@ -347,7 +413,7 @@ const PredmetiList = () => {
             ),
         },
         {
-            key: 'brAktArhivski', label: 'Број акт (архивски)', field: null, minWidth: 150,
+            key: 'brAktArhivski', label: 'Број акт (арх.)', field: null, minWidth: 110,
             filter: <ColFilter value={colFilters.brAktArhivski}
                                onChange={(v) => hfCol('brAktArhivski', v)}
                                placeholder="Бр.акт..."/>,
@@ -356,7 +422,7 @@ const PredmetiList = () => {
             ),
         },
         {
-            key: 'datumIsprakjanje', label: 'Датум испр.', field: 'datumIsprakjanje', minWidth: 105,
+            key: 'datumIsprakjanje', label: 'Датум испр.', field: 'datumIsprakjanje', minWidth: 110,
             filter: <ColFilter value={colFilters.datumIsprakjanje}
                                onChange={(v) => hfCol('datumIsprakjanje', v)}
                                placeholder="Датум..."/>,
@@ -365,21 +431,35 @@ const PredmetiList = () => {
             ),
         },
         {
-            key: 'isprakjacIme', label: 'Испраќач', field: null, minWidth: 140,
+            key: 'isprakjacIme', label: 'Испраќач', field: null, minWidth: 150,
             filter: <ColFilter value={colFilters.isprakjacIme}
                                onChange={(v) => hfCol('isprakjacIme', v)}
                                placeholder="Содржина..."/>,
             cell: (predmet) => (
                 <Typography sx={{
                     fontSize: '0.78rem', color: '#444',
-                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                     {predmet.isprakjacIme || '—'}
                 </Typography>
             ),
         },
         {
-            key: 'odgovornoLice', label: 'Одговорно лице', field: null, minWidth: 140,
+            key: 'promenilKorisnik', label: 'Извршил промена', field: null, minWidth: 150,
+            filter: <ColFilter value={colFilters.promenilKorisnik}
+                               onChange={(v) => hfCol('promenilKorisnik', v)}
+                               placeholder="Корисник..."/>,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.promenilKorisnik || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'odgovornoLice', label: 'Одговорно лице', field: null, minWidth: 150,
             filter: <ColDropdown
                 value={colFilters.odgovornoLiceId}
                 onChange={(v) => hfCol('odgovornoLiceId', v)}
@@ -391,14 +471,33 @@ const PredmetiList = () => {
             cell: (predmet) => (
                 <Typography sx={{
                     fontSize: '0.78rem', color: '#444',
-                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                     {predmet.odgovornoLiceNaziv?.join(', ') || '—'}
                 </Typography>
             ),
         },
         {
-            key: 'vidPredmet', label: 'Предмет', field: null, minWidth: 140,
+            key: 'dodelenoNa', label: 'Доделено на', field: null, minWidth: 150,
+            filter: <ColDropdown
+                value={colFilters.dodelenoNaId}
+                onChange={(v) => hfCol('dodelenoNaId', v)}
+                options={dodelenoNa || []}
+                getLabel={(o) => `${o.ime} ${o.prezime}`}
+                getId={(o) => o.id}
+                placeholder="Лице..."
+            />,
+            cell: (predmet) => (
+                <Typography sx={{
+                    fontSize: '0.78rem', color: '#444',
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                }}>
+                    {predmet.dodelenoNaNaziv?.join(', ') || '—'}
+                </Typography>
+            ),
+        },
+        {
+            key: 'vidPredmet', label: 'Предмет', field: null, minWidth: 150,
             // Оваа колона спојува два различни списока - "Вид предмет (добиена)" и
             // "Вид предмет (испратена)" - во еден dropdown. За да не се мешаат опциите
             // (и за да не се постави погрешно поле кога филтерот "Вид пошта" не е избран),
@@ -439,28 +538,28 @@ const PredmetiList = () => {
             cell: (predmet) => (
                 <Typography sx={{
                     fontSize: '0.78rem', color: '#444',
-                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                     {predmet.vidPredmetNaziv?.join('/') || '—'}
                 </Typography>
             ),
         },
         {
-            key: 'sodrzina', label: 'Содржина', field: null, minWidth: 200,
+            key: 'sodrzina', label: 'Содржина', field: null, minWidth: 180,
             filter: <ColFilter value={colFilters.sodrzina}
                                onChange={(v) => hfCol('sodrzina', v)}
                                placeholder="Содржина..."/>,
             cell: (predmet) => (
                 <Typography sx={{
                     fontSize: '0.78rem', color: '#444',
-                    maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                     {predmet.sodrzina || '—'}
                 </Typography>
             ),
         },
         {
-            key: 'realizirano', label: 'Реализ.', field: null, minWidth: 100,
+            key: 'realizirano', label: 'Реализ.', field: null, minWidth: 90,
             filter: <ColRadio
                 value={colFilters.realizirano}
                 onChange={(v) => hfCol('realizirano', v)}
@@ -472,14 +571,14 @@ const PredmetiList = () => {
             cell: (predmet) => (
                 <Typography sx={{
                     fontSize: '0.78rem', color: '#444',
-                    maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                     {predmet.realizirano ? "Да" : "Не"}
                 </Typography>
             ),
         },
         {
-            key: 'arhiva', label: 'Архива', field: null, minWidth: 160,
+            key: 'arhiva', label: 'Архива', field: null, minWidth: 150,
             filter: <ColDropdown
                 value={colFilters.arhivaId}
                 onChange={(v) => hfCol('arhivaId', v)}
@@ -491,28 +590,28 @@ const PredmetiList = () => {
             cell: (predmet) => (
                 <Typography sx={{
                     fontSize: '0.78rem', color: '#444',
-                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                     {predmet.arhivaNaziv?.join(', ') || '—'}
                 </Typography>
             ),
         },
         {
-            key: 'zabeleska', label: 'Забелешка', field: null, minWidth: 200,
+            key: 'zabeleska', label: 'Забелешка', field: null, minWidth: 180,
             filter: <ColFilter value={colFilters.zabeleska}
                                onChange={(v) => hfCol('zabeleska', v)}
                                placeholder="Забелешка..."/>,
             cell: (predmet) => (
                 <Typography sx={{
                     fontSize: '0.78rem', color: '#444',
-                    maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                 }}>
                     {predmet.zabeleska || '—'}
                 </Typography>
             ),
         },
         {
-            key: 'statusPredmet', label: 'Статус', field: null, minWidth: 160,
+            key: 'statusPredmet', label: 'Статус', field: null, minWidth: 200,
             filter: <ColDropdown
                 value={colFilters.statusPredmet}
                 onChange={(v) => hfCol('statusPredmet', v)}
@@ -880,6 +979,10 @@ const PredmetiList = () => {
                                         }}>
                             <Table size="small" sx={{
                                 minWidth: 1400,
+                                // table-layout: fixed - колоните ги почитуваат зададените
+                                // width/minWidth/maxWidth без разлика на содржината, па не
+                                // се прошируваат/собираат кога ќе се смени вредноста во филтерот.
+                                tableLayout: 'fixed',
                                 '& td.MuiTableCell-root, & th.MuiTableCell-root': {
                                     padding: '6px 24px 6px 16px',
                                     fontSize: '12px',
@@ -898,7 +1001,9 @@ const PredmetiList = () => {
                                                            whiteSpace: 'nowrap',
                                                            borderBottom: 'none',
                                                            padding: '8px !important',
+                                                           width: minWidth || 100,
                                                            minWidth: minWidth || 100,
+                                                           maxWidth: minWidth || 100,
                                                        }}
                                             >
                                                 <Box
@@ -908,9 +1013,12 @@ const PredmetiList = () => {
                                                         fontWeight: 'bold', color: '#fff',
                                                         cursor: field ? 'pointer' : 'default',
                                                         userSelect: 'none', mb: 0.6,
+                                                        overflow: 'hidden',
                                                     }}
                                                 >
-                                                    {label}
+                                                    <Box component="span" sx={{overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                                                        {label}
+                                                    </Box>
                                                     {field && <SortIcon field={field} sort={sort}/>}
                                                 </Box>
                                                 {filter}
@@ -937,7 +1045,14 @@ const PredmetiList = () => {
                                                   onClick={() => navigate(`/posta/${predmet.id}`)}
                                         >
                                             {columns.map(({key, cell, minWidth}) => (
-                                                <TableCell key={key} sx={{py: 1, minWidth: minWidth || 100}}>
+                                                <TableCell key={key} sx={{
+                                                    py: 1,
+                                                    width: minWidth || 100,
+                                                    minWidth: minWidth || 100,
+                                                    maxWidth: minWidth || 100,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                }}>
                                                     {cell(predmet)}
                                                 </TableCell>
                                             ))}

@@ -10,8 +10,9 @@ const ColRadio = ({value, onChange, options}) => (
             onClick={() => onChange('')}
             sx={{
                 fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                height: '26px',
                 color: value === '' ? '#fff' : 'rgba(255,255,255,0.65)',
-                borderBottom: value === '' ? '2px solid #fff' : '2px solid transparent', pb:0.3,
+                borderBottom: value === '' ? '1px solid #fff' : '2px solid transparent', pb:0.3,
                 '&:hover': {color: '#fff'}
             }}
         >

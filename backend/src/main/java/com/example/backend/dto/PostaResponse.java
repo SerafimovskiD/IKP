@@ -47,6 +47,7 @@ public class PostaResponse {
     private String sodrzina;
 
     private List<Long> odgovornoLiceId;
+    private List<Long> dodelenoNaId;
     //Naum
 //    private Long odgovornoLiceId;
     //Isto ko gore <-Naum
@@ -107,6 +108,7 @@ public class PostaResponse {
         );
         dto.setSodrzina(predmet.getSodrzina());
         dto.setOdgovornoLiceId(predmet.getOdgovornoLice().stream().map(UserTable::getId).toList());
+        dto.setDodelenoNaId(predmet.getDodelenoNa().stream().map(UserTable::getId).toList());
         dto.setInformativnaPosta(predmet.getInformativnaPosta());
         dto.setRealizirano(predmet.getRealizirano());
         dto.setArhivaId(predmet.getArhiva().stream().map(Arhiva::getId).toList());

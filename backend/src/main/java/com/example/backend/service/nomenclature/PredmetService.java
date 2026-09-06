@@ -101,6 +101,11 @@ public class PredmetService {
                         .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id)))
                 .collect(Collectors.toList());
 
+        List<UserTable> dodelenoNa = request.getDodelenoNaId().stream()
+                .map(id -> userRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id)))
+                .collect(Collectors.toList());
+
         List<Arhiva> arhiva = request.getArhivaId().stream()
                 .map(id -> arhivaRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Arhiva with ID: " + id)))
@@ -108,6 +113,7 @@ public class PredmetService {
         Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
                 .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
         predmet.setOdgovornoLice(new HashSet<>(odgovornoLice));
+        predmet.setDodelenoNa( new HashSet<>(dodelenoNa));
         predmet.setArhiva(new HashSet<>(arhiva));
         predmet.setIsprakjac(isprakjac);
         predmet.setIsprakjacIme(request.getIsprakjacIme());
@@ -169,6 +175,10 @@ public class PredmetService {
                 .map(id -> userRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id)))
                 .collect(Collectors.toList());
+        List<UserTable> dodelenoNa = request.getDodelenoNaId().stream()
+                .map(id -> userRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id)))
+                .collect(Collectors.toList());
 
         List<Arhiva> arhiva = request.getArhivaId().stream()
                 .map(id -> arhivaRepository.findById(id)
@@ -177,6 +187,7 @@ public class PredmetService {
         Isprakjac isprakjac = isprakjacRepository.findById(request.getIsprakjacId())
                 .orElseThrow(() -> new ResourceNotFoundException("Isprakjac not found"));
         predmet.setOdgovornoLice(new HashSet<>(odgovornoLice));
+        predmet.setDodelenoNa( new HashSet<>(dodelenoNa));
         predmet.setArhiva(new HashSet<>(arhiva));
         predmet.setIsprakjac(isprakjac);
         predmet.setIsprakjacIme(request.getIsprakjacIme());

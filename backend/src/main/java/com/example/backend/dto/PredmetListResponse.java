@@ -23,11 +23,13 @@ public record PredmetListResponse(
         String isprakjacNaziv,
         String brAktNivni,
         List<String> odgovornoLiceNaziv,
+        List<String> dodelenoNaNaziv,
         List<String> vidPredmetNaziv,
         List<String> arhivaNaziv,
         String zabeleska,
         Long isprakjacId,
         List<Long> odgovornoLiceId,
+        List<Long> dodelenoNaId,
         List<Long> vidPredmetId,
         List<Long> arhivaId,
         Boolean isActive,
@@ -45,7 +47,9 @@ public record PredmetListResponse(
                 : p.getVidPredmetIspratena().stream()
                 .map(VidPredmetIspratena::getNaziv)
                 .collect(Collectors.toList());
-        String promenil = p.getPromenil().getIme() +" "+ p.getPromenil().getPrezime();
+        String promenil = p.getPromenil() != null
+                ? p.getPromenil().getIme() + " " + p.getPromenil().getPrezime()
+                : null;
         return new PredmetListResponse(
                 p.getId(),
                 p.getBrAkt(),
@@ -66,6 +70,11 @@ public record PredmetListResponse(
                         .map(u -> u.getIme() + " " + u.getPrezime())
                         .collect(Collectors.toList())
                         : new ArrayList<>(),
+                p.getDodelenoNa() != null
+                        ? p.getDodelenoNa().stream()
+                        .map(u -> u.getIme() + " " + u.getPrezime())
+                        .collect(Collectors.toList())
+                        : new ArrayList<>(),
 
                 vidPredmet,
                 p.getArhiva().stream().map(Arhiva::getNaziv).collect(Collectors.toList()),
@@ -73,6 +82,11 @@ public record PredmetListResponse(
                 p.getIsprakjac() != null ? p.getIsprakjac().getId() : null,
                 p.getOdgovornoLice() != null
                         ? p.getOdgovornoLice().stream()
+                        .map(UserTable::getId)
+                        .collect(Collectors.toList())
+                        : new ArrayList<>(),
+                p.getDodelenoNa() != null
+                        ? p.getDodelenoNa().stream()
                         .map(UserTable::getId)
                         .collect(Collectors.toList())
                         : new ArrayList<>(),

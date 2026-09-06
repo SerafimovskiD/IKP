@@ -7,8 +7,11 @@ const StatusChip = ({status}) => {
                 : '#666';
     return (
         <Chip label={status || '—'} size="small"
-              sx={{bgcolor: color + '18', color, fontSize: '0.65rem',
-                  fontWeight: 600, height: 20, maxWidth: 180,minWidth:180}}
+              sx={{
+                  bgcolor: color + '18', color, fontSize: '0.65rem',
+                  fontWeight: 600, height: 20, maxWidth: '100%',
+                  '& .MuiChip-label': {overflow: 'hidden', textOverflow: 'ellipsis'},
+              }}
         />
     );
 };

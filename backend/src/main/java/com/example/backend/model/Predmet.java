@@ -63,6 +63,8 @@ public class Predmet {
 //    @JoinColumn(name = "odgovorno_lice_id")
     private Set<UserTable> odgovornoLice = new HashSet<>();
 
+    @ManyToMany
+    private Set<UserTable> dodelenoNa = new HashSet<>();
     private Boolean informativnaPosta;
     private Boolean realizirano;
 

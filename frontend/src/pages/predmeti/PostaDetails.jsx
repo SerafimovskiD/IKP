@@ -210,7 +210,7 @@ const PostaDetails = () => {
     const {arhiva} = useArhiva();
     const {vidPredmetD} = useVidPredmetDobieno();
     const {vidPredmetI} = useVidPredmetIspratena();
-    const {odgovornoLice} = useUsersOdgovornoLice();
+    const {odgovornoLice, dodelenoNa} = useUsersOdgovornoLice();
     const {user} = useAuth();
     const {getOrgEdinicaById} = useOrgEdinica();
     const {getPrethodniPredmeti, getDoc} = usePredmeti();
@@ -356,6 +356,7 @@ const PostaDetails = () => {
     const T = isDobiena ? DOBIENA : ISPRATENA;
 
     const odgovornoLiceList = (odgovornoLice || []).filter(u => predmet.odgovornoLiceId?.includes(u.id));
+    const dodelenoNaList = (dodelenoNa || []).filter(u => predmet.dodelenoNaId?.includes(u.id));
     const arhivaList = (arhiva || []).filter(a => predmet.arhivaId?.includes(a.id));
     const vidPredmetList = isDobiena
         ? (vidPredmetD || []).filter(v => predmet.vidPredmetDobienaId?.includes(v.id))
@@ -429,9 +430,11 @@ const PostaDetails = () => {
                             {/* РЕД 4: Содржина */}
                             <DetailTextArea label="Содржина" value={predmet.sodrzina} minHeight={100}/>
 
-                            {/* РЕД 5: Одговорно лице, Архива */}
-                            <FormRow columns="1fr 1fr">
+                            {/* РЕД 5: Одговорно лице, Доделено на, Архива */}
+                            <FormRow columns="1fr 1fr 1fr">
                                 <DetailChipsField label="Одговорно лице" items={odgovornoLiceList}
+                                                  getLabel={(u) => `${u.ime} ${u.prezime}`} theme={T}/>
+                                <DetailChipsField label="Доделено на" items={dodelenoNaList}
                                                   getLabel={(u) => `${u.ime} ${u.prezime}`} theme={T}/>
                                 <DetailChipsField label="Архива" items={arhivaList}
                                                   getLabel={(a) => a.naziv} theme={T}/>
