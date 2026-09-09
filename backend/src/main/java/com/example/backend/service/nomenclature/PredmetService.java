@@ -222,11 +222,12 @@ public class PredmetService {
 
     public Page<PredmetListResponse> getAllPredmeti(
             Pageable pageable, Integer godina,String redenBroj,
-            String isprakjacIme, Long odgovornoLiceId,
+            String isprakjacIme, Long odgovornoLiceId, Long dodelenoNaId,
             Long vidPredmetDobienaId, Long vidPredmetIspratenaId,
             Boolean realizirano, String search,
             TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,Long arhivaId,
-        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska) {
+        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska,
+        String brAktArhivski,String promenilKorisnik) {
 
         Specification<Predmet> spec = Specification
                 .where(PredmetSpecification.isActive())
@@ -240,6 +241,7 @@ public class PredmetService {
                 .and(PredmetSpecification.hasIsprakjac(isprakjacIme))
                 .and(PredmetSpecification.hasArhiva(arhivaId))
                 .and(PredmetSpecification.hasOdgovornoLice(odgovornoLiceId))
+                .and(PredmetSpecification.hasDodelenoNa(dodelenoNaId))
                 .and(PredmetSpecification.hasVidPredmetDobiena(vidPredmetDobienaId))
                 .and(PredmetSpecification.hasVidPredmetIspratena(vidPredmetIspratenaId))
 
@@ -247,10 +249,14 @@ public class PredmetService {
                 .and(PredmetSpecification.hasBrAktNivniLike(brAktNivni))
                 .and(PredmetSpecification.hasSodrzina(sodrzina))
                 .and(PredmetSpecification.hasZabeleska(zabeleska))
+                .and(PredmetSpecification.hasBrAktArhivskiLike(brAktArhivski))
+                .and(PredmetSpecification.hasPromenilKorisnikLike(promenilKorisnik))
 
                 .and(PredmetSpecification.searchText(search));
 
-        return predmetRepository.findAll(spec, pageable).map(PredmetListResponse::from);
+        return predmetRepository.findAll(spec, pageable)
+                .map(p -> PredmetListResponse.from(p,
+                        predmetRepository.findMaxPodBrojByRedenBrojAndGodina(p.getRedenBroj(), p.getGodina())));
     }
 
     public PostaResponse getPosta(Long id) {
@@ -259,7 +265,8 @@ public class PredmetService {
     public List<PredmetListResponse> getPrethodniPredmeti(Integer redenBroj, Integer godina) {
         return predmetRepository.findAllByRedenBrojAndGodina(redenBroj, godina)
                 .stream()
-                .map(PredmetListResponse::from)
+                .map(p -> PredmetListResponse.from(p,
+                        predmetRepository.findMaxPodBrojByRedenBrojAndGodina(p.getRedenBroj(), p.getGodina())))
                 .collect(Collectors.toList());
     }
 }

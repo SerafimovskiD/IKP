@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 public record PredmetListResponse(
         Long id,
         String brAkt,
@@ -36,10 +37,11 @@ public record PredmetListResponse(
         String isprakjacIme,
         String promenilKorisnik,
         String brAktArhivski,
-        LocalDate datumIsprakjanje
+        LocalDate datumIsprakjanje,
+        Integer vkPodBroevi
 
 ) {
-    public static PredmetListResponse from(Predmet p) {
+    public static PredmetListResponse from(Predmet p, Integer vkPodBroevi) {
         List<String> vidPredmet = p.getTipDelovnik() == TipDelovnik.Dobiena
                 ? p.getVidPredmetDobiena().stream()
                 .map(VidPredmetDobiena::getNaziv)
@@ -102,7 +104,8 @@ public record PredmetListResponse(
                 p.getIsprakjacIme(),
                 promenil,
                 p.getBrAktArhivski(),
-                p.getDatumIsprakjanje()
+                p.getDatumIsprakjanje(),
+                vkPodBroevi
         );
 
     }

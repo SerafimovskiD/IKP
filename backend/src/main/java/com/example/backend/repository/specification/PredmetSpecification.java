@@ -68,6 +68,8 @@ public class PredmetSpecification {
 
             var isprakjac=root.join("isprakjac", JoinType.LEFT);
             var odgovornoLice=root.join("odgovornoLice", JoinType.LEFT);
+            var dodelenoNa=root.join("dodelenoNa", JoinType.LEFT);
+            var promenil=root.join("promenil", JoinType.LEFT);
             var vidDobiena=root.join("vidPredmetDobiena", JoinType.LEFT);
             var vidIspratena=root.join("vidPredmetIspratena", JoinType.LEFT);
             var arhiva=root.join("arhiva", JoinType.LEFT);
@@ -87,6 +89,10 @@ public class PredmetSpecification {
                     cb.like(cb.lower(root.get("isprakjacIme")), pattern),
                     cb.like(cb.lower(odgovornoLice.get("ime")), pattern),
                     cb.like(cb.lower(odgovornoLice.get("prezime")), pattern),
+                    cb.like(cb.lower(dodelenoNa.get("ime")), pattern),
+                    cb.like(cb.lower(dodelenoNa.get("prezime")), pattern),
+                    cb.like(cb.lower(promenil.get("ime")), pattern),
+                    cb.like(cb.lower(promenil.get("prezime")), pattern),
                     cb.like(cb.lower(vidDobiena.get("naziv")), pattern),
                     cb.like(cb.lower(vidIspratena.get("naziv")), pattern),
                     cb.like(cb.lower(arhiva.get("naziv")), pattern)
@@ -138,6 +144,34 @@ public class PredmetSpecification {
         return (root, query, cb) -> {
             if (zabeleska == null || zabeleska.isEmpty()) return null;
             return cb.like(cb.lower(root.get("zabeleska")), "%" + zabeleska.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<Predmet> hasDodelenoNa(Long dodelenoNaId) {
+        return (root, query, cb) -> {
+            if (dodelenoNaId == null) return null;
+            query.distinct(true);
+            return cb.equal(root.join("dodelenoNa").get("id"), dodelenoNaId);
+        };
+    }
+
+    public static Specification<Predmet> hasBrAktArhivskiLike(String brAktArhivski) {
+        return (root, query, cb) -> {
+            if (brAktArhivski == null || brAktArhivski.isEmpty()) return null;
+            return cb.like(cb.lower(root.get("brAktArhivski")), "%" + brAktArhivski.toLowerCase() + "%");
+        };
+    }
+
+
+    public static Specification<Predmet> hasPromenilKorisnikLike(String promenilKorisnik) {
+        return (root, query, cb) -> {
+            if (promenilKorisnik == null || promenilKorisnik.isEmpty()) return null;
+            var promenil = root.join("promenil", JoinType.LEFT);
+            String pattern = "%" + promenilKorisnik.toLowerCase() + "%";
+            return cb.or(
+                    cb.like(cb.lower(promenil.get("ime")), pattern),
+                    cb.like(cb.lower(promenil.get("prezime")), pattern)
+            );
         };
     }
     public static Specification<Predmet> isActive() {

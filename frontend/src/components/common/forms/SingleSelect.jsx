@@ -19,6 +19,9 @@ const SingleSelect = ({label, value, onChange, options, getLabel, getId, error, 
                     '& .MuiAutocomplete-option': {fontSize: '0.85rem'},
                     '& .MuiInputLabel-root': {fontSize: '14px'},
                     '& .MuiInputLabel-root.MuiInputLabel-shrink': {fontSize: '14px'},
+                    '& .MuiOutlinedInput-root.MuiAutocomplete-inputRoot': {
+                        minHeight: '40px !important',
+                    },
                 }}
                 renderInput={(params) => (
                     <TextField

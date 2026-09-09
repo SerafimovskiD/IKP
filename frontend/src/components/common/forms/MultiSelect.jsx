@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, Chip, FormControl, TextField } from '@mui/material';
+import { Autocomplete, Chip, FormControl, TextField } from '@mui/material';
 import ErrorText from './ErrorText.jsx';
 
 // Мулти-dropdown со checkbox опции и chip-ови (изглед идентичен на DemoApp автокомплетот)
@@ -18,11 +18,10 @@ const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, t
                 getOptionLabel={(o) => getLabel(o) || ''}
                 isOptionEqualToValue={(o, v) => getId(o) === getId(v)}
                 noOptionsText="Нема резултати"
-                renderOption={(props, option, {selected: isSelected}) => {
+                renderOption={(props, option) => {
                     const {key, ...rest} = props;
                     return (
                         <li key={key} {...rest}>
-                            {/*<Checkbox checked={isSelected} size="small" sx={{mr: 1, p: 0.5}}/>*/}
                             {getLabel(option)}
                         </li>
                     );
@@ -31,7 +30,8 @@ const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, t
                     tagValue.map((option, index) => {
                         const {key, ...tagProps} = getTagProps({index});
                         return (
-                            <Chip key={key} {...tagProps} label={getLabel(option)} size="small"
+                            <Chip key={key} {...tagProps} label={getLabel(option)}
+                                  size="small"
                                   sx={{bgcolor: theme?.chipBg || '#F5F5F5', color: theme?.chipColor || '#333',
                                       fontSize: '0.68rem', height: 20, fontWeight: 500}}
                             />
@@ -41,6 +41,8 @@ const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, t
                 sx={{
                     '& .MuiAutocomplete-option': {fontSize: '0.85rem'},
                     '& .MuiInputLabel-root': {fontSize: '14px'},
+                    '& .MuiChip-root': {height: '100%',m:0},
+                    '& .MuiSvgIcon-root ': {p:0.5},
                     '& .MuiInputLabel-root.MuiInputLabel-shrink': {fontSize: '14px'},
                 }}
                 renderInput={(params) => (

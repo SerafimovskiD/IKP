@@ -231,13 +231,13 @@ const PostaDetails = () => {
     const [previewDocxBlob, setPreviewDocxBlob] = useState(null);
     const [previewExcelSheets, setPreviewExcelSheets] = useState(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    // Одделно loading за самото рендерирање на .docx (docx-preview) - previewLoading
+    // завршува веднаш штом blob-от е превземен, но вистинското рендерирање во DOM
+    // (renderDocxAsync) трае дополнително и се случува подоцна во посебен useEffect,
+    // па без ова корисникот гледаше празен dialog па содржината "се појавуваше од никаде".
+    const [docxRendering, setDocxRendering] = useState(false);
     const [previewError, setPreviewError] = useState(false);
     const docxContainerRef = useRef(null);
-
-    // Word - новиот .docx (OOXML) формат целосно се рендерира преку docx-preview.
-    // Стариот бинарен .doc формат нема доверлива JS библиотека за преглед во прелистувач,
-    // затоа за него само се овозможува преземање (истото важи и за легацискиот .xls
-    // формат ако SheetJS не успее да го парсира - многу стари/оштетени фајлови).
     const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     const DOC_MIME = 'application/msword';
     const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -254,6 +254,7 @@ const PostaDetails = () => {
         try {
             const blob = await dokumentiApi.getDokBlob(dok.id);
             if (dok.tipFile === DOCX_MIME) {
+                setDocxRendering(true);
                 setPreviewDocxBlob(blob);
             } else if (EXCEL_MIMES.includes(dok.tipFile)) {
                 const arrayBuffer = await blob.arrayBuffer();
@@ -282,13 +283,24 @@ const PostaDetails = () => {
                 className: 'docx-preview-content',
                 inWrapper: true,
                 ignoreWidth: false,
-                ignoreHeight: false,
-                // Word автоматски вметнува lastRenderedPageBreak таму каде страницата
-                // природно се пренела (без рачен page break) - без ова, docx-preview
-                // го игнорира тоа и целата содржина завршува во еден "прв" контејнер
-                // со фиксна висина, па остатокот од страниците исчезнува/се сече.
+                // ignoreHeight: true - docx-preview ги "дели" страниците само ако Word
+                // самиот вметнал lastRenderedPageBreak маркер во XML-от (се случува
+                // единствено кога документот бил отворен во вистински MS Word пред да
+                // се зачува). Ако документот е создаден на друг начин (скрипта, друга
+                // апликација), тој маркер го нема - тогаш секцијата останува со фиксна
+                // висина (првата "страница") и остатокот од содржината се СЕЧЕ, наместо
+                // да продолжи. ignoreHeight: true ја укинува фиксната висина по секција,
+                // содржината тече природно и ништо не се губи - секогаш се гледа целиот
+                // оригинал, дури и без point page-break маркери.
+                ignoreHeight: true,
                 ignoreLastRenderedPageBreak: false,
-            }).catch(() => setPreviewError(true));
+            }).then(() => {
+                setDocxRendering(false);
+            }).catch((err) => {
+                console.error('Грешка при рендерирање на .docx документ:', err);
+                setPreviewError(true);
+                setDocxRendering(false);
+            });
         }
     }, [previewDocxBlob]);
 
@@ -296,6 +308,7 @@ const PostaDetails = () => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
         setPreviewDocxBlob(null);
+        setDocxRendering(false);
         setPreviewExcelSheets(null);
         setPreviewDoc(null);
     };
@@ -447,7 +460,7 @@ const PostaDetails = () => {
                             </FormRow>
                         </Box>
 
-                        {dokumenti.length > 0 && (
+                        {(loadingDok || dokumenti.length > 0) && (
                             <>
                                 <Divider sx={{my: 2.5}}/>
                                 <Typography sx={{
@@ -456,27 +469,33 @@ const PostaDetails = () => {
                                 }}>
                                     Скенирани документи
                                 </Typography>
-                                <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.8}}>
-                                    {dokumenti.map(dok => (
-                                        <Box key={dok.id} sx={{
-                                            display: 'flex', alignItems: 'center', gap: 1,
-                                            px: 1.5, py: 0.8, bgcolor: '#fff',
-                                            border: '1px solid #EAEAEA', borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            '&:hover': {bgcolor: T.chipBg}
-                                        }}
-                                             onClick={() => openPreview(dok)}
-                                        >
-                                            <DescriptionIcon sx={{fontSize: 16, color: T.accent}}/>
-                                            <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
-                                                {dok.imeFile}
-                                            </Typography>
-                                            <Typography sx={{fontSize: '0.68rem', color: '#999'}}>
-                                                {dok.tipFile}
-                                            </Typography>
-                                        </Box>
-                                    ))}
-                                </Box>
+                                {loadingDok ? (
+                                    <Box sx={{display: 'flex', justifyContent: 'center', py: 2}}>
+                                        <CircularProgress size={24} sx={{color: T.accent}}/>
+                                    </Box>
+                                ) : (
+                                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.8}}>
+                                        {dokumenti.map(dok => (
+                                            <Box key={dok.id} sx={{
+                                                display: 'flex', alignItems: 'center', gap: 1,
+                                                px: 1.5, py: 0.8, bgcolor: '#fff',
+                                                border: '1px solid #EAEAEA', borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                '&:hover': {bgcolor: T.chipBg}
+                                            }}
+                                                 onClick={() => openPreview(dok)}
+                                            >
+                                                <DescriptionIcon sx={{fontSize: 16, color: T.accent}}/>
+                                                <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
+                                                    {dok.imeFile}
+                                                </Typography>
+                                                {/*<Typography sx={{fontSize: '0.68rem', color: '#999'}}>*/}
+                                                {/*    {dok.tipFile}*/}
+                                                {/*</Typography>*/}
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
                             </>
                         )}
 
@@ -727,7 +746,7 @@ const PostaDetails = () => {
                 </Card>
 
                 {/* ── PREVIEW НА ДОКУМЕНТ ── */}
-                <Dialog open={!!previewDoc} onClose={closePreview} maxWidth="md" fullWidth
+                <Dialog open={!!previewDoc} onClose={closePreview} maxWidth="lg" fullWidth
                         PaperProps={{sx: {borderRadius: '12px', overflow: 'hidden'}}}>
                     <DialogTitle sx={{
                         display: 'flex', alignItems: 'center', gap: 1,
@@ -756,21 +775,56 @@ const PostaDetails = () => {
                             <Box component="iframe" src={previewUrl} title={previewDoc.imeFile}
                                  sx={{width: '100%', height: '80vh', border: 'none'}}/>
                         ) : previewDoc?.tipFile === DOCX_MIME && !previewError ? (
-                            <Box
+                            <Box sx={{width: '100%', position: 'relative', minHeight: 300}}>
+                                {/* Спинер додека трае вистинското рендерирање на .docx-от
+                                    (docx-preview е бавен чекор што се случува ПО previewLoading,
+                                    без ова корисникот гледаше празен dialog па содржината
+                                    "се појавуваше од никаде" по извесно време). */}
+                                {docxRendering && (
+                                    <Box sx={{
+                                        position: 'absolute', inset: 0, zIndex: 2,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        bgcolor: '#F5F5F5',
+                                    }}>
+                                        <CircularProgress size={32} sx={{color: T.accent}}/>
+                                    </Box>
+                                )}
+                                <Box
                                 ref={docxContainerRef}
                                 sx={{
-                                    width: '100%', maxHeight: '80vh', overflowY: 'auto',
+                                    visibility: docxRendering ? 'hidden' : 'visible',
+                                    // overflow: 'auto' (не само overflowY) - ако страницата е
+                                    // пошироката од дијалогот (docx-preview ја рендерира на
+                                    // реалната ширина на страницата, ignoreWidth:false), инаку
+                                    // рабовите ѝ се сечеа наместо да се скролаат хоризонтално.
+                                    width: '100%', maxHeight: '80vh', overflow: 'auto',
                                     py: 2, display: 'flex', justifyContent: 'center',
-                                    '& .docx-preview-content': {bgcolor: 'transparent'},
-                                    '& .docx-wrapper': {
+                                    // Точните класи (className: 'docx-preview-content' во
+                                    // renderAsync опциите) се "docx-preview-content-wrapper"
+                                    // за обвивката и "section.docx-preview-content" за секоја
+                                    // страница - НЕ "docx-wrapper" (тоа е default класата само
+                                    // кога className не се менува).
+                                    '& .docx-preview-content-wrapper': {
                                         bgcolor: 'transparent', display: 'flex',
                                         flexDirection: 'column', alignItems: 'center', gap: '16px',
                                     },
-                                    '& .docx-wrapper > section': {
+                                    // Клучна поправка: docx-preview секогаш инјектира
+                                    // "overflow: hidden" на секоја section.docx-preview-content
+                                    // (тоа е нејзиниот default page-boundary стил). Ако
+                                    // документот нема реални page-break маркери, СИТЕ 82
+                                    // елементи завршуваат во ЕДНА единствена section, чија
+                                    // висина/overflow:hidden ја сечеше содржината над првата
+                                    // "страница" визуелно, иако беше веќе во DOM-от.
+                                    '& section.docx-preview-content': {
                                         boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                                        flexShrink: 0,
+                                        height: 'auto !important',
+                                        minHeight: 'unset !important',
+                                        overflow: 'visible !important',
                                     },
                                 }}
-                            />
+                                />
+                            </Box>
                         ) : previewExcelSheets && !previewError ? (
                             <Box sx={{
                                 width: '100%', maxHeight: '80vh', overflow: 'auto', p: 2,

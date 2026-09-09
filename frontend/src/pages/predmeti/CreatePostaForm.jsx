@@ -56,21 +56,64 @@ const ISPRATENA = {
     btnHover: '#1B5E20',
     sectionBg: '#F9FDF9',
 };
+// За Autocomplete-базираните полиња (SingleSelect/MultiSelect) треба composite
+// селектор (.MuiOutlinedInput-root.MuiAutocomplete-inputRoot) со !important,
+// бидејќи Autocomplete-овото сопствено CSS правило е поспецифично од обично
+// styleOverrides.root и inaку го игнорира нашето.
+const helperTextOverride = {
+    MuiFormHelperText: {
+        styleOverrides: {
+            root: {
+                fontSize: '0.68rem',
+                marginTop: '2.4px',
+                marginLeft: 0,
+                marginRight: 0,
+                minHeight: '1rem',
+                lineHeight: 1.4,
+            },
+        },
+    },
+    // Никаков сопствен padding/height override на инпутите - сите полиња (TextField,
+    // DatePicker, SingleSelect, MultiSelect) ја користат природната MUI "small"
+    // висина, истата природна висина што веќе ја има MultiSelect (непроменет).
+    MuiInputLabel: {
+        styleOverrides: {
+            root: {fontSize: '14px'},
+        },
+    },
+    MuiIconButton: {
+        defaultProps: {size: 'small'},
+    },
+    // ToggleButtonGroup (писмо/телеграма, Висок/Нормален) - природната "small"
+    // висина им е пократка од TextField/SwitchCard (~40px) - ја израмнуваме.
+    MuiToggleButton: {
+        styleOverrides: {
+            root: {minHeight: '40px'},
+        },
+    },
+};
 
 // Вгнездени MUI теми (само primary бојата се менува) - за да сите вградени MUI
 // состојаби на активирање/фокус (TextField outline, Autocomplete, DatePicker
 // избран ден, итн.) автоматски ги следат бојите на Добиена/Испратена пошта.
-const dobienaMuiTheme = createTheme({palette: {primary: {main: DOBIENA.accentDark}}});
-const ispratenaMuiTheme = createTheme({palette: {primary: {main: ISPRATENA.accentDark}}});
+const dobienaMuiTheme = createTheme({
+    palette: {primary: {main: DOBIENA.accentDark}},
+    components: helperTextOverride,
+});
+const ispratenaMuiTheme = createTheme({
+    palette: {primary: {main: ISPRATENA.accentDark}},
+    components: helperTextOverride,
+});
 
 // ─── SWITCH CARD ──────────────────────────────────────────────────────────────
 // Нема фиксна висина - природно се обликува со padding, исто како другите полиња.
 const SwitchCard = ({label, checked, onChange, theme}) => (
     <Box sx={{
         border: `1px solid ${checked ? theme.border : '#E8E8E8'}`,
-        borderRadius: '8px', px: 1.2,py:0,
+        borderRadius: '4px', px: 1.2,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        bgcolor: checked ? theme.chipBg : '#fff',height:40,
+        bgcolor: checked ? theme.chipBg : '#fff',
+        height: 37,
         transition: 'all 0.2s', cursor: 'pointer',
         '&:hover': {borderColor: theme.border}
     }} onClick={() => onChange(!checked)}>
@@ -226,6 +269,7 @@ const PredmetForm = () => {
     const {predmet: roditel} = usePredmetDetails(roditelId);
     const {predmet: existingPredmet, loading: lEdit} = usePredmetDetails(editId);
     const [existingDocs, setExistingDocs] = useState([]);
+    const [loadingExistingDocs, setLoadingExistingDocs] = useState(false);
     const [prefillDone, setPrefillDone] = useState(false);
 
     useEffect(() => {
@@ -263,7 +307,10 @@ const PredmetForm = () => {
 
     useEffect(() => {
         if (isEditMode && editId) {
-            predmetiApi.getAllDok(editId).then(setExistingDocs);
+            setLoadingExistingDocs(true);
+            predmetiApi.getAllDok(editId)
+                .then(setExistingDocs)
+                .finally(() => setLoadingExistingDocs(false));
         }
     }, [isEditMode, editId]);
 
@@ -422,6 +469,7 @@ const PredmetForm = () => {
                                     value={form.datumZaveduvanje}
                                     onChange={(v) => hc('datumZaveduvanje', v)}
                                     format="DD.MM.YYYY"
+                                    disableFuture
                                     open={datumZaveduvanjeOpen}
                                     onOpen={() => setDatumZaveduvanjeOpen(true)}
                                     onClose={() => setDatumZaveduvanjeOpen(false)}
@@ -498,6 +546,7 @@ const PredmetForm = () => {
                                         value={form.datumIsprakjanje}
                                         onChange={(v) => hc('datumIsprakjanje', v)}
                                         format="DD.MM.YYYY"
+                                        disableFuture
                                         open={datumIsprakjanjeOpen}
                                         onOpen={() => setDatumIsprakjanjeOpen(true)}
                                         onClose={() => setDatumIsprakjanjeOpen(false)}
@@ -553,14 +602,13 @@ const PredmetForm = () => {
                             </FormRow>
 
                             {/* РЕД 4: Содржина */}
-                            <TextField fullWidth multiline rows={4}
+                            <TextField fullWidth multiline rows={2}
                                        label="Содржина"
                                        placeholder="Внесете кратка содржина на предметот..."
                                        value={form.sodrzina}
                                        error={!!formErrors.sodrzina}
                                        helperText={formErrors.sodrzina || ' '}
                                        onChange={(e) => hc('sodrzina', e.target.value)}
-                                       sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}}}
                             />
 
                             {/* РЕД 5: Одговорно лице, Архива */}
@@ -603,7 +651,6 @@ const PredmetForm = () => {
                                            placeholder="Опционална забелешка..."
                                            value={form.zabeleska}
                                            onChange={(e) => hc('zabeleska', e.target.value)}
-                                           sx={{'& .MuiOutlinedInput-root': {bgcolor: '#fff'}}}
                                 />
                                 <SingleSelect
                                     label="Статус на предмет"
@@ -624,7 +671,12 @@ const PredmetForm = () => {
                         <Divider sx={{my: 2.5}}/>
 
                         {/* ── ПОСТОЈНИ ДОКУМЕНТИ (само во режим на уредување) ── */}
-                        {isEditMode && existingDocs.length > 0 && (
+                        {isEditMode && loadingExistingDocs && (
+                            <Box sx={{display: 'flex', justifyContent: 'center', py: 2}}>
+                                <CircularProgress size={24} sx={{color: T.accent}}/>
+                            </Box>
+                        )}
+                        {isEditMode && !loadingExistingDocs && existingDocs.length > 0 && (
                             <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.6, mb: 1.5}}>
                                 {existingDocs.map(dok => (
                                     <Box key={dok.id} sx={{
@@ -639,9 +691,6 @@ const PredmetForm = () => {
                                         <AttachFileIcon sx={{fontSize: 15, color: T.accent}}/>
                                         <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
                                             {dok.imeFile}
-                                        </Typography>
-                                        <Typography sx={{fontSize: '0.68rem', color: '#999'}}>
-                                            {dok.tipFile}
                                         </Typography>
                                         <IconButton size="small"
                                                     onClick={(e) => {

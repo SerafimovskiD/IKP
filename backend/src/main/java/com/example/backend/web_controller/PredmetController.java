@@ -126,6 +126,7 @@ public class PredmetController {
             @RequestParam(required = false) String redenBroj,
             @RequestParam(required = false) String isprakjacIme,
             @RequestParam(required = false) Long odgovornoLiceId,
+            @RequestParam(required = false) Long dodelenoNaId,
             @RequestParam(required = false) Long vidPredmetDobienaId,
             @RequestParam(required = false) Long vidPredmetIspratenaId,
             @RequestParam(required = false) Boolean realizirano,
@@ -137,12 +138,15 @@ public class PredmetController {
             @RequestParam(required = false) String datumZaveduvanje,
             @RequestParam(required = false) String brAktNivni,
             @RequestParam(required = false) String sodrzina,
-            @RequestParam(required = false) String zabeleska
+            @RequestParam(required = false) String zabeleska,
+            @RequestParam(required = false) String brAktArhivski,
+            @RequestParam(required = false) String promenilKorisnik
 //            @RequestParam(required = false,defaultValue = "true") Boolean isActive
     ){
-        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable, godina, redenBroj, isprakjacIme, odgovornoLiceId,
+        return ResponseEntity.ok(predmetService.getAllPredmeti(pageable, godina, redenBroj, isprakjacIme, odgovornoLiceId, dodelenoNaId,
                 vidPredmetDobienaId, vidPredmetIspratenaId, realizirano, search,
-                tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska));
+                tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska,
+                brAktArhivski,promenilKorisnik));
     }
     @GetMapping("/next-reden-broj")
     public ResponseEntity<Integer> getNextRedenBroj() {

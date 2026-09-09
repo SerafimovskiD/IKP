@@ -211,6 +211,9 @@ const PredmetiList = () => {
             if (searchFilters.zabeleska) params.append('zabeleska', searchFilters.zabeleska);
             if (searchFilters.isprakjacIme) params.append('isprakjacIme', searchFilters.isprakjacIme);
             if (searchFilters.odgovornoLiceId) params.append('odgovornoLiceId', searchFilters.odgovornoLiceId);
+            if (searchFilters.dodelenoNaId) params.append('dodelenoNaId', searchFilters.dodelenoNaId);
+            if (searchFilters.brAktArhivski) params.append('brAktArhivski', searchFilters.brAktArhivski);
+            if (searchFilters.promenilKorisnik) params.append('promenilKorisnik', searchFilters.promenilKorisnik);
             if (searchFilters.vidPredmetDobienaId) params.append('vidPredmetDobienaId', searchFilters.vidPredmetDobienaId);
             if (searchFilters.vidPredmetIspratenaId) params.append('vidPredmetIspratenaId', searchFilters.vidPredmetIspratenaId);
             if (searchFilters.realizirano !== '') params.append('realizirano', searchFilters.realizirano);
@@ -365,6 +368,16 @@ const PredmetiList = () => {
             cell: (predmet) => (
                 <Typography sx={{fontSize: '0.82rem', fontWeight: 600, color: '#333', fontFamily: 'monospace'}}>
                     {predmet.redenBroj}
+                    {/* vkPodBroevi - вкупен број на под-предмети (под броеви) за истиот
+                        реден број/година (пр. 765/3 - реден број 765, вкупно 3 под-предмети) -
+                        се прикажува само кога има повеќе од 1, за да не оптоварува кога е обичен случај. */}
+                    {predmet.vkPodBroevi > 1 && (
+                        <Typography component="span" sx={{
+                            fontSize: '0.7rem', fontWeight: 500, color: '#999', ml: 0.3,
+                        }}>
+                            /{predmet.vkPodBroevi}
+                        </Typography>
+                    )}
                 </Typography>
             ),
         },
@@ -386,8 +399,8 @@ const PredmetiList = () => {
                 value={colFilters.tipPosta}
                 onChange={(v) => hfCol('tipPosta', v)}
                 options={[
-                    {label: 'ПО', value: 'писмо'},
-                    {label: 'ТE', value: 'телеграма'},
+                    {label: 'П', value: 'писмо'},
+                    {label: 'Т', value: 'телеграма'},
                 ]}
             />,
             cell: (predmet) => (
@@ -637,7 +650,7 @@ const PredmetiList = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
                 <Typography variant="h6" sx={{color: '#000'}}>
-                    Пребарување — Листа на предмети
+                    Пребарување — Листа на пошти
                 </Typography>
             </Box>
             <Divider/>
@@ -736,14 +749,15 @@ const PredmetiList = () => {
 
                         <Collapse in={filtersOpen}>
                         {/* ГОЛЕМ ОПШТ ФИЛТЕР - пребарува преку backend-от (searchText) низ број
-                            акт, број акт (нивни), тип пошта, содржина, забелешка, испраќач,
-                            одговорно лице, вид на предмет и архива - едновремено. */}
+                            акт (нивни/архивски), датуми, содржина, забелешка, испраќач,
+                            одговорно лице, доделено на, извршил промена, вид на предмет
+                            и архива - едновремено. */}
                         <Box sx={{px: {xs: 2, md: 3}, pt: 2.5}}>
                             <TextField
                                 fullWidth
                                 value={searchForm.search}
                                 onChange={(e) => hf('search', e.target.value)}
-                                placeholder="Општо пребарување — број акт, содржина, забелешка, испраќач, одговорно лице, вид на предмет, архива..."
+                                placeholder="Општо пребарување — број акт, содржина, забелешка, испраќач, одговорно лице, доделено на, извршил промена, вид на предмет, архива..."
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -860,6 +874,28 @@ const PredmetiList = () => {
                                     getLabel={(o) => `${o.ime} ${o.prezime}`}
                                     getId={(o) => o.id}
                                 />
+                            </LabeledField>
+
+                            <LabeledField label="Доделено на">
+                                <ColDropdownField
+                                    value={searchForm.dodelenoNaId}
+                                    onChange={(v) => hf('dodelenoNaId', v)}
+                                    options={dodelenoNa || []}
+                                    getLabel={(o) => `${o.ime} ${o.prezime}`}
+                                    getId={(o) => o.id}
+                                />
+                            </LabeledField>
+
+                            <LabeledField label="Број акт (архивски)">
+                                <TextField fullWidth size="small" placeholder="Архивски акт..." sx={{m:0}}
+                                           value={searchForm.brAktArhivski}
+                                           onChange={(e) => hf('brAktArhivski', e.target.value)}/>
+                            </LabeledField>
+
+                            <LabeledField label="Извршил промена">
+                                <TextField fullWidth size="small" placeholder="Корисник..." sx={{m:0}}
+                                           value={searchForm.promenilKorisnik}
+                                           onChange={(e) => hf('promenilKorisnik', e.target.value)}/>
                             </LabeledField>
 
                             <LabeledField label="Архива">
