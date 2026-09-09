@@ -29,7 +29,7 @@ import useVidPredmetDobieno from '../../hooks/useVidPredmetDobieno.js';
 import useVidPredmetIspratena from '../../hooks/useVidPredmetIspratena.js';
 import {useEnums} from "../../hooks/useEnums.js";
 import useArhiva from "../../hooks/useArhiva.js";
-import {formatStatus} from "../../utils/formatters.js";
+import {formatStatus, formatDate} from "../../utils/formatters.js";
 import StatusChip from "../../components/common/StatusChip.jsx";
 import TipBadge from "../../components/common/TipBadge.jsx";
 import ColFilter from "../../components/common/table/ColFilter.jsx";
@@ -301,8 +301,10 @@ const PredmetiList = () => {
             if (!matchesText(p.brAkt, colFilters.brAkt)) return false;
             if (!matchesText(p.brAktNivni, colFilters.brAktNivni)) return false;
             if (!matchesText(p.brAktArhivski, colFilters.brAktArhivski)) return false;
-            if (!matchesText(p.datumZaveduvanje, colFilters.datumZaveduvanje)) return false;
-            if (!matchesText(p.datumIsprakjanje, colFilters.datumIsprakjanje)) return false;
+            // Датумите се чуваат/стигнуваат од backend-от во YYYY-MM-DD, но колонскиот
+            // филтер работи со истиот DD.MM.YYYY формат како приказот во табелата.
+            if (!matchesText(formatDate(p.datumZaveduvanje), colFilters.datumZaveduvanje)) return false;
+            if (!matchesText(formatDate(p.datumIsprakjanje), colFilters.datumIsprakjanje)) return false;
             if (colFilters.godina && String(p.godina) !== String(colFilters.godina)) return false;
             if (!matchesText(p.isprakjacIme, colFilters.isprakjacIme)) return false;
             if (!matchesText(p.promenilKorisnik, colFilters.promenilKorisnik)) return false;
@@ -411,9 +413,9 @@ const PredmetiList = () => {
             key: 'datumZaveduvanje', label: 'Датум завед.', field: 'datumZaveduvanje', minWidth: 110,
             filter: <ColFilter value={colFilters.datumZaveduvanje}
                                onChange={(v) => hfCol('datumZaveduvanje', v)}
-                               placeholder="Датум..."/>,
+                               placeholder="ДД.ММ.ГГГГ..."/>,
             cell: (predmet) => (
-                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.datumZaveduvanje}</Typography>
+                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{formatDate(predmet.datumZaveduvanje)}</Typography>
             ),
         },
         {
@@ -438,9 +440,9 @@ const PredmetiList = () => {
             key: 'datumIsprakjanje', label: 'Датум испр.', field: 'datumIsprakjanje', minWidth: 110,
             filter: <ColFilter value={colFilters.datumIsprakjanje}
                                onChange={(v) => hfCol('datumIsprakjanje', v)}
-                               placeholder="Датум..."/>,
+                               placeholder="ДД.ММ.ГГГГ..."/>,
             cell: (predmet) => (
-                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.datumIsprakjanje || '—'}</Typography>
+                <Typography sx={{fontSize: '0.78rem', color: '#666'}}>{predmet.datumIsprakjanje ? formatDate(predmet.datumIsprakjanje) : '—'}</Typography>
             ),
         },
         {
@@ -1179,7 +1181,7 @@ const ToggleField = ({label, value, onChange, options}) => (
             }}
         >
             {options.map(opt => (
-                <ToggleButton key={opt.value} value={opt.value}>
+                <ToggleButton key={opt.value} value={opt.value} disableRipple>
                     {opt.label}
                 </ToggleButton>
             ))}

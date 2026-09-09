@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +25,10 @@ public interface PredmetRepository extends JpaRepository<Predmet, Long>, JpaSpec
             @Param("redenBroj") Integer redenBroj,
             @Param("godina") Integer godina
     );
+
+    @Query("SELECT p.redenBroj, p.godina, MAX(p.podBroj) FROM Predmet p " +
+            "WHERE p.godina IN :godini GROUP BY p.redenBroj, p.godina")
+    List<Object[]> findMaxPodBrojGroupedByGodini(@Param("godini") Collection<Integer> godini);
 
     @Override
     @EntityGraph(attributePaths = {"isprakjac",

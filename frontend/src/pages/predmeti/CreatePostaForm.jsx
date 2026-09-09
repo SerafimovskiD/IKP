@@ -159,6 +159,7 @@ const ToggleField = ({error, value, onChange, options, theme}) => (
                 '& .MuiToggleButton-root': {
                     textTransform: 'none', fontSize: '0.8rem', fontWeight: 600,
                     color: '#666', borderColor: error ? '#d32f2f' : 'rgba(0,0,0,0.23)',
+                    transition: 'none',
                     '&.Mui-selected': {
                         bgcolor: theme.accentDark, color: '#fff',
                         '&:hover': {bgcolor: theme.btnHover},
@@ -167,7 +168,7 @@ const ToggleField = ({error, value, onChange, options, theme}) => (
             }}
         >
             {options.map(opt => (
-                <ToggleButton key={opt} value={opt}>
+                <ToggleButton key={opt} value={opt} disableRipple>
                     {opt}
                 </ToggleButton>
             ))}
@@ -277,6 +278,42 @@ const PredmetForm = () => {
             getOrgEdinicaById(user.organizaciskaEdinicaId).then(setOrgEdinica);
         }
     }, [user?.organizaciskaEdinicaId]);
+
+    // Ако корисникот пополни нешто во Испратена, па потоа се префрли на Добиена
+    // (или обратно) - тоа е ИСТА компонента (само tipDelovnik query param се
+    // менува, страницата не се ремаунтира), па формата инаку ги задржуваше веќе
+    // внесените вредности од претходниот тип пошта. Ги чистиме при секоја промена
+    // на tipDelovnik (освен во режим на уредување, каде тоа се контролира одделно
+    // преку prefill-ефектот погоре).
+    const prevTipDelovnikRef = useRef(tipDelovnik);
+    useEffect(() => {
+        if (!isEditMode && prevTipDelovnikRef.current !== tipDelovnik) {
+            setForm({
+                datumZaveduvanje: dayjs(),
+                tipPosta: "",
+                prioritet: "",
+                isprakjacId: "",
+                brAktNivni: "",
+                datumIsprakjanje: null,
+                brAktArhivski: "",
+                vidPredmetDobienaId: [],
+                vidPredmetIspratenaId: [],
+                sodrzina: "",
+                odgovornoLiceId: [],
+                dodelenoNaId: [],
+                informativnaPosta: false,
+                realizirano: false,
+                arhivaId: [],
+                zabeleska: "",
+                statusPredmet: "",
+                isprakjacIme: "",
+            });
+            setAttachedFiles([]);
+            setFormErrors({});
+            setSubmitted(false);
+        }
+        prevTipDelovnikRef.current = tipDelovnik;
+    }, [tipDelovnik, isEditMode]);
 
     // Пополнување на формата со постоечките податоци кога сме во режим на уредување.
     useEffect(() => {

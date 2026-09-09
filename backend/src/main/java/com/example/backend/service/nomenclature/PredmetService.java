@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,7 +73,6 @@ public class PredmetService {
             godina = roditel.getGodina();
             redenBroj = roditel.getRedenBroj();
             podBroj = predmetRepository.findMaxPodBrojByRedenBrojAndGodina(redenBroj,godina)+1;
-//            podBroj = oldPodbroj+1;
         }
         Predmet predmet = new Predmet();
         if (tipOdgovor != null){
@@ -254,19 +252,33 @@ public class PredmetService {
 
                 .and(PredmetSpecification.searchText(search));
 
-        return predmetRepository.findAll(spec, pageable)
-                .map(p -> PredmetListResponse.from(p,
-                        predmetRepository.findMaxPodBrojByRedenBrojAndGodina(p.getRedenBroj(), p.getGodina())));
+        Page<Predmet> page = predmetRepository.findAll(spec, pageable);
+        var vkPodBroeviMap = buildVkPodBroeviMap(page.getContent());
+        return page.map(p -> PredmetListResponse.from(p, vkPodBroeviMap.get(vkPodBroeviKey(p))));
     }
 
     public PostaResponse getPosta(Long id) {
         return PostaResponse.from(predmetRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Predmet not found")));
     }
     public List<PredmetListResponse> getPrethodniPredmeti(Integer redenBroj, Integer godina) {
-        return predmetRepository.findAllByRedenBrojAndGodina(redenBroj, godina)
-                .stream()
-                .map(p -> PredmetListResponse.from(p,
-                        predmetRepository.findMaxPodBrojByRedenBrojAndGodina(p.getRedenBroj(), p.getGodina())))
+        List<Predmet> predmeti = predmetRepository.findAllByRedenBrojAndGodina(redenBroj, godina);
+        var vkPodBroeviMap = buildVkPodBroeviMap(predmeti);
+        return predmeti.stream()
+                .map(p -> PredmetListResponse.from(p, vkPodBroeviMap.get(vkPodBroeviKey(p))))
                 .collect(Collectors.toList());
+    }
+
+    private java.util.Map<String, Integer> buildVkPodBroeviMap(List<Predmet> predmeti) {
+        var godini = predmeti.stream().map(Predmet::getGodina).collect(Collectors.toSet());
+        if (godini.isEmpty()) return java.util.Map.of();
+        return predmetRepository.findMaxPodBrojGroupedByGodini(godini).stream()
+                .collect(Collectors.toMap(
+                        row -> row[0] + "-" + row[1],
+                        row -> (Integer) row[2]
+                ));
+    }
+
+    private String vkPodBroeviKey(Predmet p) {
+        return p.getRedenBroj() + "-" + p.getGodina();
     }
 }

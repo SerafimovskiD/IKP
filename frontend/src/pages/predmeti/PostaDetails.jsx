@@ -489,9 +489,6 @@ const PostaDetails = () => {
                                                 <Typography sx={{fontSize: '0.8rem', flex: 1, color: '#444'}}>
                                                     {dok.imeFile}
                                                 </Typography>
-                                                {/*<Typography sx={{fontSize: '0.68rem', color: '#999'}}>*/}
-                                                {/*    {dok.tipFile}*/}
-                                                {/*</Typography>*/}
                                             </Box>
                                         ))}
                                     </Box>
