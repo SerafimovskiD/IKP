@@ -1,5 +1,7 @@
 package com.example.backend.model;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -7,8 +9,8 @@ import lombok.Data;
 @Data
 public class OrganizaciskaEdinica {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     private String naziv;
     @Column(unique = true, nullable = false)
     private String code;

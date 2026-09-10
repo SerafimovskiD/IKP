@@ -1,5 +1,7 @@
 package com.example.backend.service.nomenclature;
 
+import java.util.UUID;
+
 import com.example.backend.dto.OrgEdinicaRequest;
 import com.example.backend.dto.OrgEdinicaResponse;
 import com.example.backend.exceptions.ResourceNotFoundException;
@@ -25,7 +27,7 @@ public class OrganizaciskaEdinicaService {
     }
 
     @Cacheable(value = "orgEdiniciById", key = "#id")
-    public OrgEdinicaResponse findById(Long id) {
+    public OrgEdinicaResponse findById(UUID id) {
         return OrgEdinicaResponse.from(orgEdinicaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Organizaciska edinica", id)));
     }
@@ -39,7 +41,7 @@ public class OrganizaciskaEdinicaService {
     }
 
     @CacheEvict(value = {"orgEdinici", "orgEdiniciById"}, allEntries = true)
-    public OrgEdinicaResponse update(Long id, OrgEdinicaRequest orgEdinicaRequest) {
+    public OrgEdinicaResponse update(UUID id, OrgEdinicaRequest orgEdinicaRequest) {
         OrganizaciskaEdinica organizaciskaEdinica = orgEdinicaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Organizaciska edinica so id: " + id + " ne postoi"));
         organizaciskaEdinica.setNaziv(orgEdinicaRequest.getNaziv());
@@ -48,7 +50,7 @@ public class OrganizaciskaEdinicaService {
     }
 
     @CacheEvict(value = {"orgEdinici", "orgEdiniciById"}, allEntries = true)
-    public void delete(Long id) {
+    public void delete(UUID id) {
         orgEdinicaRepository.deleteById(id);
     }
 }

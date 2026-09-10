@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import lombok.Data;
 
 @Data
@@ -9,5 +11,5 @@ public class RegisterRequest {
     private String email;
     private String password;
     private String uloga;
-    private Long organizaciskaEdinicaId;
+    private UUID organizaciskaEdinicaId;
 }

@@ -334,13 +334,13 @@ const PostaDetails = () => {
     }, [user?.organizaciskaEdinicaId]);
 
     useEffect(() => {
-        if (predmet?.redenBroj && predmet?.godina) {
+        if (predmet?.redenBroj && predmet?.godina && predmet?.brAkt) {
             setLoadingPrethodni(true);
-            getPrethodniPredmeti(predmet.redenBroj, predmet.godina)
+            getPrethodniPredmeti(predmet.redenBroj, predmet.godina, predmet.brAkt)
                 .then(res => setPrethodni(res || []))
                 .finally(() => setLoadingPrethodni(false));
         }
-    }, [predmet?.redenBroj, predmet?.godina]);
+    }, [predmet?.redenBroj, predmet?.godina, predmet?.brAkt]);
     useEffect(() => {
         setLoadingDok(true);
         getDoc(id)
@@ -534,7 +534,7 @@ const PostaDetails = () => {
                                             </thead>
                                             <tbody>
                                             {prethodni.map((p) => {
-                                                const isActive = p.id === Number(id);
+                                                const isActive = p.id === id;
                                                 const sc = StatusColor(p.statusPredmet);
                                                 return (
                                                     <tr key={p.id}

@@ -1,5 +1,7 @@
 package com.example.backend.service.nomenclature;
 
+import java.util.UUID;
+
 import com.example.backend.dto.VidPredmetRequest;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.VidPredmetIspratena;
@@ -23,7 +25,7 @@ public class VidPredmetIspratenaService {
         return this.vidPredmetRepository.findAll();
     }
 
-    public VidPredmetIspratena getVidPredmetById(Long id) {
+    public VidPredmetIspratena getVidPredmetById(UUID id) {
         return this.vidPredmetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Вид на предмет", id));
     }
@@ -36,14 +38,14 @@ public class VidPredmetIspratenaService {
     }
 
     @CacheEvict(value = "vidPredmetIspratena", allEntries = true)
-    public VidPredmetIspratena updateVidPredmet(Long id, VidPredmetRequest request) {
+    public VidPredmetIspratena updateVidPredmet(UUID id, VidPredmetRequest request) {
         VidPredmetIspratena existingVidPredmet = this.getVidPredmetById(id);
         existingVidPredmet.setNaziv(request.getNaziv());
         return this.vidPredmetRepository.save(existingVidPredmet);
     }
 
     @CacheEvict(value = "vidPredmetIspratena", allEntries = true)
-    public void deleteVidPredmetById(Long id) {
+    public void deleteVidPredmetById(UUID id) {
         VidPredmetIspratena existingVidPredmet = this.getVidPredmetById(id);
         this.vidPredmetRepository.delete(existingVidPredmet);
     }

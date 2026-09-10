@@ -1,5 +1,7 @@
 package com.example.backend.web_controller;
 
+import java.util.UUID;
+
 import com.example.backend.dto.*;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
@@ -54,6 +56,7 @@ public class PredmetController {
             @RequestBody PostaRequest request,
             @RequestParam TipDelovnik tipDelovnik,
             @RequestParam(required = false) TipOdgovor tipOdgovor,
+            @RequestParam(required = false) String roditelBrAkt,
             @RequestParam(required = false) Integer roditelRedenBroj,
             @RequestParam(required = false) Integer roditelGodina,
             @RequestParam(required = false) Integer oldPodbroj,
@@ -65,6 +68,7 @@ public class PredmetController {
                         userDetails.getUsername(),
                         tipDelovnik,
                         tipOdgovor,
+                        roditelBrAkt,
                         roditelRedenBroj,
                         roditelGodina,
                         oldPodbroj
@@ -97,7 +101,7 @@ public class PredmetController {
 
 //    @PreAuthorize("hasAnyRole('OSL','NACALNIK','ADMIN')")
 //    @PutMapping("/{id}/status")
-//    public Predmet updateStatusPredmet(@PathVariable Long id, @RequestBody StatusPredmetRequest request, Authentication authentication) {
+//    public Predmet updateStatusPredmet(@PathVariable UUID id, @RequestBody StatusPredmetRequest request, Authentication authentication) {
 //        return this.predmetService.updateStatusPredmet(id, request, authentication.getName());
 //    }
 
@@ -108,7 +112,7 @@ public class PredmetController {
 //        return ResponseEntity.ok(predmetService.createIspratenaPosta(request,email));
 //    }
 //    @PostMapping("/{predmetId}/skenirani-dokumenti/upload")
-//    public SkeniraniDokumentiResponse uploadSkeniraniDokumenti(@PathVariable Long predmetId,
+//    public SkeniraniDokumentiResponse uploadSkeniraniDokumenti(@PathVariable UUID predmetId,
 //                                                       @RequestParam("file") MultipartFile file,
 //                                                       Authentication authentication) {
 //        return this.skeniraniDokumentiService.uploadDokument(
@@ -125,49 +129,68 @@ public class PredmetController {
             @RequestParam(required = false) Integer godina,
             @RequestParam(required = false) String redenBroj,
             @RequestParam(required = false) String isprakjacIme,
-            @RequestParam(required = false) Long odgovornoLiceId,
-            @RequestParam(required = false) Long dodelenoNaId,
-            @RequestParam(required = false) Long vidPredmetDobienaId,
-            @RequestParam(required = false) Long vidPredmetIspratenaId,
+            @RequestParam(required = false) UUID odgovornoLiceId,
+            @RequestParam(required = false) UUID dodelenoNaId,
+            @RequestParam(required = false) UUID vidPredmetDobienaId,
+            @RequestParam(required = false) UUID vidPredmetIspratenaId,
             @RequestParam(required = false) Boolean realizirano,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) TipDelovnik tipDelovnik,
             @RequestParam(required = false) TipPosta tipPosta,
             @RequestParam(required = false) StatusPredmet statusPredmet,
-            @RequestParam(required = false) Long arhivaId,
+            @RequestParam(required = false) UUID arhivaId,
             @RequestParam(required = false) String datumZaveduvanje,
             @RequestParam(required = false) String brAktNivni,
             @RequestParam(required = false) String sodrzina,
             @RequestParam(required = false) String zabeleska,
             @RequestParam(required = false) String brAktArhivski,
-            @RequestParam(required = false) String promenilKorisnik
+            @RequestParam(required = false) String promenilKorisnik,
 //            @RequestParam(required = false,defaultValue = "true") Boolean isActive
+            @AuthenticationPrincipal UserDetails userDetails
     ){
         return ResponseEntity.ok(predmetService.getAllPredmeti(pageable, godina, redenBroj, isprakjacIme, odgovornoLiceId, dodelenoNaId,
                 vidPredmetDobienaId, vidPredmetIspratenaId, realizirano, search,
                 tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska,
-                brAktArhivski,promenilKorisnik));
+                brAktArhivski,promenilKorisnik,
+                orgCodeForFiltering(userDetails)));
     }
     @GetMapping("/next-reden-broj")
-    public ResponseEntity<Integer> getNextRedenBroj() {
+    public ResponseEntity<Integer> getNextRedenBroj(@AuthenticationPrincipal UserDetails userDetails) {
         Integer godina = LocalDate.now().getYear();
-        Integer next = predmetRepository.findMaxRedenBroj(godina) + 1;
+        UserTable user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        String brAkt = user.getOrganizaciskaEdinica() != null
+                ? user.getOrganizaciskaEdinica().getCode() : null;
+        Integer next = predmetRepository.findMaxRedenBrojByBrAktAndGodina(brAkt, godina) + 1;
         return ResponseEntity.ok(next);
     }
+
+    // brAkt (code на орг. единицата) по кој се филтрира листата предмети.
+    // null за ADMIN - тие гледаат сѐ.
+    private String orgCodeForFiltering(UserDetails principal) {
+        UserTable user = userRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (user.getUloga() == Role.ADMIN) return null;
+        return user.getOrganizaciskaEdinica() != null
+                ? user.getOrganizaciskaEdinica().getCode() : null;
+    }
     @GetMapping("/getPostaByID")
-    public ResponseEntity<PostaResponse> findById(@RequestParam Long id){
+    public ResponseEntity<PostaResponse> findById(@RequestParam UUID id){
         return ResponseEntity.ok(predmetService.getPosta(id));
     }
 
     @GetMapping("/prethodni")
-    public ResponseEntity<List<PredmetListResponse>> getAllPredmeti(@RequestParam Integer redenBroj, @RequestParam Integer godina){
-        return ResponseEntity.ok(predmetService.getPrethodniPredmeti(redenBroj,godina));
+    public ResponseEntity<List<PredmetListResponse>> getAllPredmeti(
+            @RequestParam String brAkt,
+            @RequestParam Integer redenBroj,
+            @RequestParam Integer godina){
+        return ResponseEntity.ok(predmetService.getPrethodniPredmeti(brAkt,redenBroj,godina));
     }
 
 
     @PostMapping("/{id}/dokumenti")
     public ResponseEntity<Void> uploadDokument(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UserDetails userDetails) throws IOException {
 
@@ -191,7 +214,7 @@ public class PredmetController {
     }
 
     @GetMapping("/dokumenti/{dokId}")
-    public ResponseEntity<byte[]> downloadDokument(@PathVariable Long dokId) {
+    public ResponseEntity<byte[]> downloadDokument(@PathVariable UUID dokId) {
         SkeniraniDokumenti dok = skeniraniDokumentiRepository.findById(dokId).orElseThrow();
 
         return ResponseEntity.ok()
@@ -202,7 +225,7 @@ public class PredmetController {
     }
 
     @DeleteMapping("/dokumenti/{dokId}")
-    public ResponseEntity<Void> deleteDokument(@PathVariable Long dokId) {
+    public ResponseEntity<Void> deleteDokument(@PathVariable UUID dokId) {
         if (!skeniraniDokumentiRepository.existsById(dokId)) {
             throw new ResourceNotFoundException("SkeniraniDokumenti", dokId);
         }
@@ -211,7 +234,7 @@ public class PredmetController {
     }
 
     @GetMapping("/{id}/dokumenti")
-    public ResponseEntity<List<SkeniraniDokumentiResponse>> getDokumenti(@PathVariable Long id) {
+    public ResponseEntity<List<SkeniraniDokumentiResponse>> getDokumenti(@PathVariable UUID id) {
         return ResponseEntity.ok(skeniraniDokumentiRepository.findAllByPredmetId(id)
                 .stream()
                 .map(SkeniraniDokumentiResponse::from)
@@ -221,7 +244,7 @@ public class PredmetController {
     @PutMapping("/edit/{id}")
     public ResponseEntity<PostaResponse> editPosta(
             @RequestBody PostaRequest request,
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam TipDelovnik tipDelovnik
 

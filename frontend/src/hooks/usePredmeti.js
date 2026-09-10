@@ -28,11 +28,11 @@ const usePredmeti = () => {
         }
     }, []);
 
-    const createPosta = async (data, tipDelovnik, tipOdgovor = null, roditelRedenBroj = null, roditelGodina = null, oldPodbroj = null) => {
+    const createPosta = async (data, tipDelovnik, tipOdgovor = null, roditelBrAkt = null, roditelRedenBroj = null, roditelGodina = null, oldPodbroj = null) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await predmetiApi.createPosta(data, tipDelovnik, tipOdgovor, roditelRedenBroj, roditelGodina, oldPodbroj);
+            const response = await predmetiApi.createPosta(data, tipDelovnik, tipOdgovor, roditelBrAkt, roditelRedenBroj, roditelGodina, oldPodbroj);
             await fetchNextRedenBroj();
             return response;
         } catch (err) {
@@ -56,11 +56,11 @@ const usePredmeti = () => {
             setLoading(false);
         }
     };
-    const getPrethodniPredmeti = async (redenBroj, godina) => {
+    const getPrethodniPredmeti = async (redenBroj, godina, brAkt) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await predmetiApi.getPrethodniPredmeti(redenBroj, godina);
+            const response = await predmetiApi.getPrethodniPredmeti(redenBroj, godina, brAkt);
             return response;
         } catch (err) {
             const message = err.response?.data?.message || "Грешка при вчитување на претходни предмети";

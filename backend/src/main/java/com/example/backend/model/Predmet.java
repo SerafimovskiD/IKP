@@ -1,5 +1,7 @@
 package com.example.backend.model;
 
+import java.util.UUID;
+
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -25,8 +27,8 @@ import java.util.Set;
 @BatchSize(size = 50)
 public class Predmet {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     private String brAkt;
     private Integer redenBroj;
     private Integer podBroj;

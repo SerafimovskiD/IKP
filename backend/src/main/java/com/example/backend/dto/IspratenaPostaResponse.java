@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import com.example.backend.model.*;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
@@ -17,7 +19,7 @@ import java.util.List;
         "statusPredmet"
 })
 public class IspratenaPostaResponse {
-    private Long id;
+    private UUID id;
 
     private String brAkt;
     private Integer redenBroj;
@@ -27,18 +29,18 @@ public class IspratenaPostaResponse {
 
     private TipPosta tipPosta;
 
-    private Long ispratenoDoId;
+    private UUID ispratenoDoId;
 
-    private List<Long> vidPredmetIspratenaId;
+    private List<UUID> vidPredmetIspratenaId;
 
     private String sodrzina;
 
-    private List<Long> odgovornoLiceId;
+    private List<UUID> odgovornoLiceId;
 
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
-    private List<Long> arhivaId;
+    private List<UUID> arhivaId;
     private String zabeleska;
 
     private StatusPredmet statusPredmet;

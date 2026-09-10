@@ -4,9 +4,14 @@ import com.example.backend.dto.AuthResponse;
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.RegisterRequest;
 import com.example.backend.dto.UserOdgovornoLiceResponse;
+import com.example.backend.exceptions.ResourceNotFoundException;
+import com.example.backend.model.Role;
+import com.example.backend.model.UserTable;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.auth.AuthService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,10 +40,19 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(request));
     }
 
+    // Ги враќа корисниците (за "Одговорно лице" / "Доделено на") - scope-ирано на
+    // орг. единицата на најавениот корисник. ADMIN ги гледа сите.
     @GetMapping("/odgovorno-lice")
-    public ResponseEntity<List<UserOdgovornoLiceResponse>> getUsersOdgovornoLice() {
-        List<UserOdgovornoLiceResponse> users = userRepository.findAllWithOrgEdinica()
-                .stream()
+    public ResponseEntity<List<UserOdgovornoLiceResponse>> getUsersOdgovornoLice(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UserTable caller = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        List<UserTable> source = (caller.getUloga() == Role.ADMIN || caller.getOrganizaciskaEdinica() == null)
+                ? userRepository.findAllWithOrgEdinica()
+                : userRepository.findAllByOrgEdinicaId(caller.getOrganizaciskaEdinica().getId());
+
+        List<UserOdgovornoLiceResponse> users = source.stream()
                 .map(UserOdgovornoLiceResponse::from)
                 .toList();
         return ResponseEntity.ok(users);

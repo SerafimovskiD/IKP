@@ -1,5 +1,7 @@
 package com.example.backend.web_controller;
 
+import java.util.UUID;
+
 import com.example.backend.dto.OrgEdinicaRequest;
 import com.example.backend.dto.OrgEdinicaResponse;
 import com.example.backend.service.nomenclature.OrganizaciskaEdinicaService;
@@ -26,7 +28,7 @@ public class OrganizaciskaEdinicaController {
 
 //    @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<OrgEdinicaResponse> getById(@PathVariable Long id){
+    public ResponseEntity<OrgEdinicaResponse> getById(@PathVariable UUID id){
         return ResponseEntity.ok(organizaciskaEdinicaService.findById(id));
     }
 
@@ -38,13 +40,13 @@ public class OrganizaciskaEdinicaController {
 //
 //    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<OrgEdinicaResponse> update(@PathVariable Long id,@RequestBody OrgEdinicaRequest orgEdinicaRequest){
+    public ResponseEntity<OrgEdinicaResponse> update(@PathVariable UUID id,@RequestBody OrgEdinicaRequest orgEdinicaRequest){
         return ResponseEntity.ok(organizaciskaEdinicaService.update(id,orgEdinicaRequest));
     }
 //
 //    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id){
+    public void delete(@PathVariable UUID id){
         organizaciskaEdinicaService.delete(id);
     }
 }

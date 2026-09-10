@@ -1,12 +1,14 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import com.example.backend.model.Role;
 import com.example.backend.model.UserTable;
 import lombok.Data;
 
 @Data
 public class UserOdgovornoLiceResponse {
-    private Long id;
+    private UUID id;
     private String ime;
     private String prezime;
     private String email;

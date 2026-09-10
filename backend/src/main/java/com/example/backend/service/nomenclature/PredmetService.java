@@ -1,7 +1,10 @@
 package com.example.backend.service.nomenclature;
 
+import java.util.UUID;
+
 import com.example.backend.dto.*;
 
+import com.example.backend.exceptions.BadRequestException;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
 import com.example.backend.repository.*;
@@ -49,6 +52,7 @@ public class PredmetService {
                                      String email,
                                      TipDelovnik tipDelovnik,
                                      TipOdgovor tipOdgovor,
+                                     String roditelBrAkt,
                                      Integer roditelRedenBroj,
                                      Integer roditelGodina,
                                      Integer oldPodbroj
@@ -61,22 +65,31 @@ public class PredmetService {
         Integer redenBroj;
         Integer podBroj;
         if (tipOdgovor == null){
+            // Нов предмет - нумерацијата (redenBroj) е по орг. единица на корисникот + година.
             brAkt = user.getOrganizaciskaEdinica().getCode();
             godina = LocalDate.now().getYear();
-            redenBroj = predmetRepository.findMaxRedenBroj(godina) + 1;
+            redenBroj = predmetRepository.findMaxRedenBrojByBrAktAndGodina(brAkt, godina) + 1;
             podBroj=1;
         }else{
+            // Одговор/под-предмет - го наследува brAkt-от од родителот; дозволено е само
+            // на предмет од сопствената орг. единица (освен за ADMIN).
+            String userOrgCode = user.getOrganizaciskaEdinica() != null
+                    ? user.getOrganizaciskaEdinica().getCode() : null;
+            if (user.getUloga() != Role.ADMIN && !roditelBrAkt.equals(userOrgCode)) {
+                throw new BadRequestException("Не може да се прави одговор на предмет од друга организациска единица");
+            }
             Predmet roditel = predmetRepository
-                    .findPredmetByRedenBrojAndGodinaAndPodBroj
-                            (roditelRedenBroj,roditelGodina,oldPodbroj).orElseThrow(()->new ResourceNotFoundException("Predmet not found"));
+                    .findPredmetByBrAktAndRedenBrojAndGodinaAndPodBroj
+                            (roditelBrAkt, roditelRedenBroj, roditelGodina, oldPodbroj)
+                    .orElseThrow(() -> new ResourceNotFoundException("Predmet not found"));
             brAkt = roditel.getBrAkt();
             godina = roditel.getGodina();
             redenBroj = roditel.getRedenBroj();
-            podBroj = predmetRepository.findMaxPodBrojByRedenBrojAndGodina(redenBroj,godina)+1;
+            podBroj = predmetRepository.findMaxPodBrojByBrAktAndRedenBrojAndGodina(brAkt, redenBroj, godina) + 1;
         }
         Predmet predmet = new Predmet();
         if (tipOdgovor != null){
-            predmetRepository.deactivateByRedenBrojAndGodina(redenBroj,godina);
+            predmetRepository.deactivateByBrAktAndRedenBrojAndGodina(brAkt, redenBroj, godina);
         }
         predmet.setActive(true);
         predmet.setBrAkt(brAkt);
@@ -145,7 +158,7 @@ public class PredmetService {
     }
     @Transactional
     public PostaResponse editPosta(PostaRequest request,
-                                   Long predmetId,
+                                   UUID predmetId,
                                    String email,
                                    TipDelovnik tipDelovnik
 
@@ -220,15 +233,18 @@ public class PredmetService {
 
     public Page<PredmetListResponse> getAllPredmeti(
             Pageable pageable, Integer godina,String redenBroj,
-            String isprakjacIme, Long odgovornoLiceId, Long dodelenoNaId,
-            Long vidPredmetDobienaId, Long vidPredmetIspratenaId,
+            String isprakjacIme, UUID odgovornoLiceId, UUID dodelenoNaId,
+            UUID vidPredmetDobienaId, UUID vidPredmetIspratenaId,
             Boolean realizirano, String search,
-            TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,Long arhivaId,
+            TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,UUID arhivaId,
         String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska,
-        String brAktArhivski,String promenilKorisnik) {
+        String brAktArhivski,String promenilKorisnik,
+        String brAkt) {
 
         Specification<Predmet> spec = Specification
                 .where(PredmetSpecification.isActive())
+                // Секоја орг. единица си ги гледа само своите предмети (brAkt = null за ADMIN).
+                .and(PredmetSpecification.hasBrAkt(brAkt))
                 .and(PredmetSpecification.hasTipDelovnik(tipDelovnik))
                 .and(PredmetSpecification.hasGodina(godina))
                 .and(PredmetSpecification.hasRedenBrojLike(redenBroj))
@@ -257,11 +273,11 @@ public class PredmetService {
         return page.map(p -> PredmetListResponse.from(p, vkPodBroeviMap.get(vkPodBroeviKey(p))));
     }
 
-    public PostaResponse getPosta(Long id) {
+    public PostaResponse getPosta(UUID id) {
         return PostaResponse.from(predmetRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Predmet not found")));
     }
-    public List<PredmetListResponse> getPrethodniPredmeti(Integer redenBroj, Integer godina) {
-        List<Predmet> predmeti = predmetRepository.findAllByRedenBrojAndGodina(redenBroj, godina);
+    public List<PredmetListResponse> getPrethodniPredmeti(String brAkt, Integer redenBroj, Integer godina) {
+        List<Predmet> predmeti = predmetRepository.findAllByBrAktAndRedenBrojAndGodina(brAkt, redenBroj, godina);
         var vkPodBroeviMap = buildVkPodBroeviMap(predmeti);
         return predmeti.stream()
                 .map(p -> PredmetListResponse.from(p, vkPodBroeviMap.get(vkPodBroeviKey(p))))
@@ -271,14 +287,16 @@ public class PredmetService {
     private java.util.Map<String, Integer> buildVkPodBroeviMap(List<Predmet> predmeti) {
         var godini = predmeti.stream().map(Predmet::getGodina).collect(Collectors.toSet());
         if (godini.isEmpty()) return java.util.Map.of();
+        // Редовите се [brAkt, redenBroj, godina, maxPodBroj] - клуч по трите
+        // за да не се судираат исти (redenBroj, godina) од различни орг. единици.
         return predmetRepository.findMaxPodBrojGroupedByGodini(godini).stream()
                 .collect(Collectors.toMap(
-                        row -> row[0] + "-" + row[1],
-                        row -> (Integer) row[2]
+                        row -> row[0] + "-" + row[1] + "-" + row[2],
+                        row -> (Integer) row[3]
                 ));
     }
 
     private String vkPodBroeviKey(Predmet p) {
-        return p.getRedenBroj() + "-" + p.getGodina();
+        return p.getBrAkt() + "-" + p.getRedenBroj() + "-" + p.getGodina();
     }
 }

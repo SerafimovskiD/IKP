@@ -138,7 +138,7 @@ const SwitchCard = ({label, checked, onChange, theme}) => (
     </Box>
 );
 
-// ─── СЕГМЕНТИРАНА КОНТРОЛА (како во /predmeti филтерот) - за Тип/Приоритет.
+// ─── СЕГМЕНТИРАНА КОНТРОЛА (како во /listaPosta филтерот) - за Тип/Приоритет.
 // Нема фиксна висина - контролата ја има својата природна (size="small") висина,
 // а порамнувањето со другите полиња се прави преку margin, не преку height.
 const ToggleField = ({error, value, onChange, options, theme}) => (
@@ -263,7 +263,7 @@ const PredmetForm = () => {
     const {getOrgEdinicaById} = useOrgEdinica();
     const [orgEdinica, setOrgEdinica] = useState(null);
 
-    const roditelId = searchParams.get("roditelId") ? Number(searchParams.get("roditelId")) : null;
+    const roditelId = searchParams.get("roditelId") || null;
     const tipOdgovor = searchParams.get("tipOdgovor") || null;
 
 
@@ -424,7 +424,7 @@ const PredmetForm = () => {
             arhivaId: form.arhivaId,
             zabeleska: form.zabeleska,
             statusPredmet: form.statusPredmet || null,
-            isprakjacId: Number(form.isprakjacId),
+            isprakjacId: form.isprakjacId,
             ...(isDobiena && {
                 prioritet: form.prioritet || null,
                 brAktNivni: form.brAktNivni || null,
@@ -440,6 +440,7 @@ const PredmetForm = () => {
                 ? await editPosta(payload, editId, tipDelovnik)
                 : await createPosta(
                     payload, tipDelovnik, tipOdgovor,
+                    roditel?.brAkt ?? null,
                     roditel?.redenBroj ?? null,
                     roditel?.godina ?? null,
                     roditel?.podBroj ?? null
@@ -452,7 +453,7 @@ const PredmetForm = () => {
             showSnackbar(isEditMode ? 'Успешно зачувани промени!' : 'Успешно зачувано!', 'success');
             setSubmitted(false);
             setFormErrors({});
-            navigate(isEditMode ? `/posta/${editId}` : "/predmeti");
+            navigate(isEditMode ? `/posta/${editId}` : "/listaPosta");
         } catch (e) {
             console.error(e.response?.data);
             showSnackbar('Грешка при зачувување!', 'error');

@@ -1,5 +1,7 @@
 package com.example.backend.service.nomenclature;
 
+import java.util.UUID;
+
 import com.example.backend.model.Isprakjac;
 import com.example.backend.repository.IsprakjacRepository;
 import org.springframework.cache.annotation.CacheEvict;
@@ -24,7 +26,7 @@ public class IsprakjacService {
         return this.isprakjacRepository.findAllWithOrgEdinica();
     }
 
-    public Isprakjac getIsprakjacById(Long id) {
+    public Isprakjac getIsprakjacById(UUID id) {
         return this.isprakjacRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Испраќач", id));
     }
@@ -37,14 +39,14 @@ public class IsprakjacService {
     }
 
     @CacheEvict(value = "isprakjaci", allEntries = true)
-    public Isprakjac updateIsprakjac(Long id, IsprakjacRequest request) {
+    public Isprakjac updateIsprakjac(UUID id, IsprakjacRequest request) {
         Isprakjac existingIsprakjac = getIsprakjacById(id);
         existingIsprakjac.setNaziv(request.getNaziv());
         return this.isprakjacRepository.save(existingIsprakjac);
     }
 
     @CacheEvict(value = "isprakjaci", allEntries = true)
-    public void deleteIsprakjacById(Long id) {
+    public void deleteIsprakjacById(UUID id) {
         Isprakjac existingIsprakjac = getIsprakjacById(id);
         this.isprakjacRepository.delete(existingIsprakjac);
     }

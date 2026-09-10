@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import com.example.backend.model.*;
 
 import java.time.LocalDate;
@@ -9,7 +11,7 @@ import java.util.stream.Collectors;
 
 
 public record PredmetListResponse(
-        Long id,
+        UUID id,
         String brAkt,
         Integer redenBroj,
         Integer podBroj,
@@ -28,11 +30,11 @@ public record PredmetListResponse(
         List<String> vidPredmetNaziv,
         List<String> arhivaNaziv,
         String zabeleska,
-        Long isprakjacId,
-        List<Long> odgovornoLiceId,
-        List<Long> dodelenoNaId,
-        List<Long> vidPredmetId,
-        List<Long> arhivaId,
+        UUID isprakjacId,
+        List<UUID> odgovornoLiceId,
+        List<UUID> dodelenoNaId,
+        List<UUID> vidPredmetId,
+        List<UUID> arhivaId,
         Boolean isActive,
         String isprakjacIme,
         String promenilKorisnik,

@@ -1,5 +1,7 @@
 package com.example.backend.model;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.BatchSize;
@@ -8,8 +10,8 @@ import org.hibernate.annotations.BatchSize;
 @Data
 public class UserTable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     private String ime;
     private String prezime;
     private String password;

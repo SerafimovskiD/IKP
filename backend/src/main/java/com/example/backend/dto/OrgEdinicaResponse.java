@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import com.example.backend.model.OrganizaciskaEdinica;
 import lombok.Data;
 
@@ -7,7 +9,7 @@ import java.util.List;
 
 @Data
 public class OrgEdinicaResponse {
-    private Long id;
+    private UUID id;
     private String naziv;
     private String code;
 

@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import com.example.backend.model.*;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
@@ -20,7 +22,7 @@ import java.util.stream.Collectors;
         "statusPredmet", "tipDelovnik","isActive"
 })
 public class PostaResponse {
-    private Long id;
+    private UUID id;
 
     private String brAkt;
     private Integer redenBroj;
@@ -31,25 +33,25 @@ public class PostaResponse {
     private TipPosta tipPosta;
     private Prioritet prioritet;
 
-    private Long isprakjacId;
+    private UUID isprakjacId;
 
     private String brAktNivni;
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
     //Naum
-    private List<Long> vidPredmetDobienaId;
-    private List<Long> vidPredmetIspratenaId;
-    //    private Long vidPredmetId;
+    private List<UUID> vidPredmetDobienaId;
+    private List<UUID> vidPredmetIspratenaId;
+    //    private UUID vidPredmetId;
     //Mislam nema potreba da ima i naziv poso ke go dobivame preku ID <-Naum
 //    private String vidPredmetNaziv;
 
     private String sodrzina;
 
-    private List<Long> odgovornoLiceId;
-    private List<Long> dodelenoNaId;
+    private List<UUID> odgovornoLiceId;
+    private List<UUID> dodelenoNaId;
     //Naum
-//    private Long odgovornoLiceId;
+//    private UUID odgovornoLiceId;
     //Isto ko gore <-Naum
 //    private String odgovornoLiceIme;
 //    private String odgovornoLicePrezime;
@@ -58,9 +60,9 @@ public class PostaResponse {
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
-    private List<Long> arhivaId;
+    private List<UUID> arhivaId;
     //Naum
-//    private Long arhivaId;
+//    private UUID arhivaId;
     //isto ko gore <Naum
 //    private String arhivaNaziv;
 

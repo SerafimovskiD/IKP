@@ -5,10 +5,11 @@ export const predmetiApi = {
     //     const res = await api.post(`/predmet/create?tipDelovnik=${tipDelovnik}`, data);
     //     return res.data;
     // },
-    createPosta: async (data, tipDelovnik, tipOdgovor = null, roditelRedenBroj = null, roditelGodina = null, oldPodbroj = null, id=null) => {
+    createPosta: async (data, tipDelovnik, tipOdgovor = null, roditelBrAkt = null, roditelRedenBroj = null, roditelGodina = null, oldPodbroj = null, id=null) => {
         const params = new URLSearchParams();
         params.append('tipDelovnik', tipDelovnik);
         if (tipOdgovor) params.append('tipOdgovor', tipOdgovor);
+        if (roditelBrAkt) params.append('roditelBrAkt', roditelBrAkt);
         if (roditelRedenBroj) params.append('roditelRedenBroj', roditelRedenBroj);
         if (roditelGodina) params.append('roditelGodina', roditelGodina);
         if (oldPodbroj) params.append('oldPodbroj', oldPodbroj);
@@ -35,8 +36,8 @@ export const predmetiApi = {
         const res = await api.get(`/predmet/getPostaByID?id=${id}`);
         return res.data;
     },
-    getPrethodniPredmeti: async (redenBroj, godina) => {
-        const res = await api.get(`/predmet/prethodni?redenBroj=${redenBroj}&godina=${godina}`);
+    getPrethodniPredmeti: async (redenBroj, godina, brAkt) => {
+        const res = await api.get(`/predmet/prethodni?brAkt=${encodeURIComponent(brAkt)}&redenBroj=${redenBroj}&godina=${godina}`);
         return res.data;
     },
 

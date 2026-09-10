@@ -1,5 +1,7 @@
 package com.example.backend.service.nomenclature;
 
+import java.util.UUID;
+
 import com.example.backend.dto.ArhivaRequest;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.Arhiva;
@@ -23,7 +25,7 @@ public class ArhivaService {
     public List<Arhiva> getAllArhivi(){
         return this.arhivaRepository.findAllWithOrgEdinica();
     }
-    public Arhiva getArhivaById(Long id){
+    public Arhiva getArhivaById(UUID id){
         return this.arhivaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Архива",id));
     }
@@ -36,7 +38,7 @@ public class ArhivaService {
         arhiva.setOrganizaciskaedinica(organizaciskaEdinica);
         return arhivaRepository.save(arhiva);
     }
-    public Arhiva updateArhiva(Long id,ArhivaRequest arhivaRequest) {
+    public Arhiva updateArhiva(UUID id,ArhivaRequest arhivaRequest) {
         Arhiva existingArhiva = this.getArhivaById(id);
         OrganizaciskaEdinica organizaciskaEdinica = this.organizaciskaEdinicaRepository.findById(arhivaRequest.getOrganizaciskaEdinicaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Организациска единица",arhivaRequest.getOrganizaciskaEdinicaId()));
@@ -45,7 +47,7 @@ public class ArhivaService {
         return arhivaRepository.save(existingArhiva);
     }
 
-    public void deleteArhiva(Long id){
+    public void deleteArhiva(UUID id){
         Arhiva existingArhiva = getArhivaById(id);
         this.arhivaRepository.delete(existingArhiva);
     }

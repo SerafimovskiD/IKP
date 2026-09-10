@@ -1,5 +1,7 @@
 package com.example.backend.web_controller;
 
+import java.util.UUID;
+
 import com.example.backend.dto.VidPredmetRequest;
 import com.example.backend.model.VidPredmetDobiena;
 import com.example.backend.service.nomenclature.VidPredmetDobienaService;
@@ -25,7 +27,7 @@ public class VidPredmetDobienaController {
 
 //    @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping("/{id}")
-    public VidPredmetDobiena getVidPredmetById(@PathVariable Long id) {
+    public VidPredmetDobiena getVidPredmetById(@PathVariable UUID id) {
         return this.vidPredmetService.getVidPredmetById(id);
     }
 
@@ -37,13 +39,13 @@ public class VidPredmetDobienaController {
 
 //    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public VidPredmetDobiena updateVidPredmet(@PathVariable Long id, @RequestBody VidPredmetRequest request) {
+    public VidPredmetDobiena updateVidPredmet(@PathVariable UUID id, @RequestBody VidPredmetRequest request) {
         return this.vidPredmetService.updateVidPredmet(id, request);
     }
 
 //    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public void deleteVidPredmet(@PathVariable Long id) {
+    public void deleteVidPredmet(@PathVariable UUID id) {
         this.vidPredmetService.deleteVidPredmetById(id);
     }
 }

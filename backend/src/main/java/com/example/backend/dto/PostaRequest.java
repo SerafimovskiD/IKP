@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import com.example.backend.model.Prioritet;
 import com.example.backend.model.StatusPredmet;
 import com.example.backend.model.TipPosta;
@@ -14,23 +16,23 @@ public class PostaRequest {
     private LocalDate datumZaveduvanje;
     private TipPosta tipPosta;
     private String sodrzina;
-    private List<Long> odgovornoLiceId;
+    private List<UUID> odgovornoLiceId;
     private Boolean informativnaPosta;
     private Boolean realizirano;
-    private List<Long> arhivaId;
+    private List<UUID> arhivaId;
     private String zabeleska;
     private StatusPredmet statusPredmet;
-    private Long isprakjacId;
+    private UUID isprakjacId;
     private Boolean isActive;
     private String isprakjacIme;
-    private List<Long> dodelenoNaId;
+    private List<UUID> dodelenoNaId;
     // Samo dobiena
     private Prioritet prioritet;
     private String brAktNivni;
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
-    private List<Long> vidPredmetDobienaId;
+    private List<UUID> vidPredmetDobienaId;
 
     // Samo ISpratena
-    private List<Long> vidPredmetIspratenaId;
+    private List<UUID> vidPredmetIspratenaId;
 }

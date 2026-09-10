@@ -22,7 +22,7 @@ public class LocalFileStorageService implements FileStorageService {
     private String uploadDir;
 
     @Override
-    public String upload(MultipartFile file, Long predmetId) {
+    public String upload(MultipartFile file, UUID predmetId) {
         try {
             if (file == null || file.isEmpty()) {
                 throw new BadRequestException("Фајлот е задолжителен");

@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.util.UUID;
+
 import com.example.backend.model.SkeniraniDokumenti;
 import lombok.Data;
 
@@ -7,13 +9,13 @@ import java.time.LocalDateTime;
 
 @Data
 public class SkeniraniDokumentiResponse {
-    private Long id;
-    private Long predmetId;
+    private UUID id;
+    private UUID predmetId;
     private String imeFile;
     private String tipFile;
     private Long golemina;
     private LocalDateTime datumUpload;
-    private Long userId;
+    private UUID userId;
     private String uploadedBy;
 
     public static SkeniraniDokumentiResponse from(SkeniraniDokumenti d) {

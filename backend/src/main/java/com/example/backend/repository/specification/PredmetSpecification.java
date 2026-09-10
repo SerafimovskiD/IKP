@@ -5,6 +5,7 @@ import com.example.backend.model.TipPosta;
 import jakarta.persistence.criteria.JoinType;
 
 import com.example.backend.model.Predmet;
+import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
 
@@ -13,6 +14,13 @@ public class PredmetSpecification {
     public static Specification<Predmet> hasGodina(Integer godina) {
         return (root,query,cb)->
                 godina==null ? null :cb.equal(root.get("godina"),godina);
+    }
+
+    // Секоја орг. единица си ги гледа само своите предмети (brAkt = code на единицата).
+    // null = без филтер (за ADMIN, кој гледа сѐ).
+    public static Specification<Predmet> hasBrAkt(String brAkt) {
+        return (root, query, cb) ->
+                brAkt == null ? null : cb.equal(root.get("brAkt"), brAkt);
     }
     public static Specification<Predmet> hasRedenBrojLike(String redenBroj) {
         return (root, query, cb) -> {
@@ -26,28 +34,28 @@ public class PredmetSpecification {
             return cb.like(cb.lower(root.get("isprakjacIme")), "%" + isprakjacIme.toLowerCase() + "%");
         };
     }
-    public static Specification<Predmet> hasOdgovornoLice(Long odgovornoLiceId) {
+    public static Specification<Predmet> hasOdgovornoLice(UUID odgovornoLiceId) {
         return (root, query, cb)->{
             if(odgovornoLiceId==null) return null;
             query.distinct(true);
             return cb.equal(root.join("odgovornoLice").get("id"),odgovornoLiceId);
         };
     }
-    public static Specification<Predmet> hasVidPredmetDobiena (Long vidPredmetDobienaId) {
+    public static Specification<Predmet> hasVidPredmetDobiena (UUID vidPredmetDobienaId) {
         return (root, query, cb) -> {
             if(vidPredmetDobienaId==null) return null;
             query.distinct(true);
             return cb.equal(root.join("vidPredmetDobiena").get("id"),vidPredmetDobienaId);
         };
     }
-    public static Specification<Predmet> hasArhiva (Long arhivaId) {
+    public static Specification<Predmet> hasArhiva (UUID arhivaId) {
         return (root, query, cb) -> {
             if(arhivaId==null) return null;
             query.distinct(true);
             return cb.equal(root.join("arhiva").get("id"),arhivaId);
         };
     }
-    public static Specification<Predmet> hasVidPredmetIspratena(Long vidPredmetIspratenaId) {
+    public static Specification<Predmet> hasVidPredmetIspratena(UUID vidPredmetIspratenaId) {
         return (root, query, cb) -> {
             if (vidPredmetIspratenaId == null) return null;
             query.distinct(true);
@@ -147,7 +155,7 @@ public class PredmetSpecification {
         };
     }
 
-    public static Specification<Predmet> hasDodelenoNa(Long dodelenoNaId) {
+    public static Specification<Predmet> hasDodelenoNa(UUID dodelenoNaId) {
         return (root, query, cb) -> {
             if (dodelenoNaId == null) return null;
             query.distinct(true);

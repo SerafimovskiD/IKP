@@ -54,7 +54,7 @@ export default function App() {
                                 </Layout>
                             </ProtectedRoute>
                         }/>
-                        <Route path="/predmeti" element={
+                        <Route path="/listaPosta" element={
                             <ProtectedRoute>
                                 <Layout>
                                     <PredmetiList/>

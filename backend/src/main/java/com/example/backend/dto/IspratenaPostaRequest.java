@@ -1,4 +1,6 @@
 package com.example.backend.dto;
+
+import java.util.UUID;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -16,16 +18,16 @@ public class IspratenaPostaRequest {
 //    private LocalDate datumIsprakjanje;
 //    private String brAktArhivski;
     // ^ Ne se potrebni vo ispratena posta <-Naum
-    private Long ispratenoDoId;
-    private List<Long> vidPredmetIspratenaId;
+    private UUID ispratenoDoId;
+    private List<UUID> vidPredmetIspratenaId;
     private String sodrzina;
-    private List<Long> odgovornoLiceId;
+    private List<UUID> odgovornoLiceId;
     private Boolean informativnaPosta;
     private Boolean realizirano;
-    private List<Long> arhivaId;
+    private List<UUID> arhivaId;
     private String zabeleska;
-//    private Long roditelPredmetId;
-//    private Long organizaciskaEdinicaId;
+//    private UUID roditelPredmetId;
+//    private UUID organizaciskaEdinicaId;
     private StatusPredmet statusPredmet;
 
 }

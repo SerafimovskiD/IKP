@@ -13,7 +13,7 @@ const drawerWidth = 240;
 //     '/dashboard': 'Почетна',
 //     '/createPosta/nova': 'Нов предмет',
 //     '/posta': 'Детали на предмет',
-//     '/predmeti': 'Листа на предмети',
+//     '/listaPosta': 'Листа на предмети',
 //     '/search': 'Пребарување',
 // };
 
@@ -31,7 +31,7 @@ const NAV = [
     {
         label: 'ПРЕБАРУВАЊЕ',
         icon: <TravelExploreIcon/>,
-        path: '/predmeti',
+        path: '/listaPosta',
     },
 ];
 

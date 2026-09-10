@@ -1,5 +1,7 @@
 package com.example.backend.web_controller;
 
+import java.util.UUID;
+
 import com.example.backend.dto.SkeniraniDokumentiResponse;
 import com.example.backend.model.Predmet;
 import com.example.backend.model.SkeniraniDokumenti;
@@ -27,7 +29,7 @@ public class SkeniraniDokumentiController {
 //    }
 //
 //    @GetMapping("/{id}/preview")
-//    public ResponseEntity<Resource> previewDokument(@PathVariable Long id){
+//    public ResponseEntity<Resource> previewDokument(@PathVariable UUID id){
 //        SkeniraniDokumenti dokument = this.skeniraniDokumentiService.getDokument(id);
 //        Resource resource = this.skeniraniDokumentiService.loadDokument(id);
 //        String contentType = this.skeniraniDokumentiService.getContentType(dokument.getPateka());
@@ -49,7 +51,7 @@ public class SkeniraniDokumentiController {
 
     @PostMapping("/{id}/dokumenti")
     public ResponseEntity<Void> uploadDokument(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestParam("file") MultipartFile file) throws IOException {
 
         SkeniraniDokumenti dok = new SkeniraniDokumenti();
@@ -63,7 +65,7 @@ public class SkeniraniDokumentiController {
     }
 
     @GetMapping("/dokumenti/{dokId}")
-    public ResponseEntity<byte[]> downloadDokument(@PathVariable Long dokId) {
+    public ResponseEntity<byte[]> downloadDokument(@PathVariable UUID dokId) {
         SkeniraniDokumenti dok = skeniraniDokumentiRepository.findById(dokId).orElseThrow();
 
         return ResponseEntity.ok()
@@ -74,7 +76,7 @@ public class SkeniraniDokumentiController {
     }
 
     @GetMapping("/{id}/dokumenti")
-    public ResponseEntity<List<SkeniraniDokumentiResponse>> getDokumenti(@PathVariable Long id) {
+    public ResponseEntity<List<SkeniraniDokumentiResponse>> getDokumenti(@PathVariable UUID id) {
         return ResponseEntity.ok(skeniraniDokumentiRepository.findAllByPredmetId(id)
                 .stream()
                 .map(SkeniraniDokumentiResponse::from)

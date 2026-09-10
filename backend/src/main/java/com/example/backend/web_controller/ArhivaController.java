@@ -1,5 +1,7 @@
 package com.example.backend.web_controller;
 
+import java.util.UUID;
+
 import com.example.backend.dto.ArhivaRequest;
 import com.example.backend.model.Arhiva;
 import com.example.backend.service.nomenclature.ArhivaService;
@@ -25,7 +27,7 @@ public class ArhivaController {
 
     @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping("/{id}")
-    public Arhiva getArhivaById(@PathVariable Long id){
+    public Arhiva getArhivaById(@PathVariable UUID id){
         return this.arhivaService.getArhivaById(id);
     }
 
@@ -37,13 +39,13 @@ public class ArhivaController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public Arhiva updateArhiva(@PathVariable Long id,@RequestBody ArhivaRequest arhivaRequest){
+    public Arhiva updateArhiva(@PathVariable UUID id,@RequestBody ArhivaRequest arhivaRequest){
         return this.arhivaService.updateArhiva(id,arhivaRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public void deleteArhiva(@PathVariable Long id){
+    public void deleteArhiva(@PathVariable UUID id){
         this.arhivaService.deleteArhiva(id);
     }
 }

@@ -1,5 +1,7 @@
 package com.example.backend.web_controller;
 
+import java.util.UUID;
+
 import com.example.backend.dto.IsprakjacRequest;
 import com.example.backend.model.Isprakjac;
 import com.example.backend.service.nomenclature.IsprakjacService;
@@ -25,7 +27,7 @@ public class IsprakjacController {
 
     @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping("/{id}")
-    public Isprakjac getIsprakjacById(@PathVariable Long id) {
+    public Isprakjac getIsprakjacById(@PathVariable UUID id) {
         return isprakjacService.getIsprakjacById(id);
     }
 
@@ -37,13 +39,13 @@ public class IsprakjacController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public Isprakjac updateIsprakjac(@PathVariable Long id, @RequestBody IsprakjacRequest request) {
+    public Isprakjac updateIsprakjac(@PathVariable UUID id, @RequestBody IsprakjacRequest request) {
         return this.isprakjacService.updateIsprakjac(id, request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public void deleteIsprakjacById(@PathVariable Long id) {
+    public void deleteIsprakjacById(@PathVariable UUID id) {
         this.isprakjacService.deleteIsprakjacById(id);
     }
 }
