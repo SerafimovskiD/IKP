@@ -9,6 +9,7 @@ import {
     ToggleButton, ToggleButtonGroup,
     Menu, MenuItem, Checkbox, ListItemText
 } from '@mui/material';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
@@ -67,6 +68,7 @@ const EMPTY_FILTERS = {
     datumZaveduvanje: '',
     datumIsprakjanje: '',
     godina: '',
+    imeDokument: '',
     isprakjacIme: '',
     promenilKorisnik: '',
     odgovornoLiceId: '',
@@ -209,6 +211,7 @@ const PredmetiList = () => {
             if (searchFilters.brAktNivni) params.append('brAktNivni', searchFilters.brAktNivni);
             if (searchFilters.sodrzina) params.append('sodrzina', searchFilters.sodrzina);
             if (searchFilters.zabeleska) params.append('zabeleska', searchFilters.zabeleska);
+            if (searchFilters.imeDokument) params.append('imeDokument', searchFilters.imeDokument);
             if (searchFilters.isprakjacIme) params.append('isprakjacIme', searchFilters.isprakjacIme);
             if (searchFilters.odgovornoLiceId) params.append('odgovornoLiceId', searchFilters.odgovornoLiceId);
             if (searchFilters.dodelenoNaId) params.append('dodelenoNaId', searchFilters.dodelenoNaId);
@@ -958,6 +961,16 @@ const PredmetiList = () => {
                                            InputProps={{startAdornment: (
                                                <InputAdornment position="start"><NotesIcon sx={{fontSize: 17, color: '#AAA'}}/></InputAdornment>
                                            )}}/>
+                            </LabeledField>
+
+                            <LabeledField label="Име на документ">
+                                <TextField fullWidth size="small" placeholder="Пребарај по име на документ..."
+                                           sx={{m:0}}
+                                           value={searchForm.imeDokument}
+                                           onChange={(e) => hf('imeDokument', e.target.value)}
+                                           InputProps={{startAdornment: (
+                                                   <InputAdornment position="start"><AttachFileIcon sx={{fontSize: 17, color: '#AAA'}}/></InputAdornment>
+                                               )}}/>
                             </LabeledField>
                         </Box>
 
