@@ -237,9 +237,9 @@ public class PredmetService {
             UUID vidPredmetDobienaId, UUID vidPredmetIspratenaId,
             Boolean realizirano, String search,
             TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,UUID arhivaId,
-        String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska,
-        String brAktArhivski,String promenilKorisnik,
-        String brAkt) {
+            String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska,
+            String brAktArhivski,String promenilKorisnik,
+            String brAkt, String imeDokument) {
 
         Specification<Predmet> spec = Specification
                 .where(PredmetSpecification.isActive())
@@ -265,6 +265,7 @@ public class PredmetService {
                 .and(PredmetSpecification.hasZabeleska(zabeleska))
                 .and(PredmetSpecification.hasBrAktArhivskiLike(brAktArhivski))
                 .and(PredmetSpecification.hasPromenilKorisnikLike(promenilKorisnik))
+                .and(PredmetSpecification.hasSkeniranDokumentIme(imeDokument))
 
                 .and(PredmetSpecification.searchText(search));
 

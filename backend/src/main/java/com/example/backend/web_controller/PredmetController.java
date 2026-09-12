@@ -145,14 +145,14 @@ public class PredmetController {
             @RequestParam(required = false) String zabeleska,
             @RequestParam(required = false) String brAktArhivski,
             @RequestParam(required = false) String promenilKorisnik,
-//            @RequestParam(required = false,defaultValue = "true") Boolean isActive
+            @RequestParam(required = false) String imeDokument,
             @AuthenticationPrincipal UserDetails userDetails
     ){
         return ResponseEntity.ok(predmetService.getAllPredmeti(pageable, godina, redenBroj, isprakjacIme, odgovornoLiceId, dodelenoNaId,
                 vidPredmetDobienaId, vidPredmetIspratenaId, realizirano, search,
                 tipDelovnik, tipPosta, statusPredmet,arhivaId,datumZaveduvanje,brAktNivni,sodrzina,zabeleska,
                 brAktArhivski,promenilKorisnik,
-                orgCodeForFiltering(userDetails)));
+                orgCodeForFiltering(userDetails), imeDokument));
     }
     @GetMapping("/next-reden-broj")
     public ResponseEntity<Integer> getNextRedenBroj(@AuthenticationPrincipal UserDetails userDetails) {

@@ -7,7 +7,8 @@ import jakarta.persistence.criteria.JoinType;
 import com.example.backend.model.Predmet;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
-
+import com.example.backend.model.SkeniraniDokumenti;
+import jakarta.persistence.criteria.Subquery;
 
 public class PredmetSpecification {
 
@@ -15,7 +16,18 @@ public class PredmetSpecification {
         return (root,query,cb)->
                 godina==null ? null :cb.equal(root.get("godina"),godina);
     }
+    public static Specification<Predmet> hasSkeniranDokumentIme(String imeFile) {
+        return (root, query, cb) -> {
+            if (imeFile == null || imeFile.isEmpty()) return null;
 
+            Subquery<java.util.UUID> subquery = query.subquery(java.util.UUID.class);
+            var sdRoot = subquery.from(SkeniraniDokumenti.class);
+            subquery.select(sdRoot.get("predmet").get("id"))
+                    .where(cb.like(cb.lower(sdRoot.get("imeFile")), "%" + imeFile.toLowerCase() + "%"));
+
+            return root.get("id").in(subquery);
+        };
+    }
     // Секоја орг. единица си ги гледа само своите предмети (brAkt = code на единицата).
     // null = без филтер (за ADMIN, кој гледа сѐ).
     public static Specification<Predmet> hasBrAkt(String brAkt) {
@@ -68,6 +80,14 @@ public class PredmetSpecification {
                 realizirano == null ? null : cb.equal(root.get("realizirano"), realizirano);
     }
 
+    private static Subquery<java.util.UUID> subqueryImeFile(jakarta.persistence.criteria.CriteriaQuery<?> query, jakarta.persistence.criteria.CriteriaBuilder cb, String pattern) {
+        Subquery<java.util.UUID> subquery = query.subquery(java.util.UUID.class);
+        var sdRoot = subquery.from(SkeniraniDokumenti.class);
+        subquery.select(sdRoot.get("predmet").get("id"))
+                .where(cb.like(cb.lower(sdRoot.get("imeFile")), pattern));
+        return subquery;
+    }
+
     public static Specification<Predmet> searchText(String search){
         return (root, query, cb) -> {
             if (search==null || search.isEmpty()) return null;
@@ -103,8 +123,9 @@ public class PredmetSpecification {
                     cb.like(cb.lower(promenil.get("prezime")), pattern),
                     cb.like(cb.lower(vidDobiena.get("naziv")), pattern),
                     cb.like(cb.lower(vidIspratena.get("naziv")), pattern),
-                    cb.like(cb.lower(arhiva.get("naziv")), pattern)
-                    );
+                    cb.like(cb.lower(arhiva.get("naziv")), pattern),
+                    root.get("id").in(subqueryImeFile(query, cb, pattern))
+            );
         };
     }
     public static Specification<Predmet> hasTipDelovnik(TipDelovnik tipDelovnik) {
