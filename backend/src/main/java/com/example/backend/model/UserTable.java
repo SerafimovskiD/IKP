@@ -2,9 +2,9 @@ package com.example.backend.model;
 
 import java.util.UUID;
 
+import com.example.backend.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Data

@@ -2,7 +2,7 @@ package com.example.backend.dto;
 
 import java.util.UUID;
 
-import com.example.backend.model.Role;
+import com.example.backend.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

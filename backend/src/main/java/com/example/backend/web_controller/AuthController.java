@@ -5,7 +5,7 @@ import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.RegisterRequest;
 import com.example.backend.dto.UserOdgovornoLiceResponse;
 import com.example.backend.exceptions.ResourceNotFoundException;
-import com.example.backend.model.Role;
+import com.example.backend.model.enums.Role;
 import com.example.backend.model.UserTable;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.auth.AuthService;

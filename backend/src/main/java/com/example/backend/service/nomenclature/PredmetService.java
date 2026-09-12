@@ -7,6 +7,7 @@ import com.example.backend.dto.*;
 import com.example.backend.exceptions.BadRequestException;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
+import com.example.backend.model.enums.*;
 import com.example.backend.repository.*;
 import com.example.backend.repository.specification.PredmetSpecification;
 
@@ -232,13 +233,13 @@ public class PredmetService {
     }
 
     public Page<PredmetListResponse> getAllPredmeti(
-            Pageable pageable, Integer godina,String redenBroj,
+            Pageable pageable, Integer godina, String redenBroj,
             String isprakjacIme, UUID odgovornoLiceId, UUID dodelenoNaId,
             UUID vidPredmetDobienaId, UUID vidPredmetIspratenaId,
             Boolean realizirano, String search,
-            TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet,UUID arhivaId,
-            String datumZaveduvanje,String brAktNivni,String sodrzina,String zabeleska,
-            String brAktArhivski,String promenilKorisnik,
+            TipDelovnik tipDelovnik, TipPosta tipPosta, StatusPredmet statusPredmet, UUID arhivaId,
+            String datumZaveduvanje, String brAktNivni, String sodrzina, String zabeleska,
+            String brAktArhivski, String promenilKorisnik,
             String brAkt, String imeDokument) {
 
         Specification<Predmet> spec = Specification

@@ -3,6 +3,10 @@ package com.example.backend.dto;
 import java.util.UUID;
 
 import com.example.backend.model.*;
+import com.example.backend.model.enums.Prioritet;
+import com.example.backend.model.enums.StatusPredmet;
+import com.example.backend.model.enums.TipDelovnik;
+import com.example.backend.model.enums.TipPosta;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

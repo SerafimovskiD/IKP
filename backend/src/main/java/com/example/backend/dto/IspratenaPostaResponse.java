@@ -3,6 +3,8 @@ package com.example.backend.dto;
 import java.util.UUID;
 
 import com.example.backend.model.*;
+import com.example.backend.model.enums.StatusPredmet;
+import com.example.backend.model.enums.TipPosta;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 

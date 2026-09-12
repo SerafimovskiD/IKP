@@ -1,7 +1,7 @@
 package com.example.backend.repository.specification;
-import com.example.backend.model.StatusPredmet;
-import com.example.backend.model.TipDelovnik;
-import com.example.backend.model.TipPosta;
+import com.example.backend.model.enums.StatusPredmet;
+import com.example.backend.model.enums.TipDelovnik;
+import com.example.backend.model.enums.TipPosta;
 import jakarta.persistence.criteria.JoinType;
 
 import com.example.backend.model.Predmet;

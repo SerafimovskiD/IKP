@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.example.backend.dto.*;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.model.*;
+import com.example.backend.model.enums.*;
 import com.example.backend.repository.PredmetRepository;
 import com.example.backend.repository.SkeniraniDokumentiRepository;
 import com.example.backend.repository.UserRepository;
@@ -23,7 +24,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
 import java.time.LocalDate;

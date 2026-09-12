@@ -1,9 +1,9 @@
 package com.example.backend.web_controller;
 
-import com.example.backend.model.Prioritet;
-import com.example.backend.model.StatusPredmet;
-import com.example.backend.model.TipDelovnik;
-import com.example.backend.model.TipPosta;
+import com.example.backend.model.enums.Prioritet;
+import com.example.backend.model.enums.StatusPredmet;
+import com.example.backend.model.enums.TipDelovnik;
+import com.example.backend.model.enums.TipPosta;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

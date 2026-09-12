@@ -2,7 +2,7 @@ package com.example.backend.model;
 
 import java.util.UUID;
 
-import jakarta.annotation.Nullable;
+import com.example.backend.model.enums.*;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.BatchSize;
@@ -10,7 +10,6 @@ import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity

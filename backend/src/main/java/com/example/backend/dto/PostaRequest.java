@@ -2,9 +2,9 @@ package com.example.backend.dto;
 
 import java.util.UUID;
 
-import com.example.backend.model.Prioritet;
-import com.example.backend.model.StatusPredmet;
-import com.example.backend.model.TipPosta;
+import com.example.backend.model.enums.Prioritet;
+import com.example.backend.model.enums.StatusPredmet;
+import com.example.backend.model.enums.TipPosta;
 import lombok.Data;
 
 import java.time.LocalDate;

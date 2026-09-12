@@ -162,10 +162,6 @@ const Header = ({ title, onMenuToggle }) => {
                         </Typography>
                     </Box>
                     <Divider/>
-                    <MenuItem onClick={handleMenuClose} sx={{ gap: 1.5, py: 1 }}>
-                        <PersonIcon fontSize="small" sx={{ color: 'text.secondary' }}/>
-                        <Typography fontSize="0.875rem">Профил</Typography>
-                    </MenuItem>
                     <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1, color: 'error.main' }}>
                         <LogoutIcon fontSize="small"/>
                         <Typography fontSize="0.875rem">Одјави се</Typography>

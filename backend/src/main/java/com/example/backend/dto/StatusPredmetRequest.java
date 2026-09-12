@@ -1,6 +1,6 @@
 package com.example.backend.dto;
 
-import com.example.backend.model.StatusPredmet;
+import com.example.backend.model.enums.StatusPredmet;
 import lombok.Data;
 
 @Data

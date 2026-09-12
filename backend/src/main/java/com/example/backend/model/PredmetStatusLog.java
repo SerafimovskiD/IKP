@@ -2,6 +2,7 @@ package com.example.backend.model;
 
 import java.util.UUID;
 
+import com.example.backend.model.enums.StatusPredmet;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;

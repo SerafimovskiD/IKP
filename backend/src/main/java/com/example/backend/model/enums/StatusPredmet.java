@@ -1,4 +1,4 @@
-package com.example.backend.model;
+package com.example.backend.model.enums;
 
 public enum StatusPredmet {
     ДП_доставена_до_помошникот,

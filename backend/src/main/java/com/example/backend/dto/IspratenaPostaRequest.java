@@ -4,9 +4,8 @@ import java.util.UUID;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.example.backend.model.Prioritet;
-import com.example.backend.model.StatusPredmet;
-import com.example.backend.model.TipPosta;
+import com.example.backend.model.enums.StatusPredmet;
+import com.example.backend.model.enums.TipPosta;
 import lombok.Data;
 
 @Data
