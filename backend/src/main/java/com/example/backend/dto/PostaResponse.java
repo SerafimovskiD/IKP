@@ -40,32 +40,18 @@ public class PostaResponse {
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
-    //Naum
     private List<UUID> vidPredmetDobienaId;
     private List<UUID> vidPredmetIspratenaId;
-    //    private UUID vidPredmetId;
-    //Mislam nema potreba da ima i naziv poso ke go dobivame preku ID <-Naum
-//    private String vidPredmetNaziv;
 
     private String sodrzina;
 
     private List<UUID> odgovornoLiceId;
     private List<UUID> dodelenoNaId;
-    //Naum
-//    private UUID odgovornoLiceId;
-    //Isto ko gore <-Naum
-//    private String odgovornoLiceIme;
-//    private String odgovornoLicePrezime;
-//    private String odgovornoLiceEmail;
 
     private Boolean informativnaPosta;
     private Boolean realizirano;
 
     private List<UUID> arhivaId;
-    //Naum
-//    private UUID arhivaId;
-    //isto ko gore <Naum
-//    private String arhivaNaziv;
 
     private String zabeleska;
 
@@ -116,10 +102,7 @@ public class PostaResponse {
         dto.setRealizirano(predmet.getRealizirano());
         dto.setArhivaId(predmet.getArhiva().stream().map(Arhiva::getId).toList());
         dto.setZabeleska(predmet.getZabeleska());
-//        dto.setRoditelPredmetId(predmet.getRoditelPredmet() != null
-//                ? predmet.getRoditelPredmet().getId() : null);
-//        dto.setOrganizaciskaEdinicaId(predmet.getOrganizaciskaedinica() != null
-//                ? predmet.getOrganizaciskaedinica().getId() : null);
+
         dto.setStatusPredmet(predmet.getStatusPredmet());
         dto.setTipDelovnik(predmet.getTipDelovnik());
         dto.setTipOdgovor(predmet.getTipOdgovor());

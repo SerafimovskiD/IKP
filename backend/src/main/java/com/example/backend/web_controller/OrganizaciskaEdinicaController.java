@@ -20,31 +20,26 @@ public class OrganizaciskaEdinicaController {
         this.organizaciskaEdinicaService = organizaciskaEdinicaService;
     }
 
-    //    @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping
     public ResponseEntity<List<OrgEdinicaResponse>> getAll() {
         return ResponseEntity.ok(organizaciskaEdinicaService.findAll());
     }
 
-//    @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<OrgEdinicaResponse> getById(@PathVariable UUID id){
         return ResponseEntity.ok(organizaciskaEdinicaService.findById(id));
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<OrgEdinicaResponse> create(@RequestBody OrgEdinicaRequest orgEdinicaRequest){
         return ResponseEntity.ok(organizaciskaEdinicaService.create(orgEdinicaRequest));
     }
-//
-//    @PreAuthorize("hasRole('ADMIN')")
+
     @PutMapping("/{id}")
     public ResponseEntity<OrgEdinicaResponse> update(@PathVariable UUID id,@RequestBody OrgEdinicaRequest orgEdinicaRequest){
         return ResponseEntity.ok(organizaciskaEdinicaService.update(id,orgEdinicaRequest));
     }
-//
-//    @PreAuthorize("hasRole('ADMIN')")
+
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id){
         organizaciskaEdinicaService.delete(id);

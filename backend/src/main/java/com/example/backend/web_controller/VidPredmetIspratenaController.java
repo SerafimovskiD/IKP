@@ -21,31 +21,26 @@ public class VidPredmetIspratenaController {
         this.vidPredmetService = vidPredmetService;
     }
 
-//    @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping
     public List<VidPredmetIspratena> getAllVidPredmet() {
         return this.vidPredmetService.getAllVidPredmet();
     }
 
-//    @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping("/{id}")
     public VidPredmetIspratena getVidPredmetById(@PathVariable UUID id) {
         return this.vidPredmetService.getVidPredmetById(id);
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public VidPredmetIspratena createVidPredmet(@RequestBody VidPredmetRequest request) {
         return this.vidPredmetService.createVidPredmet(request);
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public VidPredmetIspratena updateVidPredmet(@PathVariable UUID id, @RequestBody VidPredmetRequest request) {
         return this.vidPredmetService.updateVidPredmet(id, request);
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteVidPredmet(@PathVariable UUID id) {
         this.vidPredmetService.deleteVidPredmetById(id);

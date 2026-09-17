@@ -4,5 +4,3 @@ public enum TipDelovnik {
     Dobiena,
     Ispratena
 }
-
-

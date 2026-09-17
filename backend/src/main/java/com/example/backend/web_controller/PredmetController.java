@@ -45,11 +45,6 @@ public class PredmetController {
         this.userRepository = userRepository;
     }
 
-//    @PostMapping
-//    public Predmet createDobienaPosta(@RequestBody DobienaPostaRequest request) {
-//        return this.predmetService.createDobienaPosta(request);
-//    }
-
     @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<PostaResponse> createPosta(
@@ -76,51 +71,6 @@ public class PredmetController {
         );
     }
 
-//    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
-//    @PostMapping("/odgovor")
-//    public ResponseEntity<PostaResponse> odgovorPosta(
-//            @RequestBody PostaRequest request,
-//            @RequestParam Integer godina,
-//            @RequestParam Integer redenBroj,
-//            @RequestParam String brAkt,
-//            @RequestParam Integer podBroj,
-//            @RequestParam TipOdgovor tipOdgovor,
-//            @AuthenticationPrincipal UserDetails userDetails) {
-//        return ResponseEntity.ok(
-//                predmetService.odgovorPosta(request,redenBroj,godina,podBroj,brAkt,tipOdgovor)
-//        );
-//    }
-
-//    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
-//    @PutMapping("/odgovorDobienaPosta")
-//    public ResponseEntity<DobienaPostaResponse> odgovorDobienaPosta(@RequestBody DobienaPostaRequest dobienaPostaRequest, @AuthenticationPrincipal UserDetails userDetails,@RequestParam Integer predmetSoRedBr,@RequestParam Integer godina) {
-//        String email =userDetails.getUsername();
-//        return ResponseEntity.ok(predmetService.odgovorDobienaPosta(dobienaPostaRequest,email,predmetSoRedBr,godina));
-//    }
-
-
-//    @PreAuthorize("hasAnyRole('OSL','NACALNIK','ADMIN')")
-//    @PutMapping("/{id}/status")
-//    public Predmet updateStatusPredmet(@PathVariable UUID id, @RequestBody StatusPredmetRequest request, Authentication authentication) {
-//        return this.predmetService.updateStatusPredmet(id, request, authentication.getName());
-//    }
-
-//    @PreAuthorize("hasAnyRole('POMOSNIK','NACALNIK','ADMIN')")
-//    @PostMapping("/ispratena")
-//    public ResponseEntity<IspratenaPostaResponse> createIspratenaPosta(@RequestBody IspratenaPostaRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-//        String email =userDetails.getUsername();
-//        return ResponseEntity.ok(predmetService.createIspratenaPosta(request,email));
-//    }
-//    @PostMapping("/{predmetId}/skenirani-dokumenti/upload")
-//    public SkeniraniDokumentiResponse uploadSkeniraniDokumenti(@PathVariable UUID predmetId,
-//                                                       @RequestParam("file") MultipartFile file,
-//                                                       Authentication authentication) {
-//        return this.skeniraniDokumentiService.uploadDokument(
-//                predmetId,
-//                file,
-//                authentication.getName()
-//        );
-//    }
     @PreAuthorize("hasAnyRole('OSL','POMOSNIK','NACALNIK','ADMIN')")
     @GetMapping
     public ResponseEntity<Page<PredmetListResponse>> getAllPredmeti(
@@ -165,8 +115,6 @@ public class PredmetController {
         return ResponseEntity.ok(next);
     }
 
-    // brAkt (code на орг. единицата) по кој се филтрира листата предмети.
-    // null за ADMIN - тие гледаат сѐ.
     private String orgCodeForFiltering(UserDetails principal) {
         UserTable user = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -186,7 +134,6 @@ public class PredmetController {
             @RequestParam Integer godina){
         return ResponseEntity.ok(predmetService.getPrethodniPredmeti(brAkt,redenBroj,godina));
     }
-
 
     @PostMapping("/{id}/dokumenti")
     public ResponseEntity<Void> uploadDokument(

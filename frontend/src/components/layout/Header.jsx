@@ -10,36 +10,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 
-// const MKFlag = () => (
-//     <Box sx={{
-//         width: 52, height: 36,
-//         borderRadius: '3px',
-//         overflow: 'hidden',
-//         flexShrink: 0,
-//         display: 'flex',
-//         alignItems: 'center',
-//         justifyContent: 'center',
-//         bgcolor: '#CE2028',
-//         border: '1px solid rgba(255,255,255,0.2)'
-//     }}>
-//         <svg viewBox="0 0 52 36" width="52" height="36" xmlns="http://www.w3.org/2000/svg">
-//             <rect width="52" height="36" fill="#CE2028"/>
-//             {/* Сончеви зраци */}
-//             <line x1="26" y1="18" x2="0" y2="0" stroke="#FFD700" strokeWidth="2"/>
-//             <line x1="26" y1="18" x2="52" y2="0" stroke="#FFD700" strokeWidth="2"/>
-//             <line x1="26" y1="18" x2="0" y2="36" stroke="#FFD700" strokeWidth="2"/>
-//             <line x1="26" y1="18" x2="52" y2="36" stroke="#FFD700" strokeWidth="2"/>
-//             <line x1="26" y1="18" x2="26" y2="0" stroke="#FFD700" strokeWidth="2"/>
-//             <line x1="26" y1="18" x2="26" y2="36" stroke="#FFD700" strokeWidth="2"/>
-//             <line x1="26" y1="18" x2="0" y2="18" stroke="#FFD700" strokeWidth="2"/>
-//             <line x1="26" y1="18" x2="52" y2="18" stroke="#FFD700" strokeWidth="2"/>
-//             {/* Сонце */}
-//             <circle cx="26" cy="18" r="6" fill="#FFD700"/>
-//             <circle cx="26" cy="18" r="3.5" fill="#CE2028"/>
-//         </svg>
-//     </Box>
-// );
-
 const Header = ({ title, onMenuToggle }) => {
     const { user, logout } = useAuth();
     const [anchorEl, setAnchorEl] = useState(null);
@@ -65,7 +35,6 @@ const Header = ({ title, onMenuToggle }) => {
         >
             <Toolbar>
 
-                {/* Хамбургер */}
                 <IconButton
                     color="inherit"
                     aria-label="open drawer"
@@ -76,7 +45,6 @@ const Header = ({ title, onMenuToggle }) => {
                     <MenuIcon/>
                 </IconButton>
 
-                {/* Знаме */}
                 <img
                     alt="flag"
                     width="180"
@@ -85,7 +53,6 @@ const Header = ({ title, onMenuToggle }) => {
                     src={'/mk-flag.jpg'}
                 />
 
-                {/* Име на апликацијата */}
                 <Link
                     to="/dashboard"
                     style={{ textDecoration: 'none', marginLeft: '15px' }}
@@ -100,7 +67,6 @@ const Header = ({ title, onMenuToggle }) => {
                     </Typography>
                 </Link>
 
-                {/* Наслов на страница */}
                 <Typography
                     component="h1"
                     variant="h6"
@@ -111,18 +77,8 @@ const Header = ({ title, onMenuToggle }) => {
                     {title || ''}
                 </Typography>
 
-                {/* Иконки десно */}
-                {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 2 }}>*/}
 
-                    {/* Нотификации */}
-                    {/*<IconButton sx={{ color: '#fff' }}>*/}
-                    {/*    <Badge badgeContent={0} color="error">*/}
-                    {/*        <NotificationsIcon/>*/}
-                    {/*    </Badge>*/}
-                    {/*</IconButton>*/}
-                {/*</Box>*/}
 
-                {/* Корисник */}
                 <Typography align="right" sx={{ color: '#fff', mr: 1 }}>
                     {fullName}
                 </Typography>
@@ -139,7 +95,6 @@ const Header = ({ title, onMenuToggle }) => {
                     </Avatar>
                 </IconButton>
 
-                {/* Dropdown мени за корисник */}
                 <Menu
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}

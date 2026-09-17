@@ -16,9 +16,7 @@ import java.util.Optional;
 
 @Repository
 public interface PredmetRepository extends JpaRepository<Predmet, UUID>, JpaSpecificationExecutor<Predmet> {
-    // Нумерацијата на предметите е по орг. единица (brAkt) + година - две различни
-    // орг. единици може да имаат ист redenBroj во иста година, па сите методи
-    // клучирани на (redenBroj, godina) мора да носат и brAkt.
+
     @Query("SELECT COALESCE(MAX(p.redenBroj),0) FROM Predmet p WHERE p.brAkt = :brAkt AND p.godina = :godina")
     Integer findMaxRedenBrojByBrAktAndGodina(@Param("brAkt") String brAkt, @Param("godina") Integer godina);
 

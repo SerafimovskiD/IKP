@@ -1,11 +1,11 @@
-// src/pages/PredmetiList.jsx
+
 import {useState, useMemo, useCallback, useEffect} from 'react';
 import {
     Box, Typography, TextField, Autocomplete,
     Button, CircularProgress, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow,
     Paper, Pagination, InputAdornment,
-    Card, CardHeader, CardContent, Divider, Collapse, IconButton,
+    Card, CardHeader, CardContent, Collapse, IconButton,
     ToggleButton, ToggleButtonGroup,
     Menu, MenuItem, Checkbox, ListItemText
 } from '@mui/material';
@@ -46,11 +46,9 @@ const THEME = {
 
 const PAGE_SIZE = 20;
 
-const MESECI_IMINJA = ['Јан', 'Фев', 'Мар', 'Апр', 'Мај', 'Јун', 'Јул', 'Авг', 'Сеп', 'Окт', 'Нов', 'Дек'];
+const MESECI_IMINJA = ['1.Јан', '2.Фев', '3.Мар', '4.Апр', '5.Мај', '6.Јун', '7.Јул', '8.Авг', '9.Сеп', '10.Окт', '11.Нов', '12.Дек'];
 const MESECI_OPTIONS = MESECI_IMINJA.map((label, i) => ({value: String(i + 1).padStart(2, '0'), label}));
 
-
-// Клучевите на сите колони од табелата (за состојбата на видливост).
 const COLUMN_KEYS = [
     'redenBroj', 'tipDelovnik', 'tipPosta', 'datumZaveduvanje', 'brAktNivni',
     'brAktArhivski', 'datumIsprakjanje',
@@ -84,17 +82,9 @@ const EMPTY_FILTERS = {
     zabeleska: '',
 };
 
-// Ги паметиме последната состојба на пребарувањето/табелата во sessionStorage - за
-// да не се губи кога корисникот отвора предмет и се враќа назад (browser back).
-// sessionStorage (не localStorage) - се брише кога ќе се затвори табот, не е трајно.
-// Одделени клучеви за филтрите/поставките (мали, менуваат често) и за самите
-// превземени податоци (allData - поголеми, менуваат само по пребарување), за да не
-// се сериjализира целиот allData на секој тастер во некој филтер.
 const FILTERS_STORAGE_KEY = 'predmetList.filters.v1';
 const DATA_STORAGE_KEY = 'predmetList.data.v1';
-// Паметењето важи само 2 минути откако корисникот ќе ја напушти страницата - по тоа
-// истечено време состојбата се смета за застарена и страницата тргнува од почеток
-// (како да немало ништо зачувано), наместо да остане "заглавена" на старото пребарување.
+
 const STATE_TTL_MS = 2 * 60 * 1000;
 
 const readStored = (key) => {
@@ -116,7 +106,7 @@ const writeStored = (key, value) => {
     try {
         sessionStorage.setItem(key, JSON.stringify({savedAt: Date.now(), value}));
     } catch {
-        // sessionStorage недостапен/полн - тивко се прескокнува.
+        return;
     }
 };
 
@@ -127,44 +117,33 @@ const PredmetiList = () => {
 
     const navigate = useNavigate();
 
-    // Иницијално видливи се само: Наш број, вид пошта, датум заведување, број акт(нивни),
-    // испраќач, одговорно лице, доделено на, предмет, содржина, реализ, архива, забелешка, статус.
     const DEFAULT_VISIBLE_COLS = [
         'redenBroj', 'tipPosta', 'datumZaveduvanje', 'brAktNivni',
         'isprakjacIme', 'promenilKorisnik', 'odgovornoLice', 'dodelenoNa', 'vidPredmet', 'sodrzina',
         'realizirano', 'arhiva', 'zabeleska', 'statusPredmet',
     ];
 
-    // Се читаат еднаш при монтирање (свежо на секое враќање на страницата преку "back").
     const storedFilters = readStoredFilters();
     const storedData = readStoredData();
 
-    // Сите записи од последното пребарување кон backend-от (само еден повик).
     const [allData, setAllData] = useState(() => storedData?.allData ?? []);
-    // Ако backend-от навистина има повеќе резултати отколку што ги превземавме во еден повик
-    // (size=100000), тука го чуваме реалниот вкупен број за да предупредиме дека листата е
-    // намалена, наместо молчешкум да недостасуваат резултати.
+
     const [totalOnServer, setTotalOnServer] = useState(() => storedData?.totalOnServer ?? null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [hasSearched, setHasSearched] = useState(() => storedFilters?.hasSearched ?? false);
-    // Формата со филтрите е отворена при прв пристап до страницата; по пребарувањето
-    // се затвора (за да не зазема простор) но останува достапна преку копчето за отворање.
+
     const [filtersOpen, setFiltersOpen] = useState(() => storedFilters?.filtersOpen ?? true);
 
-    // Филтрите од главната форма - се користат ИСКЛУЧИВО за повикот кон backend-от (копчето „Пребарај“).
     const [searchForm, setSearchForm] = useState(() => storedFilters?.searchForm ?? EMPTY_FILTERS);
-    // Филтрите во колоните на табелата - работат ИСКЛУЧИВО локално, врз веќе превземените
-    // податоци (allData), без никаков повик кон backend-от.
+
     const [colFilters, setColFilters] = useState(() => storedFilters?.colFilters ?? EMPTY_FILTERS);
-    // Филтерот за месец во формата (комбинирано со постоечкото поле "Година") се спојува во истиот
-    // searchForm.datumZaveduvanje низа-филтер како и досега (истата логика на backend-от -
-    // hasDatumZaveduvanjeLike прави LIKE '%YYYY-MM-DD%' пребарување).
+
     const [mesecZaveduvanje, setMesecZaveduvanje] = useState(() => storedFilters?.mesecZaveduvanje ?? '');
 
     const [page, setPage] = useState(() => storedFilters?.page ?? 0);
     const [sort, setSort] = useState(() => storedFilters?.sort ?? {field: 'datumZaveduvanje', dir: 'desc'});
-    // Кои колони од табелата се видливи - корисникот сам избира преку копчето "Колони".
+
     const [visibleCols, setVisibleCols] = useState(
         () => storedFilters?.visibleCols
             ?? Object.fromEntries(COLUMN_KEYS.map(k => [k, DEFAULT_VISIBLE_COLS.includes(k)]))
@@ -172,9 +151,6 @@ const PredmetiList = () => {
     const [colsMenuAnchor, setColsMenuAnchor] = useState(null);
     const toggleCol = (key) => setVisibleCols(p => ({...p, [key]: !p[key]}));
 
-    // Ги зачувуваме филтрите/поставките на секоја промена (лесни податоци, честа промена -
-    // на секој тастер во некој филтер) - за да се вратат при следно монтирање (browser back),
-    // но само во рок од 2 минути (STATE_TTL_MS) - по тоа се смета за застарено.
     useEffect(() => {
         writeStored(FILTERS_STORAGE_KEY, {
             hasSearched, filtersOpen, searchForm, colFilters,
@@ -182,8 +158,6 @@ const PredmetiList = () => {
         });
     }, [hasSearched, filtersOpen, searchForm, colFilters, mesecZaveduvanje, page, sort, visibleCols]);
 
-    // Одделно ги зачувуваме превземените податоци (allData) - поголеми, се менуваат само
-    // по завршено пребарување, не на секој тастер.
     useEffect(() => {
         writeStored(DATA_STORAGE_KEY, {allData, totalOnServer});
     }, [allData, totalOnServer]);
@@ -194,8 +168,6 @@ const PredmetiList = () => {
     const {arhiva} = useArhiva();
     const {statusPredmet} = useEnums();
 
-    // Еден повик кон backend-от - ги земаме сите записи според тековните филтри
-    // (arhivaNaziv и brAkt не постојат како параметри на backend-от, тие се филтрираат само на frontend).
     const fetchData = useCallback(async (searchFilters) => {
         setLoading(true);
         setError(null);
@@ -229,9 +201,7 @@ const PredmetiList = () => {
             const res = await predmetiApi.getAll(Object.fromEntries(params));
             let content = res?.content ?? [];
             setTotalOnServer(res?.page?.totalElements ?? content.length);
-            // Backend-от филтрира datumZaveduvanje со LIKE '%-MM-%' - точна позиција на месецот
-            // во "YYYY-MM-DD", но тука сепак ја потврдуваме точноста врз реалната вредност на секој
-            // предмет (без нов backend повик), како дополнителна гаранција.
+
             if (mesecZaveduvanje) {
                 content = content.filter(p => {
                     if (!p.datumZaveduvanje) return false;
@@ -249,19 +219,15 @@ const PredmetiList = () => {
         }
     }, [sort, mesecZaveduvanje]);
 
-    // Ажурира поле во главната форма (backend филтри) - не влијае на филтрите во колоните.
     const hf = (field, value) => {
         setSearchForm(p => ({...p, [field]: value}));
     };
 
-    // Ажурира поле во филтрите на колоните (само frontend) - не влијае на главната форма.
     const hfCol = (field, value) => {
         setColFilters(p => ({...p, [field]: value}));
         setPage(0);
     };
 
-    // Го поставува месецот и го спојува во истиот "YYYY-MM-DD" филтер-низа што backend-от ја
-    // користи за LIKE пребарување ("-MM-" - цртичка од двете страни, точно на позицијата на месецот).
     const hfMesec = (value) => {
         setMesecZaveduvanje(value);
         hf('datumZaveduvanje', value ? `-${String(value).padStart(2, '0')}-` : '');
@@ -279,9 +245,7 @@ const PredmetiList = () => {
 
     const handleSearch = () => {
         setHasSearched(true);
-        // Секое ново пребарување кон backend-от ги ресетира и филтрите во колоните -
-        // инаку "заборавен" филтер во некоја колона би можел молчешкум да сокрие
-        // резултат што backend-от штотуку точно го врати.
+
         setColFilters(EMPTY_FILTERS);
         setPage(0);
         setFiltersOpen(false);
@@ -292,8 +256,7 @@ const PredmetiList = () => {
         () => Object.values(searchForm).filter(v => v !== '').length,
         [searchForm]
     );
-    // Филтрирањето во колоните на табелата работи ИСКЛУЧИВО локално, врз веќе
-    // превземените податоци (allData) - без никаков нов повик кон backend-от.
+
     const filteredData = useMemo(() => {
         const matchesText = (value, needle) =>
             !needle || (value ?? '').toString().toLowerCase().includes(needle.toLowerCase());
@@ -304,8 +267,7 @@ const PredmetiList = () => {
             if (!matchesText(p.brAkt, colFilters.brAkt)) return false;
             if (!matchesText(p.brAktNivni, colFilters.brAktNivni)) return false;
             if (!matchesText(p.brAktArhivski, colFilters.brAktArhivski)) return false;
-            // Датумите се чуваат/стигнуваат од backend-от во YYYY-MM-DD, но колонскиот
-            // филтер работи со истиот DD.MM.YYYY формат како приказот во табелата.
+
             if (!matchesText(formatDate(p.datumZaveduvanje), colFilters.datumZaveduvanje)) return false;
             if (!matchesText(formatDate(p.datumIsprakjanje), colFilters.datumIsprakjanje)) return false;
             if (colFilters.godina && String(p.godina) !== String(colFilters.godina)) return false;
@@ -362,20 +324,15 @@ const PredmetiList = () => {
         setPage(0);
     };
 
-    // Дефиниција на сите колони - заедничка за заглавието и телото на табелата,
-    // за да "Колони" копчето може да ги вклучува/исклучува двете конзистентно.
     const allColumns = [
         {
-            key: 'redenBroj', label: 'Наш бр.', field: 'redenBroj', minWidth: 80,
+            key: 'redenBroj', label: 'Наш брoj', field: 'redenBroj', minWidth: 80,
             filter: <ColFilter value={colFilters.redenBroj}
                                onChange={(v) => hfCol('redenBroj', v)}
                                placeholder="Број..."/>,
             cell: (predmet) => (
                 <Typography sx={{fontSize: '0.82rem', fontWeight: 600, color: '#333', fontFamily: 'monospace'}}>
                     {predmet.redenBroj}
-                    {/* vkPodBroevi - вкупен број на под-предмети (под броеви) за истиот
-                        реден број/година (пр. 765/3 - реден број 765, вкупно 3 под-предмети) -
-                        се прикажува само кога има повеќе од 1, за да не оптоварува кога е обичен случај. */}
                     {predmet.vkPodBroevi > 1 && (
                         <Typography component="span" sx={{
                             fontSize: '0.7rem', fontWeight: 500, color: '#999', ml: 0.3,
@@ -516,12 +473,7 @@ const PredmetiList = () => {
         },
         {
             key: 'vidPredmet', label: 'Предмет', field: null, minWidth: 150,
-            // Оваа колона спојува два различни списока - "Вид предмет (добиена)" и
-            // "Вид предмет (испратена)" - во еден dropdown. За да не се мешаат опциите
-            // (и за да не се постави погрешно поле кога филтерот "Вид пошта" не е избран),
-            // секоја опција се означува со _tip ('D'/'I'), се групираат визуелно во
-            // dropdown-от (ColDropdown groupBy), а id-то се прави уникатно ("D:5"/"I:5")
-            // за да не се судираат идентични ID-а од двете табели.
+
             filter: <ColDropdown
                 value={
                     colFilters.vidPredmetIspratenaId ? `I:${colFilters.vidPredmetIspratenaId}`
@@ -647,30 +599,42 @@ const PredmetiList = () => {
     return (
         <Box sx={{p: 3}}>
 
-            {/* ── НАСЛОВ ── */}
-            <Box sx={{
-                background: 'linear-gradient(240deg, #b6a268 0%, #dbbd5e 70%, #826f35 100%)',
-                borderRadius: '0% 100% 100% 0% / 50% 50% 50% 50%',
-                mb: '5px', px: 2,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            }}>
-                <Typography variant="h6" sx={{color: '#000'}}>
-                    Пребарување — Листа на пошти
+            <Box sx={{mb: 2.5}}>
+                <Typography variant="h5" sx={{fontWeight: 700, color: '#2A2A2A', letterSpacing: '-0.01em'}}>
+                    Листа на пошти
+                </Typography>
+                <Typography sx={{color: '#8A8A8A', fontSize: '0.85rem', mt: 0.3}}>
+                    Пребарување и преглед на предмети
                 </Typography>
             </Box>
-            <Divider/>
-            <br/>
-            <Card sx={{marginBottom: '3px'}}>
+
+            <Card sx={{
+                borderRadius: '14px',
+                border: '1px solid #ECECEC',
+                boxShadow: '0 1px 3px rgba(16,24,40,0.06)',
+                overflow: 'hidden',
+            }}>
                 <CardHeader
                     sx={{
-                        maxHeight: '5px',
-                        background: 'linear-gradient(240deg, #FFFFFF 0%, #dbbd5e 70%, #A9A085 100%)',
-                        borderRadius: '0% 100% 100% 0% / 50% 50% 50% 50%',
+                        bgcolor: '#FAFAF9',
+                        borderBottom: '1px solid #EFEFEF',
+                        py: 1.4, px: 2.5,
                     }}
                     title={
-                        <Typography variant="subtitle1" color="#FFFFFF">
-                            Резултати
-                        </Typography>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1.2}}>
+                            <Typography variant="subtitle1" sx={{fontWeight: 700, color: '#333'}}>
+                                Резултати
+                            </Typography>
+                            {hasSearched && !loading && !error && (
+                                <Box sx={{
+                                    bgcolor: THEME.accentLight, color: THEME.accent,
+                                    fontSize: '0.72rem', fontWeight: 700, borderRadius: '10px',
+                                    px: 1, py: 0.15, border: `1px solid ${THEME.border}`,
+                                }}>
+                                    {sortedData.length.toLocaleString()}
+                                </Box>
+                            )}
+                        </Box>
                     }
                 />
                 <CardContent>
@@ -692,7 +656,6 @@ const PredmetiList = () => {
                             px: {xs: 2, md: 1},
                             borderBottom: filtersOpen ? '1px solid #EEE' : 'none',
                         }}>
-                            {/* Копче за избор на видливи колони - мала икона, лево */}
                             <IconButton
                                 size="small"
                                 onClick={(e) => setColsMenuAnchor(e.currentTarget)}
@@ -753,10 +716,6 @@ const PredmetiList = () => {
                         </Box>
 
                         <Collapse in={filtersOpen}>
-                        {/* ГОЛЕМ ОПШТ ФИЛТЕР - пребарува преку backend-от (searchText) низ број
-                            акт (нивни/архивски), датуми, содржина, забелешка, испраќач,
-                            одговорно лице, доделено на, извршил промена, вид на предмет
-                            и архива - едновремено. */}
                         <Box sx={{px: {xs: 2, md: 3}, pt: 2.5}}>
                             <TextField
                                 fullWidth
@@ -1005,9 +964,12 @@ const PredmetiList = () => {
                         </Collapse>
                     </Box>
 
-                    {/* TABLE */}
                     {!hasSearched ? (
-                        <Box sx={{p: 5, textAlign: 'center'}}>
+                        <Box sx={{
+                            p: 6, textAlign: 'center',
+                            border: '1px dashed #E0E0E0', borderRadius: '10px', bgcolor: '#FAFAFA',
+                        }}>
+                            <SearchIcon sx={{fontSize: 30, color: '#D8D8D8', mb: 1}}/>
                             <Typography sx={{color: '#999', fontSize: '0.9rem'}}>
                                 Внесете филтри и кликнете „Пребарај“ за да ги видите предметите
                             </Typography>
@@ -1015,24 +977,25 @@ const PredmetiList = () => {
                     ) : (
                     <>
                     {loading ? (
-                        <Box sx={{display: 'flex', justifyContent: 'center', py: 6}}>
-                            <CircularProgress sx={{color: THEME.accent}}/>
+                        <Box sx={{display: 'flex', justifyContent: 'center', py: 8}}>
+                            <CircularProgress sx={{color: THEME.accent}} size={32}/>
                         </Box>
                     ) : error ? (
-                        <Box sx={{p: 3, textAlign: 'center'}}>
-                            <Typography color="error">{error}</Typography>
+                        <Box sx={{
+                            p: 3, textAlign: 'center',
+                            border: '1px solid #F5C6C6', borderRadius: '10px', bgcolor: '#FFF5F5',
+                        }}>
+                            <Typography color="error" sx={{fontSize: '0.85rem', fontWeight: 500}}>{error}</Typography>
                         </Box>
                     ) : (
                         <TableContainer component={Paper} elevation={0}
                                         sx={{
-                                            border: '1px solid #E8E8E8', borderRadius: '8px',
-                                            overflow: 'hidden', overflowX: 'auto'
+                                            border: '1px solid #E9E9E9', borderRadius: '10px',
+                                            overflow: 'hidden', overflowX: 'auto',
                                         }}>
                             <Table size="small" sx={{
                                 minWidth: 1400,
-                                // table-layout: fixed - колоните ги почитуваат зададените
-                                // width/minWidth/maxWidth без разлика на содржината, па не
-                                // се прошируваат/собираат кога ќе се смени вредноста во филтерот.
+
                                 tableLayout: 'fixed',
                                 '& td.MuiTableCell-root, & th.MuiTableCell-root': {
                                     padding: '6px 24px 6px 16px',
@@ -1041,17 +1004,14 @@ const PredmetiList = () => {
                                 '& th.MuiTableCell-root input': {fontSize: '12px'},
                             }}>
                                 <TableHead>
-                                    {/* Наслов + филтер заедно во еден ред, златна боја */}
-                                    <TableRow sx={{
-                                        background: 'linear-gradient(240deg, #b6a268 0%, #dbbd5e 70%, #826f35 100%)',
-                                    }}>
+                                    <TableRow sx={{bgcolor: THEME.accent}}>
                                         {columns.map(({key, label, field, filter, minWidth}) => (
                                             <TableCell key={key}
                                                        sx={{
                                                            verticalAlign: 'top',
-                                                           whiteSpace: 'nowrap',
+                                                           whiteSpace: 'normal',
                                                            borderBottom: 'none',
-                                                           padding: '8px !important',
+                                                           padding: '10px 8px !important',
                                                            width: minWidth || 100,
                                                            minWidth: minWidth || 100,
                                                            maxWidth: minWidth || 100,
@@ -1060,14 +1020,18 @@ const PredmetiList = () => {
                                                 <Box
                                                     onClick={() => field && handleSort(field)}
                                                     sx={{
-                                                        display: 'flex', alignItems: 'center', gap: 0.3,
-                                                        fontWeight: 'bold', color: '#fff',
+                                                        display: 'flex', alignItems: 'flex-start', gap: 0.3,
+                                                        fontWeight: 700, color: '#fff', fontSize: '0.69rem',
+                                                        lineHeight: 1.15, letterSpacing: '0.01em',
                                                         cursor: field ? 'pointer' : 'default',
-                                                        userSelect: 'none', mb: 0.6,
-                                                        overflow: 'hidden',
+                                                        userSelect: 'none', mb: 0.8,
+                                                        opacity: 0.96,
+                                                        '&:hover': field ? {opacity: 1} : undefined,
                                                     }}
                                                 >
-                                                    <Box component="span" sx={{overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                                                    <Box component="span" sx={{
+                                                        whiteSpace: 'normal', wordBreak: 'break-word',
+                                                    }}>
                                                         {label}
                                                     </Box>
                                                     {field && <SortIcon field={field} sort={sort}/>}
@@ -1081,17 +1045,21 @@ const PredmetiList = () => {
                                 <TableBody>
                                     {pagedData.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={columns.length || 1} sx={{textAlign: 'center', py: 6}}>
+                                            <TableCell colSpan={columns.length || 1} sx={{textAlign: 'center', py: 7}}>
                                                 <Typography sx={{color: '#BBB', fontSize: '0.875rem'}}>
                                                     Нема пронајдени предмети
                                                 </Typography>
                                             </TableCell>
                                         </TableRow>
-                                    ) : pagedData.map((predmet) => (
+                                    ) : pagedData.map((predmet, idx) => (
                                         <TableRow key={predmet.id}
                                                   sx={{
-                                                      '&:hover': {bgcolor: 'lightgray'}, cursor: 'pointer',
-                                                      '&:last-child td': {borderBottom: 'none'}
+                                                      cursor: 'pointer',
+                                                      bgcolor: idx % 2 === 1 ? '#FAFAFA' : '#fff',
+                                                      transition: 'background-color 0.12s ease',
+                                                      '&:hover': {bgcolor: THEME.accentLight},
+                                                      '& td': {borderBottom: '1px solid #F0F0F0'},
+                                                      '&:last-child td': {borderBottom: 'none'},
                                                   }}
                                                   onClick={() => navigate(`/posta/${predmet.id}`)}
                                         >
@@ -1116,12 +1084,10 @@ const PredmetiList = () => {
                     </>
                     )}
 
-                    {/* ПРЕДУПРЕДУВАЊЕ - ако backend-от навистина има повеќе резултати од
-                        големината на еден повик (100000), листата е намалена и не се сите. */}
                     {hasSearched && totalOnServer !== null && totalOnServer > allData.length && (
                         <Box sx={{
                             mt: 2, p: 1.5, bgcolor: '#FFF8E1',
-                            border: '1px solid #FFE082', borderRadius: '6px'
+                            border: '1px solid #FFE082', borderRadius: '8px'
                         }}>
                             <Typography sx={{color: '#8D6E00', fontSize: '0.8rem'}}>
                                 Прикажани се само првите {allData.length.toLocaleString()} од вкупно {totalOnServer.toLocaleString()} резултати.
@@ -1130,20 +1096,20 @@ const PredmetiList = () => {
                         </Box>
                     )}
 
-                    {/* PAGINATION (клиентска, врз веќе превземените и филтрирани податоци) */}
                     {sortedData.length > 0 && totalPages > 1 && (
                         <Box sx={{
                             display: 'flex', justifyContent: 'space-between',
-                            alignItems: 'center', mt: 2
+                            alignItems: 'center', mt: 2.5, pt: 2, borderTop: '1px solid #F0F0F0',
                         }}>
-                            <Typography sx={{fontSize: '0.78rem', color: '#888'}}>
-                                Прикажани {pagedData.length} од {sortedData.length} записи
+                            <Typography sx={{fontSize: '0.78rem', color: '#999'}}>
+                                Прикажани <b style={{color: '#666'}}>{pagedData.length}</b> од <b style={{color: '#666'}}>{sortedData.length}</b> записи
                             </Typography>
                             <Pagination
                                 count={totalPages}
                                 page={page + 1}
                                 onChange={(_, val) => setPage(val - 1)}
                                 size="small"
+                                shape="rounded"
                                 sx={{
                                     '& .MuiPaginationItem-root': {fontSize: '0.78rem'},
                                     '& .Mui-selected': {bgcolor: `${THEME.accent} !important`, color: '#fff'}
@@ -1157,12 +1123,8 @@ const PredmetiList = () => {
     );
 };
 
-// Заеднички стил за малите надписи над полињата во формата - сите полиња (текстуални, autocomplete,
-// toggle) имаат ист "надпис одозгора + контрола" распоред за да се совпаѓаат по висина во мрежата.
 const FIELD_LABEL_SX = {fontSize: '0.72rem', color: '#666', fontWeight: 500, mb: 0.5, ml: 0.1};
 
-// Ги обвиткува обичните полиња (TextField/Autocomplete без сопствен label) со надпис одозгора,
-// со ист изглед и висина како ToggleField и групата за датум - за подобро порамнување во мрежата.
 const LabeledField = ({label, children, sx}) => (
     <Box sx={sx}>
         <Typography sx={FIELD_LABEL_SX}>{label}</Typography>
@@ -1170,8 +1132,6 @@ const LabeledField = ({label, children, sx}) => (
     </Box>
 );
 
-// Сегментирана контрола (MUI ToggleButtonGroup) за филтри со точно 2 опции.
-// Кликот на веќе избраната опција ја отповикува (враќа на "Сите").
 const ToggleField = ({label, value, onChange, options}) => (
     <Box>
         <Typography sx={FIELD_LABEL_SX}>{label}</Typography>
@@ -1202,9 +1162,6 @@ const ToggleField = ({label, value, onChange, options}) => (
     </Box>
 );
 
-// Autocomplete-базиран еквивалент на ColDropdown, за употреба во формата со филтри
-// (дозволува и пребарување со пишување, не само избор од листа). Секогаш е обвиткан во
-// LabeledField, па нема сопствен label - користи placeholder наместо тоа.
 const ColDropdownField = ({value, onChange, options, getLabel, getId}) => {
     const selected = options.find(o => String(getId(o)) === String(value)) || null;
     return (

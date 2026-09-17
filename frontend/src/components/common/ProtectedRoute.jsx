@@ -16,8 +16,6 @@ export default function ProtectedRoute({ children, roles }) {
         return <Navigate to="/login" replace />;
     }
 
-    //Roles check
-
     if (roles && roles.length > 0) {
         const hasRequiredRole = roles.includes(user.uloga);
         if (!hasRequiredRole) {

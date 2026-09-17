@@ -1,7 +1,5 @@
 import { Card, CardHeader, CardContent, Typography } from '@mui/material';
 
-// Заедничка секција-картичка (изглед идентичен на DemoApp CardWrapperWithStyles) —
-// се користи низ CreatePostaForm и PostaDetails за да изгледаат конзистентно.
 const SectionCard = ({title, children, noPad = false}) => (
     <Card sx={{marginBottom: '3px'}}>
         <CardHeader

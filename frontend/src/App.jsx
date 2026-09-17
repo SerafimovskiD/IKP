@@ -17,7 +17,6 @@ export default function App() {
                 <SnackbarProvider>
                     <Routes>
 
-                        {/* Јавни — без layout */}
                         <Route path="/login" element={<LoginPage/>}/>
 
                         <Route path="/forbidden" element={
@@ -31,7 +30,6 @@ export default function App() {
                             </Box>
                         }/>
 
-                        {/* Заштитени — со Layout */}
                         <Route path="/dashboard" element={
                             <ProtectedRoute>
                                 <Layout>

@@ -56,7 +56,6 @@ const ISPRATENA = {
     valueBg: '#fff',
 };
 
-// ─── РЕД ОД ПОЛИЊА - исто како во CreatePostaForm ───────────────────────────────
 const FormRow = ({children, columns}) => (
     <Box sx={{
         display: 'grid', gap: 2,
@@ -70,7 +69,6 @@ const FormRow = ({children, columns}) => (
     </Box>
 );
 
-// ─── ПРОСТО ПОЛЕ (само за читање) - надпис одозгора + вредност во рамка ─────────
 const DetailField = ({label, value, sx}) => (
     <Box sx={sx}>
         <Typography sx={{
@@ -90,7 +88,6 @@ const DetailField = ({label, value, sx}) => (
     </Box>
 );
 
-// ─── ВИШЕЗНАЧНО ПОЛЕ (chips) - за читање ────────────────────────────────────────
 const DetailChipsField = ({label, items, getLabel, theme, sx}) => (
     <Box sx={sx}>
         <Typography sx={{
@@ -118,7 +115,6 @@ const DetailChipsField = ({label, items, getLabel, theme, sx}) => (
     </Box>
 );
 
-// ─── МУЛТИЛИНИСКО ПОЛЕ (Содржина/Забелешка) - за читање ─────────────────────────
 const DetailTextArea = ({label, value, minHeight, sx}) => (
     <Box sx={sx}>
         <Typography sx={{
@@ -141,7 +137,6 @@ const DetailTextArea = ({label, value, minHeight, sx}) => (
     </Box>
 );
 
-// ─── СЕГМЕНТИРАН ПРИКАЗ (Тип/Приоритет) - исто како ToggleField, но само за читање ──
 const DetailToggle = ({label, value, options, theme}) => (
     <Box>
         <Typography sx={{
@@ -168,8 +163,6 @@ const DetailToggle = ({label, value, options, theme}) => (
     </Box>
 );
 
-// ─── ПРИКАЗ НА ДА/НЕ (Информативна пошта/Реализирано) - иста структура (надпис
-// одозгора + рамка) како и другите Detail* полиња, за да се порамнат во истиот ред.
 const DetailSwitch = ({label, checked, theme}) => (
     <Box>
         <Typography sx={{
@@ -205,7 +198,6 @@ const PostaDetails = () => {
     const {id} = useParams();
     const navigate = useNavigate();
 
-    // ── СЕ HOOKS ПРВО ──
     const {predmet, loading, error} = usePredmetDetails(id);
     const {arhiva} = useArhiva();
     const {vidPredmetD} = useVidPredmetDobieno();
@@ -222,19 +214,12 @@ const PostaDetails = () => {
 
     const [dokumenti, setDokumenti] = useState([]);
 
-    // Преглед на документ (Dialog) - blob URL (слики/PDF), вистински рендериран
-    // .docx преку docx-preview (изгледа идентично како кога документот ќе се преземе
-    // и отвори во Word - страници, маргини, фонтови), или Excel (.xls/.xlsx) преку
-    // SheetJS (xlsx) - секој лист (sheet) се рендерира како HTML табела.
     const [previewDoc, setPreviewDoc] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [previewDocxBlob, setPreviewDocxBlob] = useState(null);
     const [previewExcelSheets, setPreviewExcelSheets] = useState(null);
     const [previewLoading, setPreviewLoading] = useState(false);
-    // Одделно loading за самото рендерирање на .docx (docx-preview) - previewLoading
-    // завршува веднаш штом blob-от е превземен, но вистинското рендерирање во DOM
-    // (renderDocxAsync) трае дополнително и се случува подоцна во посебен useEffect,
-    // па без ова корисникот гледаше празен dialog па содржината "се појавуваше од никаде".
+
     const [docxRendering, setDocxRendering] = useState(false);
     const [previewError, setPreviewError] = useState(false);
     const docxContainerRef = useRef(null);
@@ -274,8 +259,6 @@ const PostaDetails = () => {
         }
     };
 
-    // Откако blob-от на .docx е превземен и контејнерот е монтиран во DOM-от,
-    // docx-preview го рендерира внатре во него - со вистинска пагинација.
     useEffect(() => {
         if (previewDocxBlob && docxContainerRef.current) {
             docxContainerRef.current.innerHTML = '';
@@ -283,15 +266,7 @@ const PostaDetails = () => {
                 className: 'docx-preview-content',
                 inWrapper: true,
                 ignoreWidth: false,
-                // ignoreHeight: true - docx-preview ги "дели" страниците само ако Word
-                // самиот вметнал lastRenderedPageBreak маркер во XML-от (се случува
-                // единствено кога документот бил отворен во вистински MS Word пред да
-                // се зачува). Ако документот е создаден на друг начин (скрипта, друга
-                // апликација), тој маркер го нема - тогаш секцијата останува со фиксна
-                // висина (првата "страница") и остатокот од содржината се СЕЧЕ, наместо
-                // да продолжи. ignoreHeight: true ја укинува фиксната висина по секција,
-                // содржината тече природно и ништо не се губи - секогаш се гледа целиот
-                // оригинал, дури и без point page-break маркери.
+
                 ignoreHeight: true,
                 ignoreLastRenderedPageBreak: false,
             }).then(() => {
@@ -347,7 +322,7 @@ const PostaDetails = () => {
             .then(res => setDokumenti(res || []))
             .finally(() => setLoadingDok(false));
     }, [id]);
-    // ── УСЛОВНИ RETURNS ПОСЛЕ HOOKS ──
+
     if (loading) return (
         <Box sx={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -386,7 +361,6 @@ const PostaDetails = () => {
                     border: '1px solid #E4E4E4', boxShadow: '0 1px 3px rgba(16,24,40,0.05)'
                 }}>
 
-                    {/* ── ЕДИНСТВЕН НАСЛОВ НА КАРТИЧКАТА ── */}
                     <Box sx={{
                         background: T.gradient, px: {xs: 2, md: 3}, py: 1.75,
                         display: 'flex', flexWrap: 'wrap', alignItems: 'center',
@@ -405,10 +379,8 @@ const PostaDetails = () => {
 
                     <CardContent sx={{p: {xs: 2, md: 3}}}>
 
-                        {/* ── СИТЕ ПОЛИЊА ВО РЕДОВИ, ИСТО КАКО ВО CreatePostaForm ── */}
                         <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
 
-                            {/* РЕД 1: Датум на заведување, Тип, Приоритет, Испраќач, [Друг испраќач] */}
                             <FormRow>
                                 <DetailField label="Датум на заведување" value={predmet.datumZaveduvanje}/>
                                 <DetailToggle label="Тип" value={predmet.tipPosta} options={['писмо', 'телеграма']}
@@ -418,11 +390,8 @@ const PostaDetails = () => {
                                                   options={['Висок', 'Нормален']} theme={T}/>
                                 )}
                                 <DetailField label={isDobiena ? 'Испраќач' : 'Примач'} value={predmet.isprakjacIme}/>
-                                {/*<DetailField label="Друг испраќач" value={predmet.isprakjacIme}*/}
-                                {/*             sx={{visibility: isDrugo ? 'visible' : 'hidden'}}/>*/}
                             </FormRow>
 
-                            {/* РЕД 2: Број на акт (нивни), Број на акт (архивски), Датум на испраќање */}
                             {isDobiena && (
                                 <FormRow>
                                     <DetailField label="Број на акт (нивни)" value={predmet.brAktNivni}/>
@@ -431,7 +400,6 @@ const PostaDetails = () => {
                                 </FormRow>
                             )}
 
-                            {/* РЕД 3: Вид на предмет, Информативна пошта, Реализирано */}
                             <FormRow columns="2fr 1fr 1fr" sx={{ alignItems: 'center' }}>
                                 <DetailChipsField label="Вид на предмет" items={vidPredmetList}
                                                   getLabel={(v) => v.naziv} theme={T}/>
@@ -440,10 +408,8 @@ const PostaDetails = () => {
                                 <DetailSwitch label="Реализирано" checked={predmet.realizirano} theme={T}/>
                             </FormRow>
 
-                            {/* РЕД 4: Содржина */}
                             <DetailTextArea label="Содржина" value={predmet.sodrzina} minHeight={100}/>
 
-                            {/* РЕД 5: Одговорно лице, Доделено на, Архива */}
                             <FormRow columns="1fr 1fr 1fr">
                                 <DetailChipsField label="Одговорно лице" items={odgovornoLiceList}
                                                   getLabel={(u) => `${u.ime} ${u.prezime}`} theme={T}/>
@@ -453,7 +419,6 @@ const PostaDetails = () => {
                                                   getLabel={(a) => a.naziv} theme={T}/>
                             </FormRow>
 
-                            {/* РЕД 6: Забелешка (80%), Статус на предмет (20%) */}
                             <FormRow columns="4fr 1fr">
                                 <DetailTextArea label="Забелешка" value={predmet.zabeleska} minHeight={64}/>
                                 <DetailField label="Статус на предмет" value={formatStatus(predmet.statusPredmet)}/>
@@ -696,7 +661,6 @@ const PostaDetails = () => {
                         )}
                     </CardContent>
 
-                    {/* ── ФУТЕР СО КОПЧИЊА ── */}
                     <Box sx={{
                         display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center',
                         px: {xs: 2, md: 3}, py: 2, bgcolor: '#FAFAF9', borderTop: '1px solid #EEE',
@@ -742,7 +706,6 @@ const PostaDetails = () => {
                     </Box>
                 </Card>
 
-                {/* ── PREVIEW НА ДОКУМЕНТ ── */}
                 <Dialog open={!!previewDoc} onClose={closePreview} maxWidth="lg" fullWidth
                         PaperProps={{sx: {borderRadius: '12px', overflow: 'hidden'}}}>
                     <DialogTitle sx={{
@@ -773,10 +736,6 @@ const PostaDetails = () => {
                                  sx={{width: '100%', height: '80vh', border: 'none'}}/>
                         ) : previewDoc?.tipFile === DOCX_MIME && !previewError ? (
                             <Box sx={{width: '100%', position: 'relative', minHeight: 300}}>
-                                {/* Спинер додека трае вистинското рендерирање на .docx-от
-                                    (docx-preview е бавен чекор што се случува ПО previewLoading,
-                                    без ова корисникот гледаше празен dialog па содржината
-                                    "се појавуваше од никаде" по извесно време). */}
                                 {docxRendering && (
                                     <Box sx={{
                                         position: 'absolute', inset: 0, zIndex: 2,
@@ -790,28 +749,15 @@ const PostaDetails = () => {
                                 ref={docxContainerRef}
                                 sx={{
                                     visibility: docxRendering ? 'hidden' : 'visible',
-                                    // overflow: 'auto' (не само overflowY) - ако страницата е
-                                    // пошироката од дијалогот (docx-preview ја рендерира на
-                                    // реалната ширина на страницата, ignoreWidth:false), инаку
-                                    // рабовите ѝ се сечеа наместо да се скролаат хоризонтално.
+
                                     width: '100%', maxHeight: '80vh', overflow: 'auto',
                                     py: 2, display: 'flex', justifyContent: 'center',
-                                    // Точните класи (className: 'docx-preview-content' во
-                                    // renderAsync опциите) се "docx-preview-content-wrapper"
-                                    // за обвивката и "section.docx-preview-content" за секоја
-                                    // страница - НЕ "docx-wrapper" (тоа е default класата само
-                                    // кога className не се менува).
+
                                     '& .docx-preview-content-wrapper': {
                                         bgcolor: 'transparent', display: 'flex',
                                         flexDirection: 'column', alignItems: 'center', gap: '16px',
                                     },
-                                    // Клучна поправка: docx-preview секогаш инјектира
-                                    // "overflow: hidden" на секоја section.docx-preview-content
-                                    // (тоа е нејзиниот default page-boundary стил). Ако
-                                    // документот нема реални page-break маркери, СИТЕ 82
-                                    // елементи завршуваат во ЕДНА единствена section, чија
-                                    // висина/overflow:hidden ја сечеше содржината над првата
-                                    // "страница" визуелно, иако беше веќе во DOM-от.
+
                                     '& section.docx-preview-content': {
                                         boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
                                         flexShrink: 0,

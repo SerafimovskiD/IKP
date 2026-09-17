@@ -41,7 +41,6 @@ export default function LoginPage() {
                 maxWidth: '500px',
                 padding: '40px'
             }}>
-                {/* Logo */}
                 <div style={{ textAlign: 'center', marginBottom: '50px' }}>
                     <img 
                         src="/logo.png" 

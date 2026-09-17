@@ -19,13 +19,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.time.LocalDate;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Service
 public class PredmetService {
@@ -66,14 +64,13 @@ public class PredmetService {
         Integer redenBroj;
         Integer podBroj;
         if (tipOdgovor == null){
-            // Нов предмет - нумерацијата (redenBroj) е по орг. единица на корисникот + година.
+
             brAkt = user.getOrganizaciskaEdinica().getCode();
             godina = LocalDate.now().getYear();
             redenBroj = predmetRepository.findMaxRedenBrojByBrAktAndGodina(brAkt, godina) + 1;
             podBroj=1;
         }else{
-            // Одговор/под-предмет - го наследува brAkt-от од родителот; дозволено е само
-            // на предмет од сопствената орг. единица (освен за ADMIN).
+
             String userOrgCode = user.getOrganizaciskaEdinica() != null
                     ? user.getOrganizaciskaEdinica().getCode() : null;
             if (user.getUloga() != Role.ADMIN && !roditelBrAkt.equals(userOrgCode)) {
@@ -244,7 +241,7 @@ public class PredmetService {
 
         Specification<Predmet> spec = Specification
                 .where(PredmetSpecification.isActive())
-                // Секоја орг. единица си ги гледа само своите предмети (brAkt = null за ADMIN).
+
                 .and(PredmetSpecification.hasBrAkt(brAkt))
                 .and(PredmetSpecification.hasTipDelovnik(tipDelovnik))
                 .and(PredmetSpecification.hasGodina(godina))
@@ -289,8 +286,7 @@ public class PredmetService {
     private java.util.Map<String, Integer> buildVkPodBroeviMap(List<Predmet> predmeti) {
         var godini = predmeti.stream().map(Predmet::getGodina).collect(Collectors.toSet());
         if (godini.isEmpty()) return java.util.Map.of();
-        // Редовите се [brAkt, redenBroj, godina, maxPodBroj] - клуч по трите
-        // за да не се судираат исти (redenBroj, godina) од различни орг. единици.
+
         return predmetRepository.findMaxPodBrojGroupedByGodini(godini).stream()
                 .collect(Collectors.toMap(
                         row -> row[0] + "-" + row[1] + "-" + row[2],

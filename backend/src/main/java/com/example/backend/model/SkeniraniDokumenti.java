@@ -21,7 +21,6 @@ public class SkeniraniDokumenti {
     private String tipFile;
     private Long golemina;
 
-//    @Lob
     @Column(columnDefinition = "bytea")
     private byte[] content;
 

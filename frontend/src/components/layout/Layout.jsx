@@ -9,14 +9,6 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 
 const drawerWidth = 240;
 
-// const TITLES = {
-//     '/dashboard': 'Почетна',
-//     '/createPosta/nova': 'Нов предмет',
-//     '/posta': 'Детали на предмет',
-//     '/listaPosta': 'Листа на предмети',
-//     '/search': 'Пребарување',
-// };
-
 const NAV = [
     {
         label: 'ДОБИЕНА ПОШТА',
@@ -70,12 +62,8 @@ const DrawerItem = ({label, icon, selected, onClick}) => (
 );
 
 const Layout = ({children}) => {
-    // const location = useLocation();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    // const title = Object.entries(TITLES).find(([key]) =>
-    //     location.pathname.startsWith(key)
-    // )?.[1] || 'ИКП';
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -111,7 +99,6 @@ const Layout = ({children}) => {
     return (
         <Box sx={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
 
-            {/* Desktop sidebar — се појавува/губи со клик на hamburger */}
             <Drawer
                 variant="persistent"
                 open={sidebarOpen}
@@ -137,7 +124,6 @@ const Layout = ({children}) => {
                 {sidebar}
             </Drawer>
 
-            {/* Mobile sidebar */}
             <Drawer
                 variant="temporary"
                 open={sidebarOpen}
@@ -157,7 +143,6 @@ const Layout = ({children}) => {
                 {sidebar}
             </Drawer>
 
-            {/* Main */}
             <Box sx={{
                 flex: 1,
                 display: 'flex',

@@ -1,10 +1,5 @@
 import { Autocomplete, TextField } from '@mui/material';
 
-// Dropdown-филтер во заглавие на колона - транспарентен, само линија под полето
-// (ист "underline" стил како ColFilter/ColRadio).
-// groupBy (опционално) - за колони кои спојуваат опции од две различни листи
-// (пр. "Предмет" ги спојува vidPredmetDobiena и vidPredmetIspratena) - им става
-// видлив наслов на групата за да не се мешаат едни со други.
 const ColDropdown = ({value, onChange, options, getLabel, getId, placeholder, groupBy}) => {
     const selected = options.find(o => getId(o) === value) || null;
 

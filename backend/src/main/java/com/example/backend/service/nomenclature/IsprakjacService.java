@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.example.backend.exceptions.ResourceNotFoundException;
 import com.example.backend.dto.IsprakjacRequest;
 
-
 import java.util.List;
 
 @Service

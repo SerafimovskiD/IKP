@@ -14,21 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
-/**
- * Полни тест-корисници: за СЕКОЈА организациска единица во базата создава по
- * {@code USERS_PER_ROLE} корисници со улога NACALNIK и исто толку со POMOSNIK.
- *
- * Идемпотентно е - корисник што веќе постои (по email) се прескокнува, па може да
- * се пали повеќепати без дупликати.
- *
- * НЕ се пали автоматски. Вклучи го само за тестирање со:
- *   application.properties →  app.seed-test-users=true
- * или при стартување:        --app.seed-test-users=true
- *
- * Email шема:  {role}{n}.{orgCodeSanitiziran}@ikp.mk
- *   пр. nacalnik1.11-1@ikp.mk , pomosnik3.12-1-4@ikp.mk
- * Лозинка (иста за сите тест-корисници):  TEST_PASSWORD
- */
 @Configuration
 public class TestUserSeeder {
 
@@ -50,8 +35,6 @@ public class TestUserSeeder {
                 return;
             }
 
-            // Ако базата е празна (пр. по drop-от за миграцијата во UUID), создади
-            // неколку орг. единици за апликацијата да е употреблива веднаш.
             if (orgEdinicaRepository.count() == 0) {
                 for (String[] oe : new String[][]{
                         {"11.1", "Сектор 11.1"},

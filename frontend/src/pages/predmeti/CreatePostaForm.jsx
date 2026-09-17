@@ -32,8 +32,6 @@ import SingleSelect from "../../components/common/forms/SingleSelect.jsx";
 import MultiSelect from "../../components/common/forms/MultiSelect.jsx";
 import ErrorText from "../../components/common/forms/ErrorText.jsx";
 
-// Целосно одделени теми за Добиена (злато/жолто) и Испратена (зелено) пошта -
-// исти вредности како во PostaDetails.jsx, за визуелна конзистентност меѓу двете страници.
 const DOBIENA = {
     gradient: 'linear-gradient(135deg, #7A5C10 0%, #A9821C 55%, #D4AF37 100%)',
     border: '#C8A84B',
@@ -57,10 +55,7 @@ const ISPRATENA = {
     btnHover: '#1B5E20',
     sectionBg: '#F9FDF9',
 };
-// За Autocomplete-базираните полиња (SingleSelect/MultiSelect) треба composite
-// селектор (.MuiOutlinedInput-root.MuiAutocomplete-inputRoot) со !important,
-// бидејќи Autocomplete-овото сопствено CSS правило е поспецифично од обично
-// styleOverrides.root и inaку го игнорира нашето.
+
 const helperTextOverride = {
     MuiFormHelperText: {
         styleOverrides: {
@@ -74,9 +69,7 @@ const helperTextOverride = {
             },
         },
     },
-    // Никаков сопствен padding/height override на инпутите - сите полиња (TextField,
-    // DatePicker, SingleSelect, MultiSelect) ја користат природната MUI "small"
-    // висина, истата природна висина што веќе ја има MultiSelect (непроменет).
+
     MuiInputLabel: {
         styleOverrides: {
             root: {fontSize: '14px'},
@@ -85,8 +78,7 @@ const helperTextOverride = {
     MuiIconButton: {
         defaultProps: {size: 'small'},
     },
-    // ToggleButtonGroup (писмо/телеграма, Висок/Нормален) - природната "small"
-    // висина им е пократка од TextField/SwitchCard (~40px) - ја израмнуваме.
+
     MuiToggleButton: {
         styleOverrides: {
             root: {minHeight: '40px'},
@@ -94,9 +86,6 @@ const helperTextOverride = {
     },
 };
 
-// Вгнездени MUI теми (само primary бојата се менува) - за да сите вградени MUI
-// состојаби на активирање/фокус (TextField outline, Autocomplete, DatePicker
-// избран ден, итн.) автоматски ги следат бојите на Добиена/Испратена пошта.
 const dobienaMuiTheme = createTheme({
     palette: {primary: {main: DOBIENA.accentDark}},
     components: helperTextOverride,
@@ -106,8 +95,6 @@ const ispratenaMuiTheme = createTheme({
     components: helperTextOverride,
 });
 
-// ─── SWITCH CARD ──────────────────────────────────────────────────────────────
-// Нема фиксна висина - природно се обликува со padding, исто како другите полиња.
 const SwitchCard = ({label, checked, onChange, theme}) => (
     <Box sx={{
         border: `1px solid ${checked ? theme.border : '#E8E8E8'}`,
@@ -139,17 +126,8 @@ const SwitchCard = ({label, checked, onChange, theme}) => (
     </Box>
 );
 
-// ─── СЕГМЕНТИРАНА КОНТРОЛА (како во /listaPosta филтерот) - за Тип/Приоритет.
-// Нема фиксна висина - контролата ја има својата природна (size="small") висина,
-// а порамнувањето со другите полиња се прави преку margin, не преку height.
 const ToggleField = ({error, value, onChange, options, theme}) => (
     <Box>
-        {/*<Typography sx={{*/}
-        {/*    fontSize: '0.7rem', color: error ? '#d32f2f' : '#888',*/}
-        {/*    fontWeight: 600, letterSpacing: '0.06em', mb: 0.8, textTransform: 'uppercase'*/}
-        {/*}}>*/}
-        {/*{label}{required && ' *'}*/}
-        {/*</Typography>*/}
         <ToggleButtonGroup
             exclusive
             fullWidth
@@ -178,7 +156,6 @@ const ToggleField = ({error, value, onChange, options, theme}) => (
     </Box>
 );
 
-// ─── РЕД ОД ПОЛИЊА - секое дете подеднакво широко, освен ако не е зададено columns ──
 const FormRow = ({children, columns}) => (
     <Box sx={{
         display: 'grid', gap: 2,
@@ -192,8 +169,6 @@ const FormRow = ({children, columns}) => (
     </Box>
 );
 
-
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
 const PredmetForm = () => {
     const [searchParams] = useSearchParams();
     const {id: editId} = useParams();
@@ -248,7 +223,7 @@ const PredmetForm = () => {
     const [submitted, setSubmitted] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
-    // Овозможува клик било каде во полето (не само на календарчето) да го отвори DatePicker-от.
+
     const [datumZaveduvanjeOpen, setDatumZaveduvanjeOpen] = useState(false);
     const [datumIsprakjanjeOpen, setDatumIsprakjanjeOpen] = useState(false);
 
@@ -267,13 +242,13 @@ const PredmetForm = () => {
     const roditelId = searchParams.get("roditelId") || null;
     const tipOdgovor = searchParams.get("tipOdgovor") || null;
 
-
     const {predmet: roditel} = usePredmetDetails(roditelId);
     const {predmet: existingPredmet, loading: lEdit} = usePredmetDetails(editId);
     const [existingDocs, setExistingDocs] = useState([]);
     const [loadingExistingDocs, setLoadingExistingDocs] = useState(false);
     const [prefillDone, setPrefillDone] = useState(false);
     const [dokToDelete, setDokToDelete] = useState(null);
+    const [docIdsToDelete, setDocIdsToDelete] = useState([]);
 
     useEffect(() => {
         if (user?.organizaciskaEdinicaId) {
@@ -281,12 +256,6 @@ const PredmetForm = () => {
         }
     }, [user?.organizaciskaEdinicaId]);
 
-    // Ако корисникот пополни нешто во Испратена, па потоа се префрли на Добиена
-    // (или обратно) - тоа е ИСТА компонента (само tipDelovnik query param се
-    // менува, страницата не се ремаунтира), па формата инаку ги задржуваше веќе
-    // внесените вредности од претходниот тип пошта. Ги чистиме при секоја промена
-    // на tipDelovnik (освен во режим на уредување, каде тоа се контролира одделно
-    // преку prefill-ефектот погоре).
     const prevTipDelovnikRef = useRef(tipDelovnik);
     useEffect(() => {
         if (!isEditMode && prevTipDelovnikRef.current !== tipDelovnik) {
@@ -317,7 +286,6 @@ const PredmetForm = () => {
         prevTipDelovnikRef.current = tipDelovnik;
     }, [tipDelovnik, isEditMode]);
 
-    // Пополнување на формата со постоечките податоци кога сме во режим на уредување.
     useEffect(() => {
         if (isEditMode && existingPredmet && !prefillDone) {
             setForm({
@@ -357,18 +325,17 @@ const PredmetForm = () => {
         setDokToDelete(dok);
     };
 
-    const confirmDeleteExistingDok = async () => {
+    // Документот не се брише веднаш - само се крие од листата и се чува неговото id.
+    // Реалното бришење на backend-от се случува дури откако ќе се кликне "Зачувај промени"
+    // (во handleSubmit). Ако корисникот си замине без да зачува, документот си останува
+    // недопрен - на следно отворање на предметот пак ќе се појави.
+    const confirmDeleteExistingDok = () => {
         const dok = dokToDelete;
         if (!dok) return;
-        try {
-            await predmetiApi.deleteDok(dok.id);
-            setExistingDocs(p => p.filter(d => d.id !== dok.id));
-            showSnackbar('Документот е отстранет', 'warning');
-        } catch {
-            showSnackbar('Грешка при бришење на документот!', 'error');
-        } finally {
-            setDokToDelete(null);
-        }
+        setExistingDocs(p => p.filter(d => d.id !== dok.id));
+        setDocIdsToDelete(p => [...p, dok.id]);
+        showSnackbar('Документот ќе биде отстранет по зачувување на промените', 'warning');
+        setDokToDelete(null);
     };
 
     const isPageLoading = lI || lA || lVD || lVI || lO || (isEditMode && (lEdit || !prefillDone));
@@ -459,6 +426,12 @@ const PredmetForm = () => {
                     await predmetiApi.uploadDok(savedPredmet.id, file);
                 }
             }
+            if (docIdsToDelete.length > 0) {
+                for (const dokId of docIdsToDelete) {
+                    await predmetiApi.deleteDok(dokId);
+                }
+                setDocIdsToDelete([]);
+            }
             showSnackbar(isEditMode ? 'Успешно зачувани промени!' : 'Успешно зачувано!', 'success');
             setSubmitted(false);
             setFormErrors({});
@@ -486,7 +459,6 @@ const PredmetForm = () => {
                         border: '1px solid #E4E4E4', boxShadow: '0 1px 3px rgba(16,24,40,0.05)'
                     }}>
 
-                        {/* ── ЕДИНСТВЕН НАСЛОВ НА КАРТИЧКАТА ── */}
                         <Box sx={{
                             background: T.gradient,
                             px: {xs: 2, md: 3}, py: 1.75,
@@ -506,10 +478,8 @@ const PredmetForm = () => {
 
                         <CardContent sx={{p: {xs: 2, md: 3}}}>
 
-                            {/* ── СИТЕ ПОЛИЊА ВО РЕДОВИ, БЕЗ ПОДЕЛБА НА СЕКЦИИ ── */}
                             <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
 
-                                {/* РЕД 1: Датум на заведување, Тип, Приоритет, Испраќач, [Друг испраќач] */}
                                 <FormRow>
                                     <DatePicker
                                         label="Датум на заведување *"
@@ -570,7 +540,6 @@ const PredmetForm = () => {
                                     />
                                 </FormRow>
 
-                                {/* РЕД 2: Број на акт (нивни), Број на акт (архивски), Датум на испраќање */}
                                 {isDobiena && (
                                     <FormRow>
                                         <TextField fullWidth size="small"
@@ -609,7 +578,6 @@ const PredmetForm = () => {
                                     </FormRow>
                                 )}
 
-                                {/* РЕД 3: Вид на предмет, Информативна пошта, Реализирано */}
                                 <FormRow columns="2fr 1fr 1fr">
                                     {isDobiena ? (
                                         <MultiSelect
@@ -648,7 +616,6 @@ const PredmetForm = () => {
                                     />
                                 </FormRow>
 
-                                {/* РЕД 4: Содржина */}
                                 <TextField fullWidth multiline rows={2}
                                            label="Содржина"
                                            placeholder="Внесете кратка содржина на предметот..."
@@ -658,7 +625,6 @@ const PredmetForm = () => {
                                            onChange={(e) => hc('sodrzina', e.target.value)}
                                 />
 
-                                {/* РЕД 5: Одговорно лице, Архива */}
                                 <FormRow columns="1fr 1fr 1fr">
                                     <MultiSelect
                                         label="Одговорно лице"
@@ -691,7 +657,6 @@ const PredmetForm = () => {
                                     />
                                 </FormRow>
 
-                                {/* РЕД 6: Забелешка (80%), Статус на предмет (20%) */}
                                 <FormRow columns="4fr 1fr">
                                     <TextField fullWidth multiline rows={2}
                                                label="Забелешка"
@@ -717,7 +682,6 @@ const PredmetForm = () => {
 
                             <Divider sx={{my: 2.5}}/>
 
-                            {/* ── ПОСТОЈНИ ДОКУМЕНТИ (само во режим на уредување) ── */}
                             {isEditMode && loadingExistingDocs && (
                                 <Box sx={{display: 'flex', justifyContent: 'center', py: 2}}>
                                     <CircularProgress size={24} sx={{color: T.accent}}/>
@@ -752,7 +716,6 @@ const PredmetForm = () => {
                                 </Box>
                             )}
 
-                            {/* ── ДОКУМЕНТИ ── */}
                             <Box
                                 ref={dropRef}
                                 onDragOver={(e) => {
@@ -825,7 +788,6 @@ const PredmetForm = () => {
                                 </Box>
                             )}
 
-                            {/* ── ERROR ── */}
                             {error && (
                                 <Box sx={{
                                     mt: 3, p: 1.5, bgcolor: '#FFF3F3',
@@ -836,7 +798,6 @@ const PredmetForm = () => {
                             )}
                         </CardContent>
 
-                        {/* ── ФУТЕР СО КОПЧЕТО ── */}
                         <Box sx={{
                             display: 'flex', justifyContent: 'flex-end',
                             px: {xs: 2, md: 3}, py: 2,
@@ -862,7 +823,6 @@ const PredmetForm = () => {
                         </Box>
                     </Card>
 
-                    {/* ── POTVRDA ZA BRISENJE DOKUMENT ── */}
                     <Dialog
                         open={!!dokToDelete}
                         onClose={() => setDokToDelete(null)}
@@ -899,7 +859,6 @@ const PredmetForm = () => {
                         </DialogActions>
                     </Dialog>
 
-                    {/* ── ZATEMNUVANJE + BLOKIRANJE DODEKA SE ZACUVUVA ── */}
                     <Backdrop
                         open={saving}
                         sx={{

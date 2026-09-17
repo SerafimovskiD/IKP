@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(title = "ИКП API", version = "1.0"),
-        security = @SecurityRequirement(name = "bearerAuth")  // ← ОВА Е КЛУЧНО
+        security = @SecurityRequirement(name = "bearerAuth")
 )
 @SecurityScheme(
         name = "bearerAuth",

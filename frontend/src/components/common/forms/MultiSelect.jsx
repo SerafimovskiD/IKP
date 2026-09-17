@@ -1,7 +1,6 @@
 import { Autocomplete, Chip, FormControl, TextField } from '@mui/material';
 import ErrorText from './ErrorText.jsx';
 
-// Мулти-dropdown со checkbox опции и chip-ови (изглед идентичен на DemoApp автокомплетот)
 const MultiSelect = ({label, value, onChange, options, getLabel, getId, error, theme, fullWidth}) => {
     const selected = options.filter(o => value.includes(getId(o)));
 

@@ -22,26 +22,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/skenirani-dokumenti")
 public class SkeniraniDokumentiController {
-//    private final SkeniraniDokumentiService skeniraniDokumentiService;
-//
-//    public SkeniraniDokumentiController(SkeniraniDokumentiService skeniraniDokumentiService) {
-//        this.skeniraniDokumentiService = skeniraniDokumentiService;
-//    }
-//
-//    @GetMapping("/{id}/preview")
-//    public ResponseEntity<Resource> previewDokument(@PathVariable UUID id){
-//        SkeniraniDokumenti dokument = this.skeniraniDokumentiService.getDokument(id);
-//        Resource resource = this.skeniraniDokumentiService.loadDokument(id);
-//        String contentType = this.skeniraniDokumentiService.getContentType(dokument.getPateka());
-//
-//        return ResponseEntity.ok()
-//                .contentType(MediaType.parseMediaType(contentType))
-//                .header(
-//                        HttpHeaders.CONTENT_DISPOSITION,
-//                        "inline; filename=\"" + dokument.getImeFile() + "\""
-//                )
-//                .body(resource);
-//    }
+
     private final PredmetRepository predmetRepository;
     private final SkeniraniDokumentiRepository skeniraniDokumentiRepository;
     public SkeniraniDokumentiController(PredmetRepository predmetRepository, SkeniraniDokumentiRepository skeniraniDokumentiRepository) {

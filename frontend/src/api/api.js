@@ -6,7 +6,6 @@ const api = axios.create({
     headers: {"Content-Type": "application/json"},
 });
 
-// Помошна функција — дали токенот истекол
 const isTokenExpired = (token) => {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -22,13 +21,12 @@ const logout = () => {
     window.location.href = "/login";
 };
 
-// REQUEST interceptor — провери пред секој повик
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("token");
 
         if (token) {
-            // Провери дали е истечен пред да го пратиш
+
             if (isTokenExpired(token)) {
                 logout();
                 return Promise.reject(new Error("Token expired"));
@@ -40,7 +38,6 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// RESPONSE interceptor — фати 401 од backend
 api.interceptors.response.use(
     (response) => response,
     (error) => {

@@ -7,7 +7,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.BatchSize;
 
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,7 +37,6 @@ public class Predmet {
     @Enumerated(EnumType.STRING)
     private Prioritet prioritet;
 
-    //mislam 1 bese isprakjac nemoze pojke da se <-Naum
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "isprakjac_id")
     private Isprakjac isprakjac;
@@ -46,14 +44,8 @@ public class Predmet {
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
 
-
     @ManyToMany
-//    @JoinTable(
-//            name = "vid_predmet",
-//            joinColumns = @JoinColumn(name = "vid_predmet_id"),
-//            inverseJoinColumns = @JoinColumn(name = "vid_predmet_id")
-//    )
-//    @JoinColumn(name = "vid_predmet_id")
+
     private Set<VidPredmetDobiena> vidPredmetDobiena = new HashSet<>();
 
     @ManyToMany
@@ -61,7 +53,7 @@ public class Predmet {
     @Column(length = 2000)
     private String sodrzina;
     @ManyToMany
-//    @JoinColumn(name = "odgovorno_lice_id")
+
     private Set<UserTable> odgovornoLice = new HashSet<>();
 
     @ManyToMany
@@ -70,25 +62,16 @@ public class Predmet {
     private Boolean realizirano;
 
     @ManyToMany
-//    @JoinColumn(name = "arhiva_id")
+
     private Set<Arhiva> arhiva = new HashSet<>();
 
     @Column(length = 2000)
     private String zabeleska;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "roditel_predmet_id")
-//    private Predmet roditelPredmet;
-
     @Enumerated(EnumType.STRING)
     private TipDelovnik tipDelovnik;
     @Enumerated(EnumType.STRING)
     private TipOdgovor tipOdgovor;
-
-    //mozda visak <-Naum
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "organizaciskaedinica_id")
-//    private OrganizaciskaEdinica organizaciskaedinica;
 
     @Enumerated(EnumType.STRING)
     private StatusPredmet statusPredmet;

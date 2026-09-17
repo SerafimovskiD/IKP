@@ -28,8 +28,6 @@ public class PredmetSpecification {
             return root.get("id").in(subquery);
         };
     }
-    // Секоја орг. единица си ги гледа само своите предмети (brAkt = code на единицата).
-    // null = без филтер (за ADMIN, кој гледа сѐ).
     public static Specification<Predmet> hasBrAkt(String brAkt) {
         return (root, query, cb) ->
                 brAkt == null ? null : cb.equal(root.get("brAkt"), brAkt);
@@ -103,7 +101,7 @@ public class PredmetSpecification {
             var arhiva=root.join("arhiva", JoinType.LEFT);
 
             return cb.or(
-//                    cb.like(cb.lower(root.get("brAkt")), pattern),
+
                     cb.like(cb.lower(root.get("brAktArhivski")), pattern),
                     cb.like(cb.lower(root.get("brAktNivni")), pattern),
                     cb.like(cb.function("to_char", String.class,
@@ -113,7 +111,7 @@ public class PredmetSpecification {
                     cb.like(cb.function("text", String.class, root.get("redenBroj")), pattern),
                     cb.like(cb.lower(root.get("sodrzina")), pattern),
                     cb.like(cb.lower(root.get("zabeleska")), pattern),
-//                    cb.like(cb.lower(root.get("tipPosta").as(String.class)), pattern),
+
                     cb.like(cb.lower(root.get("isprakjacIme")), pattern),
                     cb.like(cb.lower(odgovornoLice.get("ime")), pattern),
                     cb.like(cb.lower(odgovornoLice.get("prezime")), pattern),
@@ -190,7 +188,6 @@ public class PredmetSpecification {
             return cb.like(cb.lower(root.get("brAktArhivski")), "%" + brAktArhivski.toLowerCase() + "%");
         };
     }
-
 
     public static Specification<Predmet> hasPromenilKorisnikLike(String promenilKorisnik) {
         return (root, query, cb) -> {

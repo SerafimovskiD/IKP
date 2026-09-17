@@ -40,8 +40,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(request));
     }
 
-    // Ги враќа корисниците (за "Одговорно лице" / "Доделено на") - scope-ирано на
-    // орг. единицата на најавениот корисник. ADMIN ги гледа сите.
     @GetMapping("/odgovorno-lice")
     public ResponseEntity<List<UserOdgovornoLiceResponse>> getUsersOdgovornoLice(
             @AuthenticationPrincipal UserDetails userDetails) {

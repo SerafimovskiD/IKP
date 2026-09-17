@@ -12,7 +12,7 @@ import java.util.List;
 
 @Data
 public class PostaRequest {
-    // Заеднички полиња
+
     private LocalDate datumZaveduvanje;
     private TipPosta tipPosta;
     private String sodrzina;
@@ -26,13 +26,12 @@ public class PostaRequest {
     private Boolean isActive;
     private String isprakjacIme;
     private List<UUID> dodelenoNaId;
-    // Samo dobiena
+
     private Prioritet prioritet;
     private String brAktNivni;
     private LocalDate datumIsprakjanje;
     private String brAktArhivski;
     private List<UUID> vidPredmetDobienaId;
 
-    // Samo ISpratena
     private List<UUID> vidPredmetIspratenaId;
 }

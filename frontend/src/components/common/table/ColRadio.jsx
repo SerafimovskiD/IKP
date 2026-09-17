@@ -1,7 +1,5 @@
 import { Box } from '@mui/material';
 
-// Пилюли-филтер (радио група) во заглавие на колона - транспарентен, со бела
-// линија под избраната опција (ист "underline" стил како ColFilter/ColDatePicker).
 const ColRadio = ({value, onChange, options}) => (
     <Box sx={{
         display: 'flex', gap: 1.2, flexWrap: 'nowrap', mt: 1.6,

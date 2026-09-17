@@ -1,7 +1,6 @@
 import { Autocomplete, FormControl, TextField } from '@mui/material';
 import ErrorText from './ErrorText.jsx';
 
-// Dropdown со search (изглед идентичен на DemoApp автокомплетот)
 const SingleSelect = ({label, value, onChange, options, getLabel, getId, error, size = 'small', fullWidth}) => {
     const selected = options.find(o => getId(o) === value) || null;
 

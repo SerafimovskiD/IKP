@@ -1,7 +1,5 @@
 import { TextField } from '@mui/material';
 
-// Текст-филтер во заглавие на колона - транспарентен, само линија под полето
-// (се стопува со златната позадина на заглавието).
 const ColFilter = ({value, onChange, placeholder = '...'}) => (
     <TextField
         variant="standard"

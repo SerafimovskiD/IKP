@@ -1,4 +1,4 @@
-// src/api/enums.js
+
 import api from "./api.js";
 
 export const enumsApi = {

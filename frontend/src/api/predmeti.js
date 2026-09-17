@@ -1,10 +1,6 @@
 import api from "./api.js";
 export const predmetiApi = {
 
-    // createPosta: async (data, tipDelovnik) => {
-    //     const res = await api.post(`/predmet/create?tipDelovnik=${tipDelovnik}`, data);
-    //     return res.data;
-    // },
     createPosta: async (data, tipDelovnik, tipOdgovor = null, roditelBrAkt = null, roditelRedenBroj = null, roditelGodina = null, oldPodbroj = null, id=null) => {
         const params = new URLSearchParams();
         params.append('tipDelovnik', tipDelovnik);
@@ -57,9 +53,9 @@ export const predmetiApi = {
 
     downloadDok: async (dokId, ime) => {
         const res = await api.get(`/predmet/dokumenti/${dokId}`, {
-            responseType: 'blob'  // ← blob response
+            responseType: 'blob'
         });
-        // Направи download линк
+
         const url = URL.createObjectURL(res.data);
         const a = document.createElement('a');
         a.href = url;
@@ -68,7 +64,6 @@ export const predmetiApi = {
         URL.revokeObjectURL(url);
     },
 
-    // Го презема документот како blob, без веднаш да го преземе (за preview во UI-от).
     getDokBlob: async (dokId) => {
         const res = await api.get(`/predmet/dokumenti/${dokId}`, {
             responseType: 'blob'

@@ -1,4 +1,4 @@
-// src/hooks/useEnums.js
+
 import { useState, useEffect } from "react";
 import { enumsApi } from "../api/enums";
 

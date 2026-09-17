@@ -1,6 +1,5 @@
 package com.example.backend.service.auth;
 
-
 import com.example.backend.model.UserTable;
 import com.example.backend.repository.UserRepository;
 import org.springframework.cache.annotation.Cacheable;
