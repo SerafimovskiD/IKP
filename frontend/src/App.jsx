@@ -1,122 +1,86 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
+import {AuthProvider} from "./context/AuthContext";
+import LoginPage from "./pages/LoginPage.jsx";
+import ProtectedRoute from "./components/common/ProtectedRoute.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import PostaDetails from "./pages/predmeti/PostaDetails.jsx";
+import PredmetForm from "./pages/predmeti/CreatePostaForm.jsx";
+import Layout from "./components/layout/Layout.jsx";
+import {Box, Typography} from "@mui/material";
+import PredmetiList from "./pages/predmeti/PredmetList.jsx";
+import {SnackbarProvider} from "./context/SnackbarContext.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <SnackbarProvider>
+                    <Routes>
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+                        <Route path="/login" element={<LoginPage/>}/>
 
-      <div className="ticks"></div>
+                        <Route path="/forbidden" element={
+                            <Box sx={{
+                                display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', minHeight: '100vh'
+                            }}>
+                                <Typography color="error" variant="h5">
+                                    Немате пристап до оваа страница
+                                </Typography>
+                            </Box>
+                        }/>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                        <Route path="/dashboard" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <Dashboard/>
+                                </Layout>
+                            </ProtectedRoute>
+                        }/>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+                        <Route path="/createPosta/nova" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <PredmetForm/>
+                                </Layout>
+                            </ProtectedRoute>
+                        }/>
+                        <Route path="/createPosta/edit/:id" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <PredmetForm/>
+                                </Layout>
+                            </ProtectedRoute>
+                        }/>
+                        <Route path="/listaPosta" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <PredmetiList/>
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                        />
+                        <Route path="/posta/:id" element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <PostaDetails/>
+                                </Layout>
+                            </ProtectedRoute>
+                        }/>
+
+                        <Route path="/admin" element={
+                            <ProtectedRoute roles={["ADMIN"]}>
+                                <Layout>
+                                    <div>Admin</div>
+                                </Layout>
+                            </ProtectedRoute>
+                        }/>
+
+                        <Route path="/" element={<Navigate to="/dashboard" replace/>}/>
+
+                    </Routes>
+                </SnackbarProvider>
+            </AuthProvider>
+        </BrowserRouter>
+    );
 }
-
-export default App

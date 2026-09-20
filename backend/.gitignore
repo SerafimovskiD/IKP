@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+../.env
+src/main/resources/application.properties
+
+### DB backups ###
+backup/
+scripts/pg17-bin/
